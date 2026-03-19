@@ -9,13 +9,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import {
-  formatMonobankDate,
-  formatMonobankMoney,
-  type MonobankCurrency,
-  type StatementItem,
-} from "@/components/admin/monobank-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +19,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  formatMonobankDate,
+  formatMonobankMoney,
+  type MonobankCurrency,
+  type StatementItem,
+} from "@/lib/monobank";
 import { cn } from "@/lib/utils";
 
 export interface PaymentDetails {

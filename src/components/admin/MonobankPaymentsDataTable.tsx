@@ -26,11 +26,6 @@ import {
 import * as React from "react";
 
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
-import {
-  formatMonobankMoney,
-  formatMonobankShortDate,
-  type StatementItem,
-} from "@/components/admin/monobank-types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -65,15 +60,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-async function copyToClipboard(value: string) {
-  if (!navigator.clipboard) {
-    return false;
-  }
-
-  await navigator.clipboard.writeText(value);
-  return true;
-}
+import { copyToClipboard } from "@/lib/clipboard";
+import {
+  formatMonobankMoney,
+  formatMonobankShortDate,
+  type StatementItem,
+} from "@/lib/monobank";
 
 function StatusIcon({ status }: { status?: string | null }) {
   const normalizedStatus = status?.toLowerCase();

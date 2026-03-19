@@ -1,3 +1,5 @@
+export const DEFAULT_STATEMENT_DAYS = 90;
+
 export type MonobankCurrency = number | string;
 
 export interface StatementItem {
@@ -10,6 +12,20 @@ export interface StatementItem {
   ccy?: MonobankCurrency;
   reference?: string;
   destination?: string;
+}
+
+export interface MonobankStatementSnapshot {
+  rows: StatementItem[];
+  fetchedAt: number;
+}
+
+export function normalizeStatementRows(list: StatementItem[]) {
+  return [...list].sort((left, right) => {
+    const leftTime = left.date ? new Date(left.date).getTime() : 0;
+    const rightTime = right.date ? new Date(right.date).getTime() : 0;
+
+    return rightTime - leftTime;
+  });
 }
 
 export function getMonobankCurrencyLabel(ccy?: MonobankCurrency) {
@@ -47,6 +63,7 @@ export function formatMonobankDate(value?: string) {
   }
 
   const parsed = new Date(value);
+
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
@@ -60,6 +77,7 @@ export function formatMonobankShortDate(value?: string) {
   }
 
   const parsed = new Date(value);
+
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }

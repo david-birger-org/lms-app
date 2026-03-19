@@ -10,18 +10,18 @@ import {
   useState,
 } from "react";
 
-import type { StatementItem } from "@/components/admin/monobank-types";
+import {
+  DEFAULT_STATEMENT_DAYS,
+  type MonobankStatementSnapshot,
+  normalizeStatementRows,
+  type StatementItem,
+} from "@/lib/monobank";
 
 const STATEMENT_CACHE_TTL_MS = 60_000;
 
 interface StatementResponse {
   list?: StatementItem[];
   error?: string;
-}
-
-interface CachedStatement {
-  rows: StatementItem[];
-  fetchedAt: number;
 }
 
 interface MonobankStatementContextValue {
@@ -40,18 +40,29 @@ interface MonobankStatementContextValue {
   };
 }
 
-const statementCache = new Map<number, CachedStatement>();
-const statementRequests = new Map<number, Promise<CachedStatement>>();
+const statementCache = new Map<number, MonobankStatementSnapshot>();
+const statementRequests = new Map<number, Promise<MonobankStatementSnapshot>>();
 
 const MonobankStatementContext =
   createContext<MonobankStatementContextValue | null>(null);
 
-function normalizeStatementRows(list: StatementItem[]) {
-  return [...list].sort((a, b) => {
-    const aTime = a.date ? new Date(a.date).getTime() : 0;
-    const bTime = b.date ? new Date(b.date).getTime() : 0;
-    return bTime - aTime;
-  });
+function getStatementSeed(
+  days: number,
+  initialData?: MonobankStatementSnapshot | null,
+) {
+  const cachedStatement = statementCache.get(days);
+
+  if (!cachedStatement) {
+    return initialData ?? null;
+  }
+
+  if (!initialData) {
+    return cachedStatement;
+  }
+
+  return cachedStatement.fetchedAt >= initialData.fetchedAt
+    ? cachedStatement
+    : initialData;
 }
 
 async function fetchStatement(days: number, forceRefresh = false) {
@@ -87,7 +98,7 @@ async function fetchStatement(days: number, forceRefresh = false) {
       Array.isArray(payload.list) ? payload.list : [],
     );
 
-    const nextCache: CachedStatement = {
+    const nextCache: MonobankStatementSnapshot = {
       rows,
       fetchedAt: Date.now(),
     };
@@ -108,21 +119,23 @@ async function fetchStatement(days: number, forceRefresh = false) {
 
 export function MonobankStatementProvider({
   children,
-  days = 90,
+  days = DEFAULT_STATEMENT_DAYS,
+  initialData = null,
+  initialError = null,
 }: {
   children: ReactNode;
   days?: number;
+  initialData?: MonobankStatementSnapshot | null;
+  initialError?: string | null;
 }) {
-  const cachedStatement = statementCache.get(days);
-  const [rows, setRows] = useState<StatementItem[]>(
-    cachedStatement?.rows ?? [],
-  );
-  const [error, setError] = useState<string | null>(null);
+  const seed = getStatementSeed(days, initialData);
+  const [rows, setRows] = useState<StatementItem[]>(seed?.rows ?? []);
+  const [error, setError] = useState<string | null>(initialError);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    cachedStatement ? "ready" : "loading",
+    initialError ? "error" : seed ? "ready" : "loading",
   );
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(
-    cachedStatement?.fetchedAt ?? null,
+    seed?.fetchedAt ?? null,
   );
 
   const loadStatement = useCallback(
@@ -146,8 +159,24 @@ export function MonobankStatementProvider({
   );
 
   useEffect(() => {
+    if (!initialData) {
+      return;
+    }
+
+    const cachedStatement = statementCache.get(days);
+
+    if (!cachedStatement || cachedStatement.fetchedAt < initialData.fetchedAt) {
+      statementCache.set(days, initialData);
+    }
+  }, [days, initialData]);
+
+  useEffect(() => {
+    if (seed || initialError) {
+      return;
+    }
+
     void loadStatement();
-  }, [loadStatement]);
+  }, [initialError, loadStatement, seed]);
 
   const refresh = useCallback(async () => {
     await loadStatement(true);

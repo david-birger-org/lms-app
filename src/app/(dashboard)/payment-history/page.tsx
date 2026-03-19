@@ -1,14 +1,21 @@
 import { MonobankPaymentsHistory } from "@/components/admin/MonobankPaymentsHistory";
 import { MonobankStatementProvider } from "@/components/admin/MonobankStatementProvider";
+import {
+  DashboardPage,
+  DashboardSection,
+} from "@/components/dashboard/page-shell";
+import { getInitialMonobankStatementState } from "@/lib/server/monobank";
 
-export default function PaymentHistoryPage() {
+export default async function PaymentHistoryPage() {
+  const statement = await getInitialMonobankStatementState();
+
   return (
-    <MonobankStatementProvider>
-      <div className="@container/main mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <section className="px-4 lg:px-6">
+    <MonobankStatementProvider {...statement}>
+      <DashboardPage>
+        <DashboardSection>
           <MonobankPaymentsHistory />
-        </section>
-      </div>
+        </DashboardSection>
+      </DashboardPage>
     </MonobankStatementProvider>
   );
 }

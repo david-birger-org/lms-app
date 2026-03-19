@@ -2,6 +2,10 @@ import { BarChart3, PanelsTopLeft } from "lucide-react";
 
 import { MonobankStatementProvider } from "@/components/admin/MonobankStatementProvider";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
+import {
+  DashboardPage,
+  DashboardSection,
+} from "@/components/dashboard/page-shell";
 import { PaymentsChart } from "@/components/dashboard/payments-chart";
 import {
   Card,
@@ -11,25 +15,27 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getRuntimeChecks } from "@/lib/runtime-checks";
+import { getInitialMonobankStatementState } from "@/lib/server/monobank";
 
-export default function OverviewPage() {
+export default async function OverviewPage() {
   const runtimeChecks = getRuntimeChecks();
   const readyCount = runtimeChecks.filter((item) => item.ready).length;
+  const statement = await getInitialMonobankStatementState();
 
   return (
-    <div className="@container/main mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+    <DashboardPage>
       <OverviewCards
         readyCount={readyCount}
         totalChecks={runtimeChecks.length}
       />
 
-      <MonobankStatementProvider>
-        <section className="px-4 lg:px-6">
+      <MonobankStatementProvider {...statement}>
+        <DashboardSection>
           <PaymentsChart />
-        </section>
+        </DashboardSection>
       </MonobankStatementProvider>
 
-      <section className="px-4 lg:px-6">
+      <DashboardSection>
         <Card className="shadow-xs">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2">
@@ -61,7 +67,7 @@ export default function OverviewPage() {
             </div>
           </CardContent>
         </Card>
-      </section>
-    </div>
+      </DashboardSection>
+    </DashboardPage>
   );
 }

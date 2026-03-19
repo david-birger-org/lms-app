@@ -15,7 +15,6 @@ import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
 import { useMonobankStatement } from "@/components/admin/MonobankStatementProvider";
-import type { StatementItem } from "@/components/admin/monobank-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +31,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { StatementItem } from "@/lib/monobank";
 
 const dayOptions = [30, 60, 90] as const;
 
