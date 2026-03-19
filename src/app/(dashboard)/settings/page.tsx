@@ -15,7 +15,7 @@ import {
 
 export default function SettingsPage() {
   return (
-    <DashboardPage width="wide">
+    <DashboardPage route="/settings" width="wide">
       <DashboardSection>
         <Card className="shadow-xs">
           <CardHeader className="border-b">

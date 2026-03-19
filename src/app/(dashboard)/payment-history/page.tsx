@@ -11,7 +11,7 @@ export default async function PaymentHistoryPage() {
 
   return (
     <MonobankStatementProvider {...statement}>
-      <DashboardPage>
+      <DashboardPage route="/payment-history">
         <DashboardSection>
           <MonobankPaymentsHistory />
         </DashboardSection>

@@ -14,7 +14,7 @@ export interface DashboardRoute {
   icon: LucideIcon;
 }
 
-export const dashboardRoutes: DashboardRoute[] = [
+export const dashboardRoutes = [
   {
     href: "/",
     title: "Overview",
@@ -47,11 +47,17 @@ export const dashboardRoutes: DashboardRoute[] = [
     description: "Manage your Clerk account, profile, and security settings.",
     icon: Settings,
   },
-];
+] as const satisfies readonly DashboardRoute[];
+
+export type DashboardRouteHref = (typeof dashboardRoutes)[number]["href"];
 
 export function getDashboardRoute(pathname: string) {
   return (
     dashboardRoutes.find((route) => route.href === pathname) ??
     dashboardRoutes[0]
   );
+}
+
+export function getDashboardRouteByHref(href: DashboardRouteHref) {
+  return getDashboardRoute(href);
 }

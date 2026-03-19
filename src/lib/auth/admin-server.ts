@@ -21,6 +21,8 @@ type ResolvedAdminAccess =
       status: "forbidden";
     };
 
+type ResolvedAdminSuccess = Extract<ResolvedAdminAccess, { status: "ok" }>;
+
 async function resolveAdminAccess(
   includeUser = false,
 ): Promise<ResolvedAdminAccess> {
@@ -51,8 +53,10 @@ async function resolveAdminAccess(
   };
 }
 
-export async function requireAdminPageAccess() {
-  const access = await resolveAdminAccess();
+export async function requireAdminPageAccess(
+  options: { includeUser?: boolean } = {},
+): Promise<ResolvedAdminSuccess> {
+  const access = await resolveAdminAccess(options.includeUser);
 
   if (access.status === "unauthorized") {
     redirect("/sign-in");

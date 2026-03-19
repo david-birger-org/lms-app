@@ -23,7 +23,7 @@ export default async function OverviewPage() {
   const statement = await getInitialMonobankStatementState();
 
   return (
-    <DashboardPage>
+    <DashboardPage route="/">
       <OverviewCards
         readyCount={readyCount}
         totalChecks={runtimeChecks.length}

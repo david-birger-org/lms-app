@@ -9,7 +9,7 @@ export default function RuntimePage() {
   const runtimeChecks = getRuntimeChecks();
 
   return (
-    <DashboardPage>
+    <DashboardPage route="/runtime">
       <DashboardSection>
         <OperationsStatusCard checks={runtimeChecks} />
       </DashboardSection>

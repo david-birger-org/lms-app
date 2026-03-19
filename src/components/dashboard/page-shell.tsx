@@ -1,5 +1,10 @@
 import type { ReactNode } from "react";
 
+import { DashboardPageHeading } from "@/components/dashboard/page-heading";
+import {
+  type DashboardRouteHref,
+  getDashboardRouteByHref,
+} from "@/lib/dashboard-routes";
 import { cn } from "@/lib/utils";
 
 const pageWidthClasses = {
@@ -9,11 +14,15 @@ const pageWidthClasses = {
 
 export function DashboardPage({
   children,
+  route,
   width = "default",
 }: {
   children: ReactNode;
+  route?: DashboardRouteHref;
   width?: keyof typeof pageWidthClasses;
 }) {
+  const page = route ? getDashboardRouteByHref(route) : null;
+
   return (
     <div
       className={cn(
@@ -21,6 +30,11 @@ export function DashboardPage({
         pageWidthClasses[width],
       )}
     >
+      {page ? (
+        <DashboardSection>
+          <DashboardPageHeading page={page} />
+        </DashboardSection>
+      ) : null}
       {children}
     </div>
   );

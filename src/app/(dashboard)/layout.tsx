@@ -6,15 +6,18 @@ import { SiteHeader } from "@/components/dashboard/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireAdminPageAccess } from "@/lib/auth/admin-server";
+import { getDashboardAccount } from "@/lib/dashboard-account";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdminPageAccess();
-
-  const cookieStore = await cookies();
+  const [access, cookieStore] = await Promise.all([
+    requireAdminPageAccess({ includeUser: true }),
+    cookies(),
+  ]);
+  const account = getDashboardAccount(access.user);
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
@@ -27,7 +30,7 @@ export default async function DashboardLayout({
           } as CSSProperties
         }
       >
-        <AppSidebar variant="inset" />
+        <AppSidebar account={account} variant="inset" />
         <SidebarInset>
           <SiteHeader />
           {children}

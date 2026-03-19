@@ -6,7 +6,7 @@ import {
 
 export default function InvoicePage() {
   return (
-    <DashboardPage>
+    <DashboardPage route="/invoice">
       <DashboardSection>
         <MonobankInvoiceForm />
       </DashboardSection>
