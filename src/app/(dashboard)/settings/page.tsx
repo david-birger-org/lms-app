@@ -1,0 +1,48 @@
+import { UserProfile } from "@clerk/nextjs";
+import { LockKeyhole, Settings2 } from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export default function SettingsPage() {
+  return (
+    <div className="@container/main mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+      <section className="px-4 lg:px-6">
+        <Card className="shadow-xs">
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Settings2 className="size-4" />
+              Account settings
+            </CardTitle>
+            <CardDescription>
+              Manage your profile, session security, and account preferences
+              without leaving the admin workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-4 xl:grid-cols-[280px_minmax(0,1fr)] xl:pt-6">
+            <div className="rounded-xl border bg-muted/20 p-4">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <LockKeyhole className="size-4" />
+                Protected account controls
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This embedded Clerk view keeps profile edits, password updates,
+                and device/session management inside the existing dashboard
+                layout.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-xl border bg-background">
+              <UserProfile routing="hash" />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}
