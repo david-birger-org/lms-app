@@ -2,6 +2,10 @@ import { UserProfile } from "@clerk/nextjs";
 import { LockKeyhole, Settings2 } from "lucide-react";
 
 import {
+  DashboardPage,
+  DashboardSection,
+} from "@/components/dashboard/page-shell";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -11,8 +15,8 @@ import {
 
 export default function SettingsPage() {
   return (
-    <div className="@container/main mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <section className="px-4 lg:px-6">
+    <DashboardPage width="wide">
+      <DashboardSection>
         <Card className="shadow-xs">
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -42,7 +46,7 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-      </section>
-    </div>
+      </DashboardSection>
+    </DashboardPage>
   );
 }

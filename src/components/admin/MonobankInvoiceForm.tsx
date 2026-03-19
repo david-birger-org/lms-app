@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { copyToClipboard } from "@/lib/clipboard";
 
 type SupportedCurrency = "UAH" | "USD";
 type OutputMode = "link" | "qr";
@@ -29,19 +30,6 @@ interface InvoiceResult {
   invoiceId?: string;
   pageUrl: string;
   qrCodeDataUrl?: string;
-}
-
-async function copyToClipboard(value: string) {
-  if (!navigator.clipboard) {
-    return false;
-  }
-
-  try {
-    await navigator.clipboard.writeText(value);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function MonobankInvoiceForm() {

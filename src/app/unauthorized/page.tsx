@@ -1,4 +1,5 @@
 import { ShieldAlert } from "lucide-react";
+import Link from "next/link";
 
 import { SwitchAccountButton } from "@/components/auth/switch-account-button";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export default function UnauthorizedPage() {
           <div className="flex flex-wrap gap-2">
             <SwitchAccountButton />
             <Button variant="outline" asChild>
-              <a href="/sign-in">Go to sign-in</a>
+              <Link href="/sign-in">Go to sign-in</Link>
             </Button>
           </div>
         </CardContent>
