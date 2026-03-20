@@ -14,7 +14,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [access, cookieStore] = await Promise.all([
-    requireAdminPageAccess({ includeUser: true }),
+    requireAdminPageAccess(),
     cookies(),
   ]);
   const account = getDashboardAccount(access.user);

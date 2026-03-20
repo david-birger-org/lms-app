@@ -1,7 +1,4 @@
-import { headers as getRequestHeaders } from "next/headers";
 import { NextResponse } from "next/server";
-
-import { requireAdminApiAccess } from "@/lib/auth/admin-server";
 
 export function getLmsSlsConfig() {
   const rawBaseUrl = process.env.LMS_SLS_BASE_URL?.trim();
@@ -46,10 +43,6 @@ export function getForwardedAuthHeaders(source: Headers) {
   copyHeaderIfPresent(headers, source, "cookie");
 
   return headers;
-}
-
-export async function getCurrentRequestAuthHeaders() {
-  return getForwardedAuthHeaders(await getRequestHeaders());
 }
 
 interface ForwardLmsSlsRequestOptions {
@@ -109,12 +102,6 @@ export async function forwardLmsSlsRequest({
 }
 
 export async function proxyLmsSlsRequest(request: Request, path: string) {
-  const access = await requireAdminApiAccess();
-
-  if (!access.ok) {
-    return access.response;
-  }
-
   try {
     const incomingUrl = new URL(request.url);
     const method = request.method.toUpperCase();

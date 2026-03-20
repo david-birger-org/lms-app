@@ -1,15 +1,14 @@
 import "server-only";
 
+import { headers as getRequestHeaders } from "next/headers";
+
 import {
   DEFAULT_STATEMENT_DAYS,
   type MonobankStatementSnapshot,
   normalizeStatementRows,
   type StatementItem,
 } from "@/lib/monobank";
-import {
-  getCurrentRequestAuthHeaders,
-  getLmsSlsConfig,
-} from "@/lib/server/lms-sls";
+import { getForwardedAuthHeaders, getLmsSlsConfig } from "@/lib/server/lms-sls";
 
 interface StatementResponse {
   list?: StatementItem[];
@@ -22,7 +21,7 @@ export async function getMonobankStatement(
   days = DEFAULT_STATEMENT_DAYS,
 ): Promise<MonobankStatementSnapshot> {
   const { apiKey, baseUrl } = getLmsSlsConfig();
-  const authHeaders = await getCurrentRequestAuthHeaders();
+  const authHeaders = getForwardedAuthHeaders(await getRequestHeaders());
   const targetUrl = new URL("api/monobank/statement", baseUrl);
 
   targetUrl.searchParams.set("days", String(days));

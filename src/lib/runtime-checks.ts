@@ -6,12 +6,12 @@ export interface RuntimeCheck {
 export function getRuntimeChecks(): RuntimeCheck[] {
   return [
     {
-      label: "Clerk publishable key",
-      ready: Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
+      label: "Auth service URL",
+      ready: Boolean(process.env.AUTH_BASE_URL),
     },
     {
-      label: "Clerk secret key",
-      ready: Boolean(process.env.CLERK_SECRET_KEY),
+      label: "Public auth URL",
+      ready: Boolean(process.env.NEXT_PUBLIC_AUTH_BASE_URL),
     },
     {
       label: "LMS SLS base URL",
