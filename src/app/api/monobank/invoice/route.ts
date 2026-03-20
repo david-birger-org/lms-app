@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminApiAccess } from "@/lib/auth/admin-server";
-import { forwardLmsSlsRequest } from "@/lib/server/lms-sls";
+import {
+  forwardLmsSlsRequest,
+  getForwardedAuthHeaders,
+} from "@/lib/server/lms-sls";
 
 function getAppUserId(privateMetadata: unknown) {
   if (!privateMetadata || typeof privateMetadata !== "object") {
@@ -23,6 +26,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as unknown;
     const idempotencyKey = request.headers.get("idempotency-key")?.trim();
+    const headers = getForwardedAuthHeaders(request.headers);
 
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
@@ -33,6 +37,10 @@ export async function POST(request: Request) {
 
     const incomingUrl = new URL(request.url);
 
+    if (idempotencyKey) {
+      headers.set("idempotency-key", idempotencyKey);
+    }
+
     return await forwardLmsSlsRequest({
       body: JSON.stringify({
         ...body,
@@ -41,11 +49,7 @@ export async function POST(request: Request) {
         customerEmail: access.user?.primaryEmailAddress?.emailAddress ?? null,
       }),
       contentType: "application/json",
-      headers: idempotencyKey
-        ? {
-            "idempotency-key": idempotencyKey,
-          }
-        : undefined,
+      headers,
       method: "POST",
       path: "/api/monobank/invoice",
       search: incomingUrl.search,
