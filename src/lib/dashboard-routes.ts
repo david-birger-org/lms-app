@@ -44,7 +44,8 @@ export const dashboardRoutes = [
   {
     href: "/settings",
     title: "Settings",
-    description: "Manage your Clerk account, profile, and security settings.",
+    description:
+      "Manage your Better Auth account, password, and session settings.",
     icon: Settings,
   },
 ] as const satisfies readonly DashboardRoute[];

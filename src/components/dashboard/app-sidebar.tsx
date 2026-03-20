@@ -1,7 +1,7 @@
-import { UserButton } from "@clerk/nextjs";
 import { ShieldCheck } from "lucide-react";
 import type { ComponentProps } from "react";
 
+import { AccountMenu } from "@/components/auth/account-menu";
 import { DashboardNavigation } from "@/components/dashboard/dashboard-navigation";
 import {
   Sidebar,
@@ -12,19 +12,7 @@ import {
 import type { DashboardAccount } from "@/lib/dashboard-account";
 
 function SidebarAccount({ account }: { account: DashboardAccount }) {
-  return (
-    <div className="flex items-center gap-3 rounded-lg border border-sidebar-border/70 bg-sidebar-accent/40 p-2">
-      <UserButton userProfileMode="navigation" userProfileUrl="/settings" />
-      <div className="min-w-0">
-        <p className="truncate text-xs font-medium text-sidebar-foreground">
-          {account.fullName}
-        </p>
-        <p className="truncate text-xs text-sidebar-foreground/70">
-          {account.email}
-        </p>
-      </div>
-    </div>
-  );
+  return <AccountMenu email={account.email} fullName={account.fullName} />;
 }
 
 export function AppSidebar({

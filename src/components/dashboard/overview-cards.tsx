@@ -37,9 +37,9 @@ const dashboardCards: DashboardCard[] = [
   },
   {
     title: "Auth Guard",
-    value: "Clerk",
+    value: "Better Auth",
     description: "Session-based access",
-    footer: "All routes remain protected behind Clerk middleware.",
+    footer: "All routes remain protected behind Better Auth session checks.",
     badge: "Secure",
     icon: ShieldCheck,
   },
@@ -91,7 +91,7 @@ export function OverviewCards({
             Required keys checked <CheckCircle2 className="size-4" />
           </div>
           <div className="text-muted-foreground hidden sm:block">
-            Clerk and lms-sls are available for the protected workspace.
+            Better Auth and lms-sls are available for the protected workspace.
           </div>
         </CardFooter>
       </Card>

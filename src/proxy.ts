@@ -1,32 +1,37 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
+import { type NextRequest, NextResponse } from "next/server";
 
-const CLERK_ACCOUNTS_HOST = "accounts.admin.davidbirger.com";
-
-const isPublicRoute = createRouteMatcher([
-  "/sign-in(.*)",
-  "/sign-up(.*)",
+const PUBLIC_PATH_PREFIXES = [
+  "/api/auth",
+  "/sign-in",
+  "/sign-up",
   "/unauthorized",
-]);
+];
 
-export default clerkMiddleware(async (auth, request) => {
-  if (request.nextUrl.hostname === CLERK_ACCOUNTS_HOST) {
-    return;
+function isPublicRoute(request: NextRequest) {
+  return PUBLIC_PATH_PREFIXES.some(
+    (prefix) =>
+      request.nextUrl.pathname === prefix ||
+      request.nextUrl.pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export function proxy(request: NextRequest) {
+  if (isPublicRoute(request)) {
+    return NextResponse.next();
   }
 
-  if (!isPublicRoute(request)) {
-    const { userId } = await auth();
+  if (!getSessionCookie(request)) {
+    const signInUrl = new URL("/sign-in", request.url);
+    const redirectPath =
+      request.nextUrl.pathname + (request.nextUrl.search || "");
+    signInUrl.searchParams.set("redirect_url", redirectPath);
 
-    if (!userId) {
-      const signInUrl = new URL("/sign-in", request.url);
-      const redirectPath =
-        request.nextUrl.pathname + (request.nextUrl.search || "");
-      signInUrl.searchParams.set("redirect_url", redirectPath);
-
-      return NextResponse.redirect(signInUrl);
-    }
+    return NextResponse.redirect(signInUrl);
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"],

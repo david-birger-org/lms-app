@@ -1,6 +1,6 @@
 # LMS Admin
 
-Standalone admin app extracted from the public site workspace. It owns the Clerk-protected back office and proxies Monobank payment tooling through `lms-sls`.
+Standalone admin app extracted from the public site workspace. It consumes Better Auth from `lms-sls` and proxies Monobank payment tooling through the same backend.
 
 ## Setup
 
@@ -10,13 +10,13 @@ Standalone admin app extracted from the public site workspace. It owns the Clerk
 bun install
 ```
 
-2. Copy the environment template and fill in the values:
+1. Copy the environment template and fill in the values:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Start the development server:
+1. Start the development server:
 
 ```bash
 bun run dev
@@ -26,8 +26,8 @@ The app runs on `http://localhost:3000` by default.
 
 ## Required Environment Variables
 
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
+- `AUTH_BASE_URL` (server-side Better Auth base URL, defaults to `LMS_SLS_BASE_URL`)
+- `NEXT_PUBLIC_AUTH_BASE_URL` (browser Better Auth base URL)
 - `LMS_SLS_BASE_URL`
 - `LMS_SLS_API_KEY`
 

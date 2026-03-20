@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -32,25 +31,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} theme-default antialiased`}
       >
-        <ClerkProvider
-          appearance={{
-            variables: {
-              colorPrimary: "#111111",
-              colorBackground: "#fafafa",
-              colorInputBackground: "#ffffff",
-              colorInputText: "#111111",
-              colorText: "#111111",
-              colorTextSecondary: "#666666",
-              colorNeutral: "#e5e5e5",
-              borderRadius: "10px",
-            },
-          }}
-        >
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </ClerkProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

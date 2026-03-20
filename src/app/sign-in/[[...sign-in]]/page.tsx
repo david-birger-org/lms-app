@@ -1,15 +1,9 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignInForm } from "@/components/auth/sign-in-form";
 
 export default function SignInPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <SignIn
-        path="/sign-in"
-        routing="path"
-        signUpFallbackRedirectUrl="/api/post-sign-up"
-        signUpForceRedirectUrl="/api/post-sign-up"
-        signUpUrl="/sign-up"
-      />
+    <main className="flex min-h-svh items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.08),_transparent_45%),linear-gradient(180deg,_rgba(255,255,255,1),_rgba(248,250,252,1))] px-4 py-10">
+      <SignInForm />
     </main>
   );
 }

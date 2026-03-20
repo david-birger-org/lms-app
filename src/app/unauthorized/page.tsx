@@ -21,7 +21,8 @@ export default function UnauthorizedPage() {
             Access restricted
           </CardTitle>
           <CardDescription>
-            This workspace is limited to users with the Clerk role `admin`.
+            This workspace is limited to users with the Better Auth `admin`
+            role.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
