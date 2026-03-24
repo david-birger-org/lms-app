@@ -1,27 +1,11 @@
 import { NextResponse } from "next/server";
 
-export function getLmsSlsConfig() {
-  const rawBaseUrl = process.env.LMS_SLS_BASE_URL?.trim();
-  const apiKey = process.env.LMS_SLS_API_KEY?.trim();
+import { env } from "@/lib/env";
 
-  if (!rawBaseUrl) {
-    throw new Error("LMS_SLS_BASE_URL is missing in environment variables.");
-  }
-
-  if (!apiKey) {
-    throw new Error("LMS_SLS_API_KEY is missing in environment variables.");
-  }
-
-  const normalizedBaseUrl = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(rawBaseUrl)
-    ? rawBaseUrl
-    : `http://${rawBaseUrl}`;
-
-  return {
-    apiKey,
-    baseUrl: normalizedBaseUrl.endsWith("/")
-      ? normalizedBaseUrl
-      : `${normalizedBaseUrl}/`,
-  };
+export interface TrustedAdminIdentity {
+  email: string | null;
+  name: string | null;
+  userId: string;
 }
 
 function copyHeaderIfPresent(
@@ -36,11 +20,59 @@ function copyHeaderIfPresent(
   }
 }
 
-export function getForwardedAuthHeaders(source: Headers) {
+export function getLmsSlsConfig() {
+  const rawBaseUrl = env.lmsSlsBaseUrl;
+  const apiKey = env.lmsSlsApiKey;
+
+  const normalizedBaseUrl = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(rawBaseUrl)
+    ? rawBaseUrl
+    : `http://${rawBaseUrl}`;
+
+  return {
+    apiKey,
+    baseUrl: normalizedBaseUrl.endsWith("/")
+      ? normalizedBaseUrl
+      : `${normalizedBaseUrl}/`,
+  };
+}
+
+export function createTrustedAdminHeaders(admin: TrustedAdminIdentity) {
+  const headers = new Headers();
+
+  headers.set("x-admin-user-id", admin.userId);
+
+  if (admin.email) {
+    headers.set("x-admin-email", admin.email);
+  }
+
+  if (admin.name) {
+    headers.set("x-admin-name", admin.name);
+  }
+
+  return headers;
+}
+
+export function getForwardedSessionHeaders(source: Headers) {
   const headers = new Headers();
 
   copyHeaderIfPresent(headers, source, "authorization");
   copyHeaderIfPresent(headers, source, "cookie");
+
+  return headers;
+}
+
+export function mergeHeaders(...headerSets: Array<HeadersInit | undefined>) {
+  const headers = new Headers();
+
+  for (const headerSet of headerSets) {
+    if (!headerSet) {
+      continue;
+    }
+
+    for (const [key, value] of new Headers(headerSet).entries()) {
+      headers.set(key, value);
+    }
+  }
 
   return headers;
 }
@@ -66,19 +98,13 @@ export async function forwardLmsSlsRequest({
   const targetUrl = new URL(path.replace(/^\//, ""), baseUrl);
   targetUrl.search = search;
 
-  const headers = new Headers({
-    "x-internal-api-key": apiKey,
-  });
+  const headers = new Headers(additionalHeaders);
 
-  if (contentType) {
+  if (contentType && !headers.has("content-type")) {
     headers.set("content-type", contentType);
   }
 
-  if (additionalHeaders) {
-    for (const [key, value] of new Headers(additionalHeaders).entries()) {
-      headers.set(key, value);
-    }
-  }
+  headers.set("x-internal-api-key", apiKey);
 
   const response = await fetch(targetUrl, {
     method,
@@ -101,7 +127,15 @@ export async function forwardLmsSlsRequest({
   });
 }
 
-export async function proxyLmsSlsRequest(request: Request, path: string) {
+export async function proxyLmsSlsRequest({
+  admin,
+  path,
+  request,
+}: {
+  admin: TrustedAdminIdentity;
+  path: string;
+  request: Request;
+}) {
   try {
     const incomingUrl = new URL(request.url);
     const method = request.method.toUpperCase();
@@ -112,7 +146,10 @@ export async function proxyLmsSlsRequest(request: Request, path: string) {
     return await forwardLmsSlsRequest({
       body,
       contentType,
-      headers: getForwardedAuthHeaders(request.headers),
+      headers: mergeHeaders(
+        createTrustedAdminHeaders(admin),
+        getForwardedSessionHeaders(request.headers),
+      ),
       method,
       path,
       search: incomingUrl.search,

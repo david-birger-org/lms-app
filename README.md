@@ -1,6 +1,6 @@
 # LMS Admin
 
-Standalone admin app extracted from the public site workspace. It consumes Better Auth from `lms-sls` and proxies Monobank payment tooling through the same backend.
+Standalone admin app extracted from the public site workspace. It owns Better Auth locally on `admin.davidbirger.com` and proxies Monobank payment tooling to `lms-sls` as a backend service.
 
 ## Setup
 
@@ -26,8 +26,11 @@ The app runs on `http://localhost:3000` by default.
 
 ## Required Environment Variables
 
-- `AUTH_BASE_URL` (server-side Better Auth base URL, defaults to `LMS_SLS_BASE_URL`)
+- `BETTER_AUTH_URL`
 - `NEXT_PUBLIC_AUTH_BASE_URL` (browser Better Auth base URL)
+- `BETTER_AUTH_SECRET`
+- `DATABASE_URL`
+- `ADMIN_EMAILS` (optional comma-separated allowlist for auto-admin role assignment)
 - `LMS_SLS_BASE_URL`
 - `LMS_SLS_API_KEY`
 

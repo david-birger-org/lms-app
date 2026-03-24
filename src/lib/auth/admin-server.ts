@@ -4,30 +4,25 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
-import { getServerAuthBaseUrl } from "@/lib/auth/config";
-import { getForwardedAuthHeaders } from "@/lib/server/lms-sls";
+import { isAdminUser } from "@/lib/auth/admin";
+import {
+  type AuthSessionRecord,
+  type AuthUser,
+  getAuth,
+} from "@/lib/auth/better-auth";
 
-type AuthSession = {
-  session: {
-    id: string;
-    userId: string;
-    [key: string]: unknown;
-  };
-  user: {
-    email: string;
-    id: string;
-    name: string;
-    role?: string | null;
-    [key: string]: unknown;
-  };
-};
-
-type AuthUser = AuthSession["user"];
+export interface AuthenticatedAdmin {
+  email: string | null;
+  name: string | null;
+  role: "admin";
+  userId: string;
+}
 
 type ResolvedAdminAccess =
   | {
+      admin: AuthenticatedAdmin;
       role: "admin";
-      session: AuthSession["session"];
+      session: AuthSessionRecord;
       status: "ok";
       userId: string;
       user: AuthUser;
@@ -41,35 +36,33 @@ type ResolvedAdminAccess =
 
 type ResolvedAdminSuccess = Extract<ResolvedAdminAccess, { status: "ok" }>;
 
-async function resolveAdminAccess(): Promise<ResolvedAdminAccess> {
-  const response = await fetch(
-    `${getServerAuthBaseUrl()}/api/auth/admin-session`,
-    {
-      cache: "no-store",
-      headers: getForwardedAuthHeaders(await headers()),
-    },
-  );
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected error";
+}
 
-  if (response.status === 401) {
+async function resolveAdminAccess(
+  requestHeaders: Headers,
+): Promise<ResolvedAdminAccess> {
+  const session = await getAuth().api.getSession({
+    headers: requestHeaders,
+  });
+
+  if (!session) {
     return { status: "unauthorized" };
   }
 
-  if (response.status === 403) {
+  if (!isAdminUser(session.user)) {
     return { status: "forbidden" };
   }
 
-  if (!response.ok) {
-    throw new Error(`Failed to resolve admin session: ${response.status}`);
-  }
-
-  const session = (await response.json()) as {
-    role: "admin";
-    session: AuthSession["session"];
-    user: AuthUser;
-  };
-
   return {
-    role: session.role,
+    admin: {
+      email: session.user.email ?? null,
+      name: session.user.name ?? null,
+      role: "admin",
+      userId: session.user.id,
+    },
+    role: "admin",
     session: session.session,
     status: "ok",
     userId: session.user.id,
@@ -77,8 +70,12 @@ async function resolveAdminAccess(): Promise<ResolvedAdminAccess> {
   };
 }
 
+async function resolveCurrentAdminAccess() {
+  return resolveAdminAccess(await headers());
+}
+
 export async function requireAdminPageAccess(): Promise<ResolvedAdminSuccess> {
-  const access = await resolveAdminAccess();
+  const access = await resolveCurrentAdminAccess();
 
   if (access.status === "unauthorized") {
     redirect("/sign-in");
@@ -93,9 +90,10 @@ export async function requireAdminPageAccess(): Promise<ResolvedAdminSuccess> {
 
 type AdminApiAccess =
   | {
+      admin: AuthenticatedAdmin;
       ok: true;
       role: "admin";
-      session: AuthSession["session"];
+      session: AuthSessionRecord;
       userId: string;
       user: AuthUser;
     }
@@ -104,8 +102,22 @@ type AdminApiAccess =
       response: NextResponse;
     };
 
-export async function requireAdminApiAccess(): Promise<AdminApiAccess> {
-  const access = await resolveAdminAccess();
+export async function requireAdminApiAccess(
+  request: Request,
+): Promise<AdminApiAccess> {
+  let access: ResolvedAdminAccess;
+
+  try {
+    access = await resolveAdminAccess(request.headers);
+  } catch (error) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: `Failed to authorize request: ${getErrorMessage(error)}` },
+        { status: 500 },
+      ),
+    };
+  }
 
   if (access.status === "unauthorized") {
     return {
@@ -122,6 +134,7 @@ export async function requireAdminApiAccess(): Promise<AdminApiAccess> {
   }
 
   return {
+    admin: access.admin,
     ok: true,
     role: "admin",
     session: access.session,

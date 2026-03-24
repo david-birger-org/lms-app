@@ -107,8 +107,8 @@ export function OperationsStatusCard({ checks }: { checks: RuntimeCheck[] }) {
         </div>
       </CardContent>
       <CardFooter className="border-t pt-4 text-sm text-muted-foreground">
-        Auth is enforced by Better Auth session checks before any invoice or
-        statement request reaches the proxy.
+        Better Auth runs on the admin app, and every backend proxy request is
+        gated by a local admin session check first.
         <ArrowRight className="ml-2 size-4" />
       </CardFooter>
     </Card>

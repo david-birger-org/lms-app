@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   allowedDevOrigins: getAllowedDevOrigins(),
+  serverExternalPackages: ["pg"],
 };
 
 export default nextConfig;

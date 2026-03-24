@@ -6,12 +6,20 @@ export interface RuntimeCheck {
 export function getRuntimeChecks(): RuntimeCheck[] {
   return [
     {
-      label: "Auth service URL",
-      ready: Boolean(process.env.AUTH_BASE_URL),
+      label: "Better Auth URL",
+      ready: Boolean(process.env.BETTER_AUTH_URL),
     },
     {
       label: "Public auth URL",
       ready: Boolean(process.env.NEXT_PUBLIC_AUTH_BASE_URL),
+    },
+    {
+      label: "Better Auth secret",
+      ready: Boolean(process.env.BETTER_AUTH_SECRET),
+    },
+    {
+      label: "Auth database URL",
+      ready: Boolean(process.env.DATABASE_URL),
     },
     {
       label: "LMS SLS base URL",

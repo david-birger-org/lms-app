@@ -1,15 +1,27 @@
 import { NextResponse } from "next/server";
 
+import { requireAdminApiAccess } from "@/lib/auth/admin-server";
 import {
+  createTrustedAdminHeaders,
   forwardLmsSlsRequest,
-  getForwardedAuthHeaders,
+  getForwardedSessionHeaders,
+  mergeHeaders,
 } from "@/lib/server/lms-sls";
 
 export async function POST(request: Request) {
   try {
+    const access = await requireAdminApiAccess(request);
+
+    if (!access.ok) {
+      return access.response;
+    }
+
     const body = (await request.json()) as unknown;
     const idempotencyKey = request.headers.get("idempotency-key")?.trim();
-    const headers = getForwardedAuthHeaders(request.headers);
+    const headers = mergeHeaders(
+      createTrustedAdminHeaders(access.admin),
+      getForwardedSessionHeaders(request.headers),
+    );
 
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
