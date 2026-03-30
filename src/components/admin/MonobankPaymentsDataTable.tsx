@@ -38,10 +38,18 @@ export function MonobankPaymentsDataTable({
   data,
   isLoading,
   onRefresh,
+  onInvoiceChanged,
+  showStats = true,
+  title = "Payments history",
+  description = "Search the statement feed, filter rows, and inspect invoice-level payment details.",
 }: {
   data: StatementItem[];
   isLoading: boolean;
   onRefresh: () => void;
+  onInvoiceChanged?: () => void;
+  showStats?: boolean;
+  title?: string;
+  description?: string;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -168,11 +176,8 @@ export function MonobankPaymentsDataTable({
   return (
     <Card className="shadow-xs">
       <CardHeader className="border-b px-3 sm:px-6">
-        <CardTitle>Payments history</CardTitle>
-        <CardDescription>
-          Search the statement feed, filter rows, and inspect invoice-level
-          payment details.
-        </CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="px-3 pb-3 pt-4 sm:px-6 sm:pb-6">
         <div className="w-full">
@@ -189,10 +194,12 @@ export function MonobankPaymentsDataTable({
             onClearSelection={() => setRowSelection({})}
           />
 
-          <MonobankPaymentsTableStats
-            totalCount={data.length}
-            successfulCount={successfulCount}
-          />
+          {showStats ? (
+            <MonobankPaymentsTableStats
+              totalCount={data.length}
+              successfulCount={successfulCount}
+            />
+          ) : null}
 
           <MonobankPaymentsTableContent
             table={table}
@@ -204,6 +211,7 @@ export function MonobankPaymentsDataTable({
             payment={activePayment ?? undefined}
             open={detailsOpen}
             onOpenChange={setDetailsOpen}
+            onInvoiceChanged={onInvoiceChanged}
             hideTrigger
           />
 

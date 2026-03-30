@@ -41,6 +41,27 @@ function StatusIcon({ status }: { status?: string | null }) {
     return <CircleX className="size-4 text-rose-600" aria-label="Failure" />;
   }
 
+  if (
+    normalizedStatus === "invoice_created" ||
+    normalizedStatus === "created"
+  ) {
+    return (
+      <CircleAlert
+        className="size-4 text-sky-600"
+        aria-label={status ?? undefined}
+      />
+    );
+  }
+
+  if (normalizedStatus === "cancelled") {
+    return (
+      <CircleX
+        className="size-4 text-muted-foreground"
+        aria-label="Cancelled"
+      />
+    );
+  }
+
   return <div className="text-xs text-muted-foreground">-</div>;
 }
 

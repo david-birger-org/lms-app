@@ -1,4 +1,4 @@
-import { MonobankInvoiceForm } from "@/components/admin/MonobankInvoiceForm";
+import { MonobankInvoiceWorkspace } from "@/components/admin/MonobankInvoiceWorkspace";
 import {
   DashboardPage,
   DashboardSection,
@@ -8,7 +8,7 @@ export default function InvoicePage() {
   return (
     <DashboardPage route="/invoice">
       <DashboardSection>
-        <MonobankInvoiceForm />
+        <MonobankInvoiceWorkspace />
       </DashboardSection>
     </DashboardPage>
   );

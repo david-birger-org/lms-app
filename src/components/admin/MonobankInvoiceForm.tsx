@@ -26,18 +26,27 @@ import { copyToClipboard } from "@/lib/clipboard";
 
 type SupportedCurrency = "UAH" | "USD";
 type OutputMode = "link" | "qr";
+const DEFAULT_EXPIRATION_MINUTES = 24 * 60;
 
 interface InvoiceResult {
+  expiresAt?: string;
   invoiceId?: string;
   pageUrl: string;
   qrCodeDataUrl?: string;
 }
 
-export function MonobankInvoiceForm() {
+export function MonobankInvoiceForm({
+  onInvoiceCreated,
+}: {
+  onInvoiceCreated?: () => void;
+}) {
   const [customerName, setCustomerName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState<SupportedCurrency>("UAH");
+  const [expirationMinutes, setExpirationMinutes] = useState(
+    String(DEFAULT_EXPIRATION_MINUTES),
+  );
   const [output, setOutput] = useState<OutputMode>("link");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,10 +54,25 @@ export function MonobankInvoiceForm() {
   const [isCopied, setIsCopied] = useState(false);
 
   const parsedAmount = useMemo(() => Number(amount), [amount]);
+  const parsedExpirationMinutes = useMemo(
+    () => Number(expirationMinutes),
+    [expirationMinutes],
+  );
+  const validitySeconds = useMemo(
+    () => Math.round(parsedExpirationMinutes * 60),
+    [parsedExpirationMinutes],
+  );
   const paymentIntentScope = useMemo(
     () =>
-      JSON.stringify({ amount, currency, customerName, description, output }),
-    [amount, currency, customerName, description, output],
+      JSON.stringify({
+        amount,
+        currency,
+        customerName,
+        description,
+        expirationMinutes,
+        output,
+      }),
+    [amount, currency, customerName, description, expirationMinutes, output],
   );
   const { idempotencyKey, renewIdempotencyKey } =
     useIdempotencyKey(paymentIntentScope);
@@ -60,6 +84,10 @@ export function MonobankInvoiceForm() {
     setIsSubmitting(true);
 
     try {
+      if (!Number.isInteger(validitySeconds) || validitySeconds < 60) {
+        throw new Error("Expiration time must be at least 1 minute.");
+      }
+
       const response = await fetch("/api/monobank/invoice", {
         method: "POST",
         headers: {
@@ -71,6 +99,7 @@ export function MonobankInvoiceForm() {
           description,
           amount: parsedAmount,
           currency,
+          validitySeconds,
           output,
         }),
       });
@@ -88,6 +117,7 @@ export function MonobankInvoiceForm() {
       const invoice = data as InvoiceResult;
       setResult(invoice);
       renewIdempotencyKey();
+      onInvoiceCreated?.();
 
       const copied = await copyToClipboard(invoice.pageUrl);
       setIsCopied(copied);
@@ -198,6 +228,29 @@ export function MonobankInvoiceForm() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expirationMinutes">
+                    Expires in (minutes)
+                  </Label>
+                  <Input
+                    className="h-9"
+                    id="expirationMinutes"
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    step="1"
+                    value={expirationMinutes}
+                    onChange={(event) =>
+                      setExpirationMinutes(event.target.value)
+                    }
+                    required
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Default Monobank lifetime is 24 hours (
+                    {DEFAULT_EXPIRATION_MINUTES} minutes).
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -251,6 +304,11 @@ export function MonobankInvoiceForm() {
               >
                 {result.pageUrl}
               </a>
+              {result.expiresAt ? (
+                <p className="text-muted-foreground text-xs">
+                  Expires: {new Date(result.expiresAt).toLocaleString()}
+                </p>
+              ) : null}
             </div>
             {result.qrCodeDataUrl && (
               <div className="pt-1">

@@ -4,7 +4,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   CreditCard,
+  ExternalLink,
   Eye,
+  LoaderCircle,
   ReceiptText,
   XCircle,
 } from "lucide-react";
@@ -40,6 +42,9 @@ export interface PaymentDetails {
   modifiedDate?: string;
   reference?: string;
   destination?: string;
+  customerName?: string;
+  expiresAt?: string;
+  pageUrl?: string;
   paymentInfo?: {
     maskedPan?: string;
     approvalCode?: string;
@@ -80,6 +85,7 @@ function mergePaymentDetails(
 
   return {
     ...details,
+    customerName: details?.customerName ?? summary?.customerName,
     invoiceId: details?.invoiceId ?? summary?.invoiceId,
     status: details?.status ?? summary?.status,
     amount: details?.amount ?? summary?.amount,
@@ -87,6 +93,8 @@ function mergePaymentDetails(
     createdDate: details?.createdDate ?? summary?.date,
     reference: details?.reference ?? summary?.reference,
     destination: details?.destination ?? summary?.destination,
+    expiresAt: details?.expiresAt ?? summary?.expiresAt,
+    pageUrl: details?.pageUrl ?? summary?.pageUrl,
     paymentInfo: Object.values(paymentInfo).some(Boolean)
       ? paymentInfo
       : undefined,
@@ -146,6 +154,45 @@ function getStatusAppearance(status?: string) {
       icon: XCircle,
       className:
         "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
+    };
+  }
+
+  if (
+    normalizedStatus === "invoice_created" ||
+    normalizedStatus === "created"
+  ) {
+    return {
+      label: "Pending",
+      icon: AlertTriangle,
+      className:
+        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-500/10 dark:text-sky-300",
+    };
+  }
+
+  if (normalizedStatus === "paid") {
+    return {
+      label: "Paid",
+      icon: CheckCircle2,
+      className:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-500/10 dark:text-emerald-300",
+    };
+  }
+
+  if (normalizedStatus === "failed") {
+    return {
+      label: "Failed",
+      icon: XCircle,
+      className:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
+    };
+  }
+
+  if (normalizedStatus === "cancelled") {
+    return {
+      label: "Cancelled",
+      icon: XCircle,
+      className:
+        "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
     };
   }
 
@@ -216,6 +263,15 @@ function PaymentDetailsBody({
       : null,
     paymentInfo?.tranId
       ? { label: "Transaction ID", value: paymentInfo.tranId, mono: true }
+      : null,
+    displayDetails?.customerName
+      ? { label: "Customer", value: displayDetails.customerName }
+      : null,
+    displayDetails?.expiresAt
+      ? {
+          label: "Expires",
+          value: formatMonobankDate(displayDetails.expiresAt),
+        }
       : null,
     displayDetails?.reference
       ? { label: "Reference", value: displayDetails.reference, mono: true }
@@ -322,6 +378,17 @@ function PaymentDetailsBody({
               <p className="text-sm leading-6 sm:text-[15px]">
                 {displayDetails.destination ?? "-"}
               </p>
+              {displayDetails.pageUrl ? (
+                <a
+                  href={displayDetails.pageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary mt-3 inline-flex items-center gap-1 text-sm underline underline-offset-4"
+                >
+                  Open checkout link
+                  <ExternalLink className="size-3.5" />
+                </a>
+              ) : null}
             </div>
           </div>
 
@@ -377,12 +444,14 @@ export function MonobankPaymentDetailsPopover({
   payment,
   open: controlledOpen,
   onOpenChange,
+  onInvoiceChanged,
   hideTrigger = false,
 }: {
   invoiceId?: string;
   payment?: StatementItem;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onInvoiceChanged?: () => void;
   hideTrigger?: boolean;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -390,6 +459,10 @@ export function MonobankPaymentDetailsPopover({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancellationError, setCancellationError] = useState<string | null>(
+    null,
+  );
   const effectiveInvoiceId = invoiceId ?? payment?.invoiceId;
   const previousInvoiceId = useRef(effectiveInvoiceId);
 
@@ -461,11 +534,75 @@ export function MonobankPaymentDetailsPopover({
   useEffect(() => {
     if (previousInvoiceId.current !== effectiveInvoiceId) {
       previousInvoiceId.current = effectiveInvoiceId;
+      setCancellationError(null);
       setDetails(null);
       setError(null);
       setWarning(null);
     }
   }, [effectiveInvoiceId]);
+
+  const displayDetails = mergePaymentDetails(payment, details);
+  const normalizedStatus = displayDetails?.status?.toLowerCase();
+  const canCancelInvoice =
+    Boolean(effectiveInvoiceId) &&
+    (normalizedStatus === "created" || normalizedStatus === "invoice_created");
+
+  const handleCancelInvoice = useCallback(async () => {
+    if (!effectiveInvoiceId || !canCancelInvoice || isCancelling) {
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Cancel this unpaid invoice? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setIsCancelling(true);
+    setCancellationError(null);
+
+    try {
+      const response = await fetch("/api/monobank/invoice/remove", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ invoiceId: effectiveInvoiceId }),
+      });
+
+      const payload = (await response.json()) as PaymentDetails;
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to cancel invoice");
+      }
+
+      setDetails((current) => ({
+        ...(current ?? {}),
+        expiresAt: current?.expiresAt ?? payment?.expiresAt,
+        invoiceId: effectiveInvoiceId,
+        pageUrl: current?.pageUrl ?? payment?.pageUrl,
+        status: "cancelled",
+      }));
+      onInvoiceChanged?.();
+    } catch (cancelError) {
+      setCancellationError(
+        cancelError instanceof Error
+          ? cancelError.message
+          : "Failed to cancel invoice",
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  }, [
+    canCancelInvoice,
+    effectiveInvoiceId,
+    isCancelling,
+    onInvoiceChanged,
+    payment?.expiresAt,
+    payment?.pageUrl,
+  ]);
 
   useEffect(() => {
     if (
@@ -513,8 +650,33 @@ export function MonobankPaymentDetailsPopover({
           <DialogDescription className="break-all font-mono text-[11px] sm:text-xs">
             {effectiveInvoiceId ?? "-"}
           </DialogDescription>
+          {canCancelInvoice ? (
+            <div className="pt-3">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={isCancelling}
+                onClick={() => void handleCancelInvoice()}
+              >
+                {isCancelling ? (
+                  <>
+                    <LoaderCircle className="animate-spin" />
+                    Cancelling...
+                  </>
+                ) : (
+                  "Cancel invoice"
+                )}
+              </Button>
+            </div>
+          ) : null}
         </DialogHeader>
         <div className="max-h-[85vh] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+          {cancellationError ? (
+            <p className="text-destructive border-destructive/40 bg-destructive/5 mb-4 rounded-lg border px-3 py-2 text-sm">
+              {cancellationError}
+            </p>
+          ) : null}
           <PaymentDetailsBody
             isLoading={isLoading}
             error={error}

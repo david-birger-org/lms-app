@@ -12,6 +12,42 @@ export interface StatementItem {
   ccy?: MonobankCurrency;
   reference?: string;
   destination?: string;
+  customerName?: string;
+  error?: string;
+  expiresAt?: string;
+  pageUrl?: string;
+}
+
+export interface PendingInvoiceItem {
+  amount: number;
+  createdDate: string;
+  currency: MonobankCurrency;
+  customerName: string;
+  description: string;
+  error?: string;
+  expiresAt?: string;
+  invoiceId: string;
+  pageUrl?: string;
+  reference: string;
+  status: string;
+}
+
+export function mapPendingInvoiceToStatementItem(
+  invoice: PendingInvoiceItem,
+): StatementItem {
+  return {
+    amount: invoice.amount,
+    ccy: invoice.currency,
+    customerName: invoice.customerName,
+    date: invoice.createdDate,
+    destination: invoice.description,
+    error: invoice.error,
+    expiresAt: invoice.expiresAt,
+    invoiceId: invoice.invoiceId,
+    pageUrl: invoice.pageUrl,
+    reference: invoice.reference,
+    status: invoice.status,
+  };
 }
 
 export interface MonobankStatementSnapshot {
