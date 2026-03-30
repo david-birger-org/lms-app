@@ -22,7 +22,7 @@ export function getRuntimeChecks(): RuntimeCheck[] {
       ready: Boolean(process.env.BETTER_AUTH_API_KEY),
     },
     {
-      label: "Auth database URL",
+      label: "Auth database URL (session pooler)",
       ready: Boolean(process.env.DATABASE_URL),
     },
     {

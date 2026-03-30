@@ -160,9 +160,33 @@ function getTrustedOrigins() {
   );
 }
 
+function getAuthDatabaseUrl() {
+  const connectionString = env.databaseUrl;
+
+  try {
+    const url = new URL(connectionString);
+
+    if (url.hostname.endsWith(".pooler.supabase.com") && url.port === "6543") {
+      throw new Error(
+        "DATABASE_URL must use the Supabase session pooler (port 5432) for Better Auth.",
+      );
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "DATABASE_URL must be a valid Postgres connection string.",
+      );
+    }
+
+    throw error;
+  }
+
+  return connectionString;
+}
+
 function getPool() {
   if (!globalThis.__lmsAdminAuthPool) {
-    const connectionString = env.databaseUrl;
+    const connectionString = getAuthDatabaseUrl();
 
     globalThis.__lmsAdminAuthPool = new Pool({
       allowExitOnIdle: true,
