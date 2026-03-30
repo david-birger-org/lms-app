@@ -1,15 +1,15 @@
-import { withAuthRetry } from "@/lib/auth/better-auth";
+import { getAuth } from "@/lib/auth/better-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  return withAuthRetry((auth) => auth.handler(request));
+  return getAuth().handler(request);
 }
 
 export async function POST(request: Request) {
-  return withAuthRetry((auth) => auth.handler(request));
+  return getAuth().handler(request);
 }
 
 export async function OPTIONS(request: Request) {
-  return withAuthRetry((auth) => auth.handler(request));
+  return getAuth().handler(request);
 }

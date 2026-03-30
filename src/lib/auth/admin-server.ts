@@ -3,12 +3,13 @@ import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { cache } from "react";
 
 import { isAdminUser } from "@/lib/auth/admin";
 import {
   type AuthSessionRecord,
   type AuthUser,
-  withAuthRetry,
+  getAuth,
 } from "@/lib/auth/better-auth";
 
 export interface AuthenticatedAdmin {
@@ -43,11 +44,9 @@ function getErrorMessage(error: unknown) {
 async function resolveAdminAccess(
   requestHeaders: Headers,
 ): Promise<ResolvedAdminAccess> {
-  const session = await withAuthRetry((auth) =>
-    auth.api.getSession({
-      headers: requestHeaders,
-    }),
-  );
+  const session = await getAuth().api.getSession({
+    headers: requestHeaders,
+  });
 
   if (!session) {
     return { status: "unauthorized" };
@@ -72,9 +71,9 @@ async function resolveAdminAccess(
   };
 }
 
-async function resolveCurrentAdminAccess() {
-  return resolveAdminAccess(await headers());
-}
+const resolveCurrentAdminAccess = cache(async () =>
+  resolveAdminAccess(await headers()),
+);
 
 export async function requireAdminPageAccess(): Promise<ResolvedAdminSuccess> {
   const access = await resolveCurrentAdminAccess();

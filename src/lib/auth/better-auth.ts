@@ -12,16 +12,6 @@ declare global {
   var __lmsAdminAuthPool: Pool | undefined;
 }
 
-const RECOVERABLE_POSTGRES_ERROR_MESSAGES = [
-  "connection terminated due to connection timeout",
-  "connection terminated unexpectedly",
-  "terminating connection due to administrator command",
-  "client has encountered a connection error and is not queryable",
-  "connection ended unexpectedly",
-];
-
-const RECOVERABLE_BETTER_AUTH_ERROR_CODES = ["FAILED_TO_GET_SESSION"];
-
 function createAuth() {
   return betterAuth({
     advanced: {
@@ -85,6 +75,11 @@ function createAuth() {
       modelName: "auth_accounts",
     },
     session: {
+      cookieCache: {
+        enabled: true,
+        maxAge: 60,
+        strategy: "jwe",
+      },
       fields: {
         createdAt: "created_at",
         expiresAt: "expires_at",
@@ -173,8 +168,8 @@ function getPool() {
       allowExitOnIdle: true,
       connectionTimeoutMillis: 10_000,
       connectionString,
-      idleTimeoutMillis: 30_000,
-      max: 10,
+      idleTimeoutMillis: 5_000,
+      max: 1,
       maxUses: 1_000,
       ssl: shouldUseSsl(connectionString)
         ? { rejectUnauthorized: false }
@@ -191,56 +186,4 @@ export function getAuth() {
   }
 
   return globalThis.__lmsAdminAuth;
-}
-
-export async function resetAuth() {
-  const pool = globalThis.__lmsAdminAuthPool;
-
-  globalThis.__lmsAdminAuth = undefined;
-  globalThis.__lmsAdminAuthPool = undefined;
-
-  await pool?.end().catch(() => undefined);
-}
-
-function isRecoverablePostgresError(error: unknown) {
-  const message = error instanceof Error ? error.message.toLowerCase() : "";
-  const causeMessage =
-    error instanceof Error && error.cause instanceof Error
-      ? error.cause.message.toLowerCase()
-      : "";
-  const body =
-    typeof error === "object" && error !== null && "body" in error
-      ? error.body
-      : undefined;
-  const code =
-    typeof body === "object" && body !== null && "code" in body
-      ? body.code
-      : undefined;
-
-  return (
-    RECOVERABLE_POSTGRES_ERROR_MESSAGES.some(
-      (candidate) =>
-        message.includes(candidate) || causeMessage.includes(candidate),
-    ) ||
-    (typeof code === "string" &&
-      RECOVERABLE_BETTER_AUTH_ERROR_CODES.includes(code))
-  );
-}
-
-export async function withAuthRetry<T>(
-  operation: (auth: AuthInstance) => Promise<T>,
-) {
-  try {
-    return await operation(getAuth());
-  } catch (error) {
-    if (!isRecoverablePostgresError(error)) {
-      throw error;
-    }
-
-    // TODO: Replace this retry/reset workaround after moving off the current
-    // Supabase pooler setup, e.g. paid Supabase with a more stable connection path.
-    await resetAuth();
-
-    return operation(getAuth());
-  }
 }
