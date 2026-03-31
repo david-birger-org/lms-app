@@ -30,7 +30,7 @@ The app runs on `http://localhost:3000` by default.
 - `NEXT_PUBLIC_AUTH_BASE_URL` (browser Better Auth base URL)
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_API_KEY` (required for Better Auth Dash connectivity)
-- `DATABASE_URL` (use the Supabase session pooler URL for Better Auth, port `5432`)
+- `DATABASE_URL` (use the Supabase session pooler URL for Better Auth: host `*.pooler.supabase.com`, port `5432`, username `postgres.<project-ref>`)
 - `ADMIN_EMAILS` (optional comma-separated allowlist for auto-admin role assignment)
 - `LMS_SLS_BASE_URL`
 - `LMS_SLS_API_KEY`

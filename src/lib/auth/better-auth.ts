@@ -166,10 +166,21 @@ function getAuthDatabaseUrl() {
   try {
     const url = new URL(connectionString);
 
-    if (url.hostname.endsWith(".pooler.supabase.com") && url.port === "6543") {
-      throw new Error(
-        "DATABASE_URL must use the Supabase session pooler (port 5432) for Better Auth.",
-      );
+    if (url.hostname.endsWith(".pooler.supabase.com")) {
+      if (url.port === "6543") {
+        throw new Error(
+          "DATABASE_URL must use the Supabase session pooler (port 5432) for Better Auth.",
+        );
+      }
+
+      if (
+        url.port === "5432" &&
+        !decodeURIComponent(url.username).startsWith("postgres.")
+      ) {
+        throw new Error(
+          "DATABASE_URL must use the pooled Supabase username (postgres.<project-ref>) with the session pooler.",
+        );
+      }
     }
   } catch (error) {
     if (error instanceof TypeError) {
