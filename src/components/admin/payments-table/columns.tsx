@@ -1,6 +1,6 @@
 "use client";
 
-import type { Column, ColumnDef } from "@tanstack/react-table";
+import type { Column, ColumnDef, FilterFn } from "@tanstack/react-table";
 import {
   ArrowUpDown,
   CircleAlert,
@@ -93,6 +93,35 @@ function SortableColumnHeader({
   );
 }
 
+const statusFilterFn: FilterFn<StatementItem> = (
+  row,
+  columnId,
+  filterValue,
+) => {
+  if (!Array.isArray(filterValue) || filterValue.length === 0) {
+    return true;
+  }
+
+  const status = row.getValue<string | undefined>(columnId);
+  return typeof status === "string" ? filterValue.includes(status) : false;
+};
+
+const searchFilterFn: FilterFn<StatementItem> = (
+  row,
+  columnId,
+  filterValue,
+) => {
+  const query =
+    typeof filterValue === "string" ? filterValue.trim().toLowerCase() : "";
+
+  if (!query) {
+    return true;
+  }
+
+  const searchValue = row.getValue<string | undefined>(columnId);
+  return typeof searchValue === "string" && searchValue.includes(query);
+};
+
 export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = [
   {
     id: "select",
@@ -120,6 +149,7 @@ export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = [
   {
     accessorKey: "status",
     header: "Status",
+    filterFn: statusFilterFn,
     cell: ({ row }) => (
       <div className="flex justify-center" title={row.original.status ?? "-"}>
         <StatusIcon status={row.original.status} />
@@ -127,18 +157,22 @@ export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = [
     ),
   },
   {
-    accessorKey: "search",
+    id: "search",
     accessorFn: (row) =>
       [
+        row.customerName,
+        row.error,
         row.invoiceId,
-        row.status,
         row.maskedPan,
         row.reference,
         row.destination,
         row.date,
+        row.status,
       ]
-        .filter(Boolean)
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.toLowerCase())
         .join(" "),
+    filterFn: searchFilterFn,
     enableHiding: false,
     enableSorting: false,
   },

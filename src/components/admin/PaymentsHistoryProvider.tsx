@@ -39,6 +39,11 @@ interface PaymentsHistoryContextValue {
   };
 }
 
+interface LoadHistoryOptions {
+  background?: boolean;
+  forceRefresh?: boolean;
+}
+
 const paymentsHistoryCache = new Map<number, PaymentHistorySnapshot>();
 const paymentsHistoryRequests = new Map<
   number,
@@ -141,9 +146,14 @@ export function PaymentsHistoryProvider({
   );
 
   const loadHistory = useCallback(
-    async (forceRefresh = false) => {
-      setStatus("loading");
-      setError(null);
+    async ({
+      background = false,
+      forceRefresh = false,
+    }: LoadHistoryOptions = {}) => {
+      if (!background) {
+        setStatus("loading");
+        setError(null);
+      }
 
       try {
         const nextHistory = await fetchPaymentsHistory(days, forceRefresh);
@@ -180,8 +190,35 @@ export function PaymentsHistoryProvider({
     void loadHistory();
   }, [initialError, loadHistory, seed]);
 
+  useEffect(() => {
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void loadHistory({ background: true, forceRefresh: true });
+      }
+    }
+
+    function refreshOnFocus() {
+      void loadHistory({ background: true, forceRefresh: true });
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void loadHistory({ background: true, forceRefresh: true });
+      }
+    }, 30_000);
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [loadHistory]);
+
   const refresh = useCallback(async () => {
-    await loadHistory(true);
+    await loadHistory({ forceRefresh: true });
   }, [loadHistory]);
 
   const value = useMemo<PaymentsHistoryContextValue>(

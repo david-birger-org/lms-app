@@ -26,6 +26,7 @@ export function MonobankPaymentsHistory({
         data={state.rows}
         isLoading={state.isLoading}
         onRefresh={() => void actions.refresh()}
+        onInvoiceChanged={() => void actions.refresh()}
         detailsSource={detailsSource}
         title={title}
         description={description}

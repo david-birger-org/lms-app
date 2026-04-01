@@ -130,6 +130,17 @@ function isCancelableInvoiceStatus(status?: string) {
   );
 }
 
+function shouldAutoRefreshInvoiceStatus(status?: string) {
+  const normalizedStatus = normalizePaymentStatus(status);
+
+  return (
+    normalizedStatus === "created" ||
+    normalizedStatus === "invoice_created" ||
+    normalizedStatus === "processing" ||
+    normalizedStatus === "hold"
+  );
+}
+
 function stringifyDetailValue(value?: number | string) {
   return value === undefined || value === null ? "-" : String(value);
 }
@@ -568,7 +579,17 @@ export function MonobankPaymentDetailsPopover({
         throw new Error(payload.error ?? "Failed to load payment details");
       }
 
+      const previousStatus = details?.status ?? payment?.status;
+      const previousModifiedDate = details?.modifiedDate;
+
       setDetails(payload);
+
+      if (
+        payload.status !== previousStatus ||
+        payload.modifiedDate !== previousModifiedDate
+      ) {
+        onInvoiceChanged?.();
+      }
     } catch (loadError) {
       const message = getPaymentDetailsErrorMessage(loadError);
 
@@ -583,7 +604,14 @@ export function MonobankPaymentDetailsPopover({
     } finally {
       setIsLoading(false);
     }
-  }, [detailsSource, effectiveInvoiceId, payment]);
+  }, [
+    details?.modifiedDate,
+    details?.status,
+    detailsSource,
+    effectiveInvoiceId,
+    onInvoiceChanged,
+    payment,
+  ]);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -699,6 +727,37 @@ export function MonobankPaymentDetailsPopover({
     open,
     warning,
   ]);
+
+  useEffect(() => {
+    if (
+      !open ||
+      !effectiveInvoiceId ||
+      !shouldAutoRefreshInvoiceStatus(displayDetails?.status)
+    ) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void loadDetails();
+    }, 15_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [displayDetails?.status, effectiveInvoiceId, loadDetails, open]);
+
+  useEffect(() => {
+    if (
+      !open ||
+      !details ||
+      !payment?.status ||
+      payment.status === details.status
+    ) {
+      return;
+    }
+
+    void loadDetails();
+  }, [details, loadDetails, open, payment?.status]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

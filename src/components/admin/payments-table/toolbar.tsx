@@ -48,7 +48,7 @@ export function MonobankPaymentsTableToolbar({
   onRefresh,
   selectedStatuses,
   statusOptions,
-  selectedInvoiceIds,
+  selectedPaymentIdentifiers,
   hasActiveState,
   onStatusToggle,
   onReset,
@@ -59,7 +59,7 @@ export function MonobankPaymentsTableToolbar({
   onRefresh: () => void;
   selectedStatuses: string[];
   statusOptions: string[];
-  selectedInvoiceIds: string[];
+  selectedPaymentIdentifiers: string[];
   hasActiveState: boolean;
   onStatusToggle: (status: string, checked: boolean) => void;
   onReset: () => void;
@@ -72,7 +72,7 @@ export function MonobankPaymentsTableToolbar({
   return (
     <div className="flex flex-col gap-2 py-3 md:flex-row md:items-center">
       <Input
-        placeholder="Search payments..."
+        placeholder="Search invoice, reference, card, or description..."
         value={searchValue}
         onChange={(event) =>
           table.getColumn("search")?.setFilterValue(event.target.value)
@@ -95,10 +95,10 @@ export function MonobankPaymentsTableToolbar({
                 <DropdownMenuLabel>Bulk actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onClick={() =>
-                    void copyToClipboard(selectedInvoiceIds.join("\n"))
+                    void copyToClipboard(selectedPaymentIdentifiers.join("\n"))
                   }
                 >
-                  Copy selected payment IDs
+                  Copy selected IDs
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onClearSelection}>
                   Clear selection

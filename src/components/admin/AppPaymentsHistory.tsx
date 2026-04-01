@@ -4,7 +4,7 @@ import { MonobankPaymentsDataTable } from "@/components/admin/MonobankPaymentsDa
 import { usePaymentsHistory } from "@/components/admin/PaymentsHistoryProvider";
 
 export function AppPaymentsHistory() {
-  const { state, actions } = usePaymentsHistory();
+  const { state, actions, meta } = usePaymentsHistory();
 
   return (
     <div className="space-y-4">
@@ -17,9 +17,10 @@ export function AppPaymentsHistory() {
         data={state.rows}
         isLoading={state.isLoading}
         onRefresh={() => void actions.refresh()}
+        onInvoiceChanged={() => void actions.refresh()}
         detailsSource="database"
         title="Payment history"
-        description="Canonical app payment history from the payments table. Use the statement audit page to reconcile against the live Monobank feed."
+        description={`Canonical app payment history from the payments table. Use the statement audit page to reconcile against the live Monobank feed.${meta.lastFetchedAt ? ` Last synced ${new Date(meta.lastFetchedAt).toLocaleTimeString()}.` : ""}`}
       />
     </div>
   );

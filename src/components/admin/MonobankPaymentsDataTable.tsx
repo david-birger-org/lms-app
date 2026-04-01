@@ -38,6 +38,14 @@ const defaultColumnVisibility: VisibilityState = {
   invoiceId: false,
 };
 
+function getPaymentRowId(payment: StatementItem, index: number) {
+  return (
+    payment.invoiceId ??
+    payment.reference ??
+    `${payment.date ?? "unknown-date"}-${payment.amount ?? 0}-${index}`
+  );
+}
+
 export function MonobankPaymentsDataTable({
   data,
   emptyMessage,
@@ -66,7 +74,6 @@ export function MonobankPaymentsDataTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
-  const [selectedStatuses, setSelectedStatuses] = React.useState<string[]>([]);
   const [activePayment, setActivePayment] =
     React.useState<StatementItem | null>(null);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
@@ -79,30 +86,22 @@ export function MonobankPaymentsDataTable({
     [],
   );
 
-  const filteredData = React.useMemo(() => {
-    if (selectedStatuses.length === 0) {
-      return data;
-    }
-
-    return data.filter(
-      (row) => row.status && selectedStatuses.includes(row.status),
-    );
-  }, [data, selectedStatuses]);
-
   const pageResetKey = React.useMemo(
     () =>
       [
-        String(filteredData.length),
+        String(data.length),
         ...sorting.map(({ id, desc }) => `${id}:${desc ? "desc" : "asc"}`),
         ...columnFilters.map(({ id, value }) => `${id}:${String(value)}`),
       ].join("|"),
-    [columnFilters, filteredData.length, sorting],
+    [columnFilters, data.length, sorting],
   );
 
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns: monobankPaymentsColumns,
     autoResetPageIndex: false,
+    enableRowSelection: true,
+    getRowId: getPaymentRowId,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -135,9 +134,18 @@ export function MonobankPaymentsDataTable({
     [data],
   );
 
+  const selectedStatuses = React.useMemo(() => {
+    const value = columnFilters.find((filter) => filter.id === "status")?.value;
+
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === "string")
+      : [];
+  }, [columnFilters]);
+
   const searchValue =
     (table.getColumn("search")?.getFilterValue() as string | undefined) ?? "";
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
+  const filteredRowCount = table.getFilteredRowModel().rows.length;
   const hasCustomColumnVisibility = Object.entries(columnVisibility).some(
     ([columnId, isVisible]) => defaultColumnVisibility[columnId] !== isVisible,
   );
@@ -149,9 +157,9 @@ export function MonobankPaymentsDataTable({
     selectedRowCount > 0 ||
     hasCustomColumnVisibility;
 
-  const selectedInvoiceIds = table
+  const selectedPaymentIdentifiers = table
     .getFilteredSelectedRowModel()
-    .rows.map((row) => row.original.invoiceId)
+    .rows.map((row) => row.original.invoiceId ?? row.original.reference)
     .filter((value): value is string => Boolean(value));
 
   const successfulCount = React.useMemo(
@@ -161,12 +169,23 @@ export function MonobankPaymentsDataTable({
 
   const handleStatusToggle = React.useCallback(
     (status: string, checked: boolean) => {
-      setSelectedStatuses((current) => {
-        if (checked) {
-          return [...new Set([...current, status])];
-        }
+      setColumnFilters((current) => {
+        const otherFilters = current.filter((filter) => filter.id !== "status");
+        const currentStatuses = current.find(
+          (filter) => filter.id === "status",
+        )?.value;
+        const nextStatuses = Array.isArray(currentStatuses)
+          ? currentStatuses.filter(
+              (item): item is string => typeof item === "string",
+            )
+          : [];
+        const updatedStatuses = checked
+          ? [...new Set([...nextStatuses, status])]
+          : nextStatuses.filter((item) => item !== status);
 
-        return current.filter((item) => item !== status);
+        return updatedStatuses.length > 0
+          ? [...otherFilters, { id: "status", value: updatedStatuses }]
+          : otherFilters;
       });
     },
     [],
@@ -175,7 +194,6 @@ export function MonobankPaymentsDataTable({
   const resetTable = React.useCallback(() => {
     setSorting([]);
     setColumnFilters([]);
-    setSelectedStatuses([]);
     setRowSelection({});
     setColumnVisibility(defaultColumnVisibility);
     table.getColumn("search")?.setFilterValue("");
@@ -186,21 +204,15 @@ export function MonobankPaymentsDataTable({
       return "Loading results...";
     }
 
-    if (hasActiveState && filteredData.length === 0) {
+    if (hasActiveState && filteredRowCount === 0) {
       return "No visible results. Reset filters or clear the search to see every row.";
     }
 
     return emptyMessage ?? "No results.";
-  }, [
-    data.length,
-    emptyMessage,
-    filteredData.length,
-    hasActiveState,
-    isLoading,
-  ]);
+  }, [data.length, emptyMessage, filteredRowCount, hasActiveState, isLoading]);
 
   const emptyActionLabel =
-    hasActiveState && filteredData.length === 0 ? "Reset table" : undefined;
+    hasActiveState && filteredRowCount === 0 ? "Reset table" : undefined;
 
   return (
     <Card className="shadow-xs">
@@ -216,7 +228,7 @@ export function MonobankPaymentsDataTable({
             onRefresh={onRefresh}
             selectedStatuses={selectedStatuses}
             statusOptions={statusOptions}
-            selectedInvoiceIds={selectedInvoiceIds}
+            selectedPaymentIdentifiers={selectedPaymentIdentifiers}
             hasActiveState={hasActiveState}
             onStatusToggle={handleStatusToggle}
             onReset={resetTable}
