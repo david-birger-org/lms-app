@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -71,52 +72,32 @@ export function MonobankInvoiceForm({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InvoiceResult | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [expiresAtPreview, setExpiresAtPreview] = useState<string | null>(null);
 
-  const parsedAmount = useMemo(() => Number(amount), [amount]);
-  const expirationMinutes = useMemo(
-    () =>
-      useCustomExpiration ? customExpirationMinutes : selectedExpirationPreset,
-    [customExpirationMinutes, selectedExpirationPreset, useCustomExpiration],
-  );
-  const parsedExpirationMinutes = useMemo(
-    () => Number(expirationMinutes),
-    [expirationMinutes],
-  );
-  const validitySeconds = useMemo(
-    () => Math.round(parsedExpirationMinutes * 60),
-    [parsedExpirationMinutes],
-  );
-  const expiresAtPreview = useMemo(
-    () => formatExpirationPreview(validitySeconds),
-    [validitySeconds],
-  );
-  const paymentIntentScope = useMemo(
-    () =>
-      JSON.stringify({
-        amount,
-        customExpirationMinutes,
-        currency,
-        customerName,
-        description,
-        expirationMinutes,
-        output,
-        useCustomExpiration,
-      }),
-    [
-      amount,
-      currency,
-      customExpirationMinutes,
-      customerName,
-      description,
-      expirationMinutes,
-      output,
-      useCustomExpiration,
-    ],
-  );
+  const parsedAmount = Number(amount);
+  const expirationMinutes = useCustomExpiration
+    ? customExpirationMinutes
+    : selectedExpirationPreset;
+  const parsedExpirationMinutes = Number(expirationMinutes);
+  const validitySeconds = Math.round(parsedExpirationMinutes * 60);
+  const paymentIntentScope = JSON.stringify({
+    amount,
+    customExpirationMinutes,
+    currency,
+    customerName,
+    description,
+    expirationMinutes,
+    output,
+    useCustomExpiration,
+  });
   const { idempotencyKey, renewIdempotencyKey } =
     useIdempotencyKey(paymentIntentScope);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    setExpiresAtPreview(formatExpirationPreview(validitySeconds));
+  }, [validitySeconds]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsCopied(false);
