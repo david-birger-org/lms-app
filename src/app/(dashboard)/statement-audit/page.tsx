@@ -1,5 +1,5 @@
-import { MonobankPaymentsHistory } from "@/components/admin/MonobankPaymentsHistory";
-import { MonobankStatementProvider } from "@/components/admin/MonobankStatementProvider";
+import { MonobankStatementProvider } from "@/components/admin/PaymentsDataProvider";
+import { PaymentsHistoryTable } from "@/components/admin/PaymentsHistoryTable";
 import {
   DashboardPage,
   DashboardSection,
@@ -13,7 +13,7 @@ export default async function StatementAuditPage() {
     <MonobankStatementProvider {...statement}>
       <DashboardPage route="/statement-audit">
         <DashboardSection>
-          <MonobankPaymentsHistory />
+          <PaymentsHistoryTable source="provider" />
         </DashboardSection>
       </DashboardPage>
     </MonobankStatementProvider>

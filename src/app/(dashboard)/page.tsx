@@ -1,6 +1,6 @@
 import { BarChart3, PanelsTopLeft } from "lucide-react";
 
-import { PaymentsHistoryProvider } from "@/components/admin/PaymentsHistoryProvider";
+import { PaymentsHistoryProvider } from "@/components/admin/PaymentsDataProvider";
 import { OverviewCards } from "@/components/dashboard/overview-cards";
 import {
   DashboardPage,

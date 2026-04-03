@@ -1,5 +1,5 @@
-import { AppPaymentsHistory } from "@/components/admin/AppPaymentsHistory";
-import { PaymentsHistoryProvider } from "@/components/admin/PaymentsHistoryProvider";
+import { PaymentsHistoryProvider } from "@/components/admin/PaymentsDataProvider";
+import { PaymentsHistoryTable } from "@/components/admin/PaymentsHistoryTable";
 import {
   DashboardPage,
   DashboardSection,
@@ -13,7 +13,7 @@ export default async function PaymentHistoryPage() {
     <PaymentsHistoryProvider {...paymentHistory}>
       <DashboardPage route="/payment-history">
         <DashboardSection>
-          <AppPaymentsHistory />
+          <PaymentsHistoryTable source="database" />
         </DashboardSection>
       </DashboardPage>
     </PaymentsHistoryProvider>

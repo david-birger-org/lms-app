@@ -14,7 +14,7 @@ import { RefreshCw, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis } from "recharts";
 
-import { usePaymentsHistory } from "@/components/admin/PaymentsHistoryProvider";
+import { usePaymentsHistory } from "@/components/admin/PaymentsDataProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -252,7 +252,7 @@ export function PaymentsChart() {
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[220px] w-full sm:h-[320px]"
+            className="aspect-auto h-[220px] min-w-0 w-full sm:h-[320px]"
           >
             {chartMode === "total" ? (
               <LineChart
