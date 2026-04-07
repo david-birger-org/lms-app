@@ -76,8 +76,8 @@ export function usePaymentDetails({
     try {
       const detailsEndpoint =
         detailsSource === "provider"
-          ? "/api/monobank/invoice/status"
-          : "/api/payments/details";
+          ? "/api/monobank/invoices/pending"
+          : "/api/payments/history";
       const response = await fetch(
         `${detailsEndpoint}?invoiceId=${encodeURIComponent(effectiveInvoiceId)}`,
         {
