@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ interface CheckoutConfirmProps {
 }
 
 export function CheckoutConfirm({ checkoutToken }: CheckoutConfirmProps) {
+  const t = useTranslations("checkout");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,20 +28,17 @@ export function CheckoutConfirm({ checkoutToken }: CheckoutConfirmProps) {
 
       const data = (await response.json().catch(() => null)) as {
         pageUrl?: string;
-        error?: string;
       } | null;
 
       if (!response.ok || !data?.pageUrl) {
-        setError(data?.error ?? "Failed to create checkout.");
+        setError(t("createCheckoutError"));
         setIsSubmitting(false);
         return;
       }
 
       window.location.href = data.pageUrl;
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create checkout.",
-      );
+    } catch {
+      setError(t("createCheckoutError"));
       setIsSubmitting(false);
     }
   }
@@ -50,10 +49,10 @@ export function CheckoutConfirm({ checkoutToken }: CheckoutConfirmProps) {
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Creating invoice...
+            {t("creatingInvoice")}
           </>
         ) : (
-          "Proceed to payment"
+          t("proceedToPayment")
         )}
       </Button>
       {error ? (

@@ -183,6 +183,9 @@
     "title": "Confirm purchase",
     "signedInAs": "Signed in as {email}",
     "product": "Product",
-    "total": "Total"
+    "total": "Total",
+    "creatingInvoice": "Creating invoice...",
+    "proceedToPayment": "Proceed to payment",
+    "createCheckoutError": "Failed to create checkout."
   }
 }

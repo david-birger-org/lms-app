@@ -183,6 +183,9 @@
     "title": "Підтвердіть покупку",
     "signedInAs": "Ви увійшли як {email}",
     "product": "Продукт",
-    "total": "Разом"
+    "total": "Разом",
+    "creatingInvoice": "Створюємо інвойс...",
+    "proceedToPayment": "Перейти до оплати",
+    "createCheckoutError": "Не вдалося створити checkout."
   }
 }
