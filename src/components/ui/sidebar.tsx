@@ -80,8 +80,13 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      // Persist sidebar state when the browser supports the Cookie Store API.
+      void window.cookieStore?.set({
+        name: SIDEBAR_COOKIE_NAME,
+        value: String(openState),
+        path: "/",
+        expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
+      });
     },
     [setOpenProp, open],
   );
