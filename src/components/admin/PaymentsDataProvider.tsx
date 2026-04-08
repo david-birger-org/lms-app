@@ -15,6 +15,7 @@ import {
   createDefaultStatementRange,
   type MonobankStatementSnapshot,
   normalizeStatementRows,
+  normalizeStatementRange,
   type StatementItem,
   type StatementRange,
   statementRangeKey,
@@ -328,10 +329,12 @@ function createPaymentsFeed({
     }, [loadFeed]);
 
     const setRange = useCallback((nextRange: StatementRange) => {
+      const normalizedRange = normalizeStatementRange(nextRange);
+
       setRangeState((current) =>
-        statementRangeKey(current) === statementRangeKey(nextRange)
+        statementRangeKey(current) === statementRangeKey(normalizedRange)
           ? current
-          : nextRange,
+          : normalizedRange,
       );
     }, []);
 

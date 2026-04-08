@@ -32,6 +32,21 @@ interface UserPurchasesResponse {
 }
 
 const USER_PURCHASES_ERROR_MESSAGE = "Failed to fetch purchases.";
+const DEFAULT_PURCHASES_LIMIT = 100;
+const DEFAULT_PURCHASES_RANGE_DAYS = 180;
+
+export function getDefaultUserPurchasesSearch() {
+  const to = new Date();
+  const from = new Date(
+    to.getTime() - DEFAULT_PURCHASES_RANGE_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  return `?${new URLSearchParams({
+    from: from.toISOString(),
+    limit: String(DEFAULT_PURCHASES_LIMIT),
+    to: to.toISOString(),
+  }).toString()}`;
+}
 
 export async function listUserPurchases(): Promise<UserPurchaseRecord[]> {
   const access = await requireAuthPageAccess();
@@ -43,6 +58,7 @@ export async function listUserPurchases(): Promise<UserPurchaseRecord[]> {
     ),
     method: "GET",
     path: "/api/user/purchases",
+    search: getDefaultUserPurchasesSearch(),
   });
 
   const payload = (await response

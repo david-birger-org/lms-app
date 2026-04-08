@@ -5,6 +5,7 @@ import { headers as getRequestHeaders } from "next/headers";
 import { requireAdminPageAccess } from "@/lib/auth/admin-server";
 import {
   createDefaultStatementRange,
+  normalizeStatementRange,
   type StatementItem,
   type StatementRange,
   statementRangeSearchParams,
@@ -35,6 +36,7 @@ function defaultHistoryRange() {
 export async function getPaymentsHistory(
   range: StatementRange = defaultHistoryRange(),
 ): Promise<PaymentHistorySnapshot> {
+  const normalizedRange = normalizeStatementRange(range);
   const access = await requireAdminPageAccess();
   const requestHeaders = await getRequestHeaders();
   const response = await forwardLmsSlsRequest({
@@ -44,7 +46,7 @@ export async function getPaymentsHistory(
     ),
     method: "GET",
     path: "/api/payments/history",
-    search: `?${statementRangeSearchParams(range).toString()}`,
+    search: `?${statementRangeSearchParams(normalizedRange).toString()}`,
   });
 
   const payload = (await response
@@ -66,15 +68,17 @@ export async function getPaymentsHistory(
 export async function getInitialPaymentsHistoryState(
   range: StatementRange = defaultHistoryRange(),
 ) {
+  const normalizedRange = normalizeStatementRange(range);
+
   try {
     return {
-      initialRange: range,
-      initialData: await getPaymentsHistory(range),
+      initialRange: normalizedRange,
+      initialData: await getPaymentsHistory(normalizedRange),
       initialError: null,
     };
   } catch (error) {
     return {
-      initialRange: range,
+      initialRange: normalizedRange,
       initialData: null,
       initialError:
         error instanceof Error ? error.message : PAYMENT_HISTORY_ERROR_MESSAGE,

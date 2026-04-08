@@ -1,27 +1,52 @@
 export const DEFAULT_STATEMENT_RANGE_DAYS = 30;
+export const MAX_STATEMENT_RANGE_DAYS = 31;
+
+const DAY_IN_SECONDS = 24 * 60 * 60;
 
 export interface StatementRange {
   from: number;
   to: number;
 }
 
+export function normalizeStatementRange(range: StatementRange): StatementRange {
+  const now = Math.floor(Date.now() / 1000);
+  const to = Number.isFinite(range.to) ? Math.floor(range.to) : now;
+  const fallbackFrom = to - DEFAULT_STATEMENT_RANGE_DAYS * DAY_IN_SECONDS;
+  const rawFrom = Number.isFinite(range.from)
+    ? Math.floor(range.from)
+    : fallbackFrom;
+
+  if (rawFrom >= to) {
+    return { from: fallbackFrom, to };
+  }
+
+  return {
+    from: Math.max(rawFrom, to - MAX_STATEMENT_RANGE_DAYS * DAY_IN_SECONDS),
+    to,
+  };
+}
+
 export function createDefaultStatementRange(
   days = DEFAULT_STATEMENT_RANGE_DAYS,
 ): StatementRange {
   const to = Math.floor(Date.now() / 1000);
-  const from = to - days * 24 * 60 * 60;
+  const from = to - Math.min(days, MAX_STATEMENT_RANGE_DAYS) * DAY_IN_SECONDS;
 
   return { from, to };
 }
 
 export function statementRangeKey(range: StatementRange) {
-  return `${range.from}-${range.to}`;
+  const normalizedRange = normalizeStatementRange(range);
+
+  return `${normalizedRange.from}-${normalizedRange.to}`;
 }
 
 export function statementRangeSearchParams(range: StatementRange) {
+  const normalizedRange = normalizeStatementRange(range);
+
   return new URLSearchParams({
-    from: String(range.from),
-    to: String(range.to),
+    from: String(normalizedRange.from),
+    to: String(normalizedRange.to),
   });
 }
 

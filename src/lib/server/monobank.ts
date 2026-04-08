@@ -7,6 +7,7 @@ import {
   createDefaultStatementRange,
   type MonobankStatementSnapshot,
   normalizeStatementRows,
+  normalizeStatementRange,
   type StatementItem,
   type StatementRange,
   statementRangeSearchParams,
@@ -28,6 +29,7 @@ const STATEMENT_ERROR_MESSAGE = "Failed to load payment history.";
 export async function getMonobankStatement(
   range: StatementRange = createDefaultStatementRange(),
 ): Promise<MonobankStatementSnapshot> {
+  const normalizedRange = normalizeStatementRange(range);
   const access = await requireAdminPageAccess();
   const requestHeaders = await getRequestHeaders();
   const response = await forwardLmsSlsRequest({
@@ -37,7 +39,7 @@ export async function getMonobankStatement(
     ),
     method: "GET",
     path: "/api/monobank/statement",
-    search: `?${statementRangeSearchParams(range).toString()}`,
+    search: `?${statementRangeSearchParams(normalizedRange).toString()}`,
   });
 
   const payload = (await response
@@ -59,15 +61,17 @@ export async function getMonobankStatement(
 export async function getInitialMonobankStatementState(
   range: StatementRange = createDefaultStatementRange(),
 ) {
+  const normalizedRange = normalizeStatementRange(range);
+
   try {
     return {
-      initialRange: range,
-      initialData: await getMonobankStatement(range),
+      initialRange: normalizedRange,
+      initialData: await getMonobankStatement(normalizedRange),
       initialError: null,
     };
   } catch (error) {
     return {
-      initialRange: range,
+      initialRange: normalizedRange,
       initialData: null,
       initialError:
         error instanceof Error ? error.message : STATEMENT_ERROR_MESSAGE,

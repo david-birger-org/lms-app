@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -28,7 +27,6 @@ import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { copyToClipboard } from "@/lib/clipboard";
 
 type SupportedCurrency = "UAH" | "USD";
-type OutputMode = "link" | "qr";
 const DEFAULT_EXPIRATION_MINUTES = 24 * 60;
 const EXPIRATION_PRESETS = [
   { label: "15 min", minutes: 15 },
@@ -48,7 +46,6 @@ interface InvoiceResult {
   expiresAt?: string;
   invoiceId?: string;
   pageUrl: string;
-  qrCodeDataUrl?: string;
 }
 
 export function MonobankInvoiceForm({
@@ -68,7 +65,6 @@ export function MonobankInvoiceForm({
     String(DEFAULT_EXPIRATION_MINUTES),
   );
   const [useCustomExpiration, setUseCustomExpiration] = useState(false);
-  const [output, setOutput] = useState<OutputMode>("link");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<InvoiceResult | null>(null);
@@ -88,7 +84,6 @@ export function MonobankInvoiceForm({
     customerName,
     description,
     expirationMinutes,
-    output,
     redirectUrl,
     useCustomExpiration,
   });
@@ -122,7 +117,6 @@ export function MonobankInvoiceForm({
           amount: parsedAmount,
           currency,
           validitySeconds,
-          output,
           redirectUrl: redirectUrl.trim() || undefined,
         }),
       });
@@ -165,10 +159,9 @@ export function MonobankInvoiceForm({
   return (
     <Card className="shadow-xs">
       <CardHeader className="border-b px-3 sm:px-6">
-        <CardTitle>Generate payment link or QR</CardTitle>
+        <CardTitle>Generate payment link</CardTitle>
         <CardDescription>
-          Create a Monobank invoice, copy the checkout link immediately, or
-          share the generated QR code.
+          Create a Monobank invoice and copy the checkout link immediately.
         </CardDescription>
       </CardHeader>
 
@@ -249,22 +242,6 @@ export function MonobankInvoiceForm({
                     <SelectContent>
                       <SelectItem value="UAH">UAH</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Generate</Label>
-                  <Select
-                    value={output}
-                    onValueChange={(value) => setOutput(value as OutputMode)}
-                  >
-                    <SelectTrigger className="h-9 w-full">
-                      <SelectValue placeholder="Select output mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="link">Payment link</SelectItem>
-                      <SelectItem value="qr">QR code</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -380,7 +357,7 @@ export function MonobankInvoiceForm({
         </form>
 
         {result && (
-          <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 lg:grid-cols-[1fr_auto] lg:items-start">
+          <div className="rounded-lg border bg-muted/20 p-4">
             <div className="space-y-3">
               <p className="text-sm font-medium text-foreground">
                 Generated invoice
@@ -404,18 +381,6 @@ export function MonobankInvoiceForm({
                 </p>
               ) : null}
             </div>
-            {result.qrCodeDataUrl && (
-              <div className="pt-1">
-                <Image
-                  src={result.qrCodeDataUrl}
-                  alt="Monobank payment QR code"
-                  width={192}
-                  height={192}
-                  unoptimized
-                  className="h-40 w-40 rounded-lg border bg-background p-2 sm:h-48 sm:w-48"
-                />
-              </div>
-            )}
           </div>
         )}
       </CardContent>

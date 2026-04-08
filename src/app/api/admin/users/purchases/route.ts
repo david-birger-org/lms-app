@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdminApiAccess } from "@/lib/auth/admin-server";
 import type { AuthenticatedUser } from "@/lib/auth/auth-server";
 import { getAdminUserById } from "@/lib/server/admin-users";
+import { getDefaultUserPurchasesSearch } from "@/lib/server/user-purchases";
 import {
   forwardLmsSlsRequest,
   getForwardedSessionHeaders,
@@ -45,7 +46,10 @@ export async function GET(request: Request) {
       ),
       method: "GET",
       path: "/api/user/purchases",
-      search: user.role === "admin" ? "?scope=created" : undefined,
+      search:
+        user.role === "admin"
+          ? `${getDefaultUserPurchasesSearch()}&scope=created`
+          : getDefaultUserPurchasesSearch(),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";

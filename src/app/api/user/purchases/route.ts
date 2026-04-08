@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAuthApiAccess } from "@/lib/auth/auth-server";
+import { getDefaultUserPurchasesSearch } from "@/lib/server/user-purchases";
 import {
   forwardLmsSlsRequest,
   getForwardedSessionHeaders,
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
       ),
       method: "GET",
       path: "/api/user/purchases",
+      search: getDefaultUserPurchasesSearch(),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
