@@ -4,10 +4,12 @@ import { headers as getRequestHeaders } from "next/headers";
 
 import { requireAdminPageAccess } from "@/lib/auth/admin-server";
 import {
-  DEFAULT_STATEMENT_DAYS,
+  createDefaultStatementRange,
   type MonobankStatementSnapshot,
   normalizeStatementRows,
   type StatementItem,
+  type StatementRange,
+  statementRangeSearchParams,
 } from "@/lib/monobank";
 import {
   createTrustedAdminHeaders,
@@ -24,11 +26,10 @@ interface StatementResponse {
 const STATEMENT_ERROR_MESSAGE = "Failed to load payment history.";
 
 export async function getMonobankStatement(
-  days = DEFAULT_STATEMENT_DAYS,
+  range: StatementRange = createDefaultStatementRange(),
 ): Promise<MonobankStatementSnapshot> {
   const access = await requireAdminPageAccess();
   const requestHeaders = await getRequestHeaders();
-  const searchParams = new URLSearchParams({ days: String(days) });
   const response = await forwardLmsSlsRequest({
     headers: mergeHeaders(
       createTrustedAdminHeaders(access.admin),
@@ -36,7 +37,7 @@ export async function getMonobankStatement(
     ),
     method: "GET",
     path: "/api/monobank/statement",
-    search: `?${searchParams.toString()}`,
+    search: `?${statementRangeSearchParams(range).toString()}`,
   });
 
   const payload = (await response
@@ -56,15 +57,17 @@ export async function getMonobankStatement(
 }
 
 export async function getInitialMonobankStatementState(
-  days = DEFAULT_STATEMENT_DAYS,
+  range: StatementRange = createDefaultStatementRange(),
 ) {
   try {
     return {
-      initialData: await getMonobankStatement(days),
+      initialRange: range,
+      initialData: await getMonobankStatement(range),
       initialError: null,
     };
   } catch (error) {
     return {
+      initialRange: range,
       initialData: null,
       initialError:
         error instanceof Error ? error.message : STATEMENT_ERROR_MESSAGE,

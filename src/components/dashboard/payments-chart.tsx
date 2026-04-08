@@ -11,8 +11,8 @@ import {
   subDays,
 } from "date-fns";
 import { RefreshCw, TrendingUp } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis } from "recharts";
 
 import { usePaymentsHistory } from "@/components/admin/PaymentsDataProvider";
@@ -38,8 +38,12 @@ import { isSuccessfulPaymentStatus } from "@/lib/payments";
 const dayOptions = [30, 60, 90] as const;
 const chartModes = ["total", "daily"] as const;
 
-function formatMetricValue(value: number) {
-  return new Intl.NumberFormat(undefined, {
+function getIntlLocale(locale: string) {
+  return locale === "ua" ? "uk-UA" : "en-US";
+}
+
+function formatMetricValue(value: number, locale: string) {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -112,6 +116,8 @@ export function PaymentsChart() {
     useState<(typeof chartModes)[number]>("total");
   const { state, actions, meta } = usePaymentsHistory();
   const t = useTranslations("admin.paymentsChart");
+  const locale = useLocale();
+  const intlLocale = getIntlLocale(locale);
   const chartConfig = {
     totalVolume: {
       label: t("tooltip.totalPaidVolume"),
@@ -136,14 +142,20 @@ export function PaymentsChart() {
       ? totals.volume > 0
       : chartData.some((item) => item.dailyVolume > 0 || item.dailyCount > 0);
 
-  const lastUpdated = meta.lastFetchedAt
-    ? new Intl.DateTimeFormat(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-        month: "short",
-        day: "numeric",
-      }).format(new Date(meta.lastFetchedAt))
-    : t("notSyncedYet");
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const lastUpdated =
+    hasMounted && meta.lastFetchedAt
+      ? new Intl.DateTimeFormat(intlLocale, {
+          hour: "numeric",
+          minute: "2-digit",
+          month: "short",
+          day: "numeric",
+        }).format(new Date(meta.lastFetchedAt))
+      : t("notSyncedYet");
 
   return (
     <Card className="shadow-xs">
@@ -187,9 +199,7 @@ export function PaymentsChart() {
               onValueChange={(value) => {
                 const v = value[0];
                 if (v) {
-                  setSelectedRange(
-                    Number(v) as (typeof dayOptions)[number],
-                  );
+                  setSelectedRange(Number(v) as (typeof dayOptions)[number]);
                 }
               }}
               variant="outline"
@@ -223,7 +233,7 @@ export function PaymentsChart() {
               {t("stats.volume")}
             </p>
             <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
-              {formatMetricValue(totals.volume)}
+              {formatMetricValue(totals.volume, locale)}
             </p>
           </div>
           <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">

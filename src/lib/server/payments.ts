@@ -3,9 +3,14 @@ import "server-only";
 import { headers as getRequestHeaders } from "next/headers";
 
 import { requireAdminPageAccess } from "@/lib/auth/admin-server";
-import type { StatementItem } from "@/lib/monobank";
 import {
-  DEFAULT_PAYMENT_HISTORY_DAYS,
+  createDefaultStatementRange,
+  type StatementItem,
+  type StatementRange,
+  statementRangeSearchParams,
+} from "@/lib/monobank";
+import {
+  DEFAULT_PAYMENT_HISTORY_RANGE_DAYS,
   normalizePaymentHistoryRows,
   type PaymentHistorySnapshot,
 } from "@/lib/payments";
@@ -23,12 +28,15 @@ interface PaymentHistoryResponse {
 
 const PAYMENT_HISTORY_ERROR_MESSAGE = "Failed to load payment history.";
 
+function defaultHistoryRange() {
+  return createDefaultStatementRange(DEFAULT_PAYMENT_HISTORY_RANGE_DAYS);
+}
+
 export async function getPaymentsHistory(
-  days = DEFAULT_PAYMENT_HISTORY_DAYS,
+  range: StatementRange = defaultHistoryRange(),
 ): Promise<PaymentHistorySnapshot> {
   const access = await requireAdminPageAccess();
   const requestHeaders = await getRequestHeaders();
-  const searchParams = new URLSearchParams({ days: String(days) });
   const response = await forwardLmsSlsRequest({
     headers: mergeHeaders(
       createTrustedAdminHeaders(access.admin),
@@ -36,7 +44,7 @@ export async function getPaymentsHistory(
     ),
     method: "GET",
     path: "/api/payments/history",
-    search: `?${searchParams.toString()}`,
+    search: `?${statementRangeSearchParams(range).toString()}`,
   });
 
   const payload = (await response
@@ -56,15 +64,17 @@ export async function getPaymentsHistory(
 }
 
 export async function getInitialPaymentsHistoryState(
-  days = DEFAULT_PAYMENT_HISTORY_DAYS,
+  range: StatementRange = defaultHistoryRange(),
 ) {
   try {
     return {
-      initialData: await getPaymentsHistory(days),
+      initialRange: range,
+      initialData: await getPaymentsHistory(range),
       initialError: null,
     };
   } catch (error) {
     return {
+      initialRange: range,
       initialData: null,
       initialError:
         error instanceof Error ? error.message : PAYMENT_HISTORY_ERROR_MESSAGE,

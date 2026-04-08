@@ -72,6 +72,10 @@
           "title": "Products",
           "description": "Manage products, pricing, and availability."
         },
+        "users": {
+          "title": "Users",
+          "description": "Review users, update access roles, and inspect purchases on demand."
+        },
         "settings": {
           "title": "Settings",
           "description": "Manage your Better Auth account, password, and session settings."
@@ -291,6 +295,74 @@
         "active": "Active",
         "activeHint": "Hidden products won't appear on the portfolio site.",
         "saving": "Saving..."
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Review all users, update their profile details, and inspect purchases on demand.",
+      "empty": "No users found.",
+      "unnamed": "Unnamed user",
+      "columns": {
+        "user": "User",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "success": {
+        "updated": "User updated"
+      },
+      "errors": {
+        "load": "Failed to load users.",
+        "update": "Failed to update user."
+      },
+      "edit": {
+        "title": "Edit user",
+        "description": "Update this user's profile details and access role.",
+        "open": "Edit {email}",
+        "cancel": "Cancel",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "fields": {
+          "name": "Full name",
+          "email": "Email",
+          "role": "Role"
+        },
+        "placeholders": {
+          "name": "Optional",
+          "email": "name@example.com"
+        }
+      },
+      "purchases": {
+        "title": "User purchases",
+        "open": "Open purchases for {email}",
+        "loading": "Loading purchases...",
+        "empty": "No purchases found for this user.",
+        "errors": {
+          "load": "Failed to load user purchases."
+        },
+        "columns": {
+          "product": "Product",
+          "amount": "Amount",
+          "status": "Status",
+          "date": "Date"
+        },
+        "statuses": {
+          "draft": "Draft",
+          "creating_invoice": "Creating...",
+          "creation_failed": "Failed",
+          "invoice_created": "Awaiting payment",
+          "processing": "Processing",
+          "paid": "Paid",
+          "failed": "Failed",
+          "expired": "Expired",
+          "cancelled": "Cancelled",
+          "reversed": "Reversed"
+        }
       }
     },
     "paymentsChart": {

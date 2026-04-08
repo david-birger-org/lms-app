@@ -12,13 +12,16 @@ import {
 } from "react";
 
 import {
-  DEFAULT_STATEMENT_DAYS,
+  createDefaultStatementRange,
   type MonobankStatementSnapshot,
   normalizeStatementRows,
   type StatementItem,
+  type StatementRange,
+  statementRangeKey,
+  statementRangeSearchParams,
 } from "@/lib/monobank";
 import {
-  DEFAULT_PAYMENT_HISTORY_DAYS,
+  DEFAULT_PAYMENT_HISTORY_RANGE_DAYS,
   normalizePaymentHistoryRows,
   type PaymentDetailsSource,
   type PaymentHistorySnapshot,
@@ -45,16 +48,17 @@ interface PaymentsFeedContextValue {
   };
   actions: {
     refresh: () => Promise<void>;
+    setRange: (range: StatementRange) => void;
   };
   meta: {
-    days: number;
+    range: StatementRange;
     lastFetchedAt: number | null;
   };
 }
 
 interface PaymentsFeedProviderProps {
   children: ReactNode;
-  days: number;
+  initialRange: StatementRange;
   initialData?: PaymentsFeedSnapshot | null;
   initialError?: string | null;
 }
@@ -72,26 +76,26 @@ interface AutoRefreshOptions {
 
 interface CreatePaymentsFeedOptions {
   errorMessage: string;
-  getUrl: (days: number) => string;
+  basePath: string;
   normalizeRows: (rows: StatementItem[]) => StatementItem[];
   autoRefresh?: AutoRefreshOptions;
 }
 
 function createPaymentsFeed({
   errorMessage,
-  getUrl,
+  basePath,
   normalizeRows,
   autoRefresh,
 }: CreatePaymentsFeedOptions) {
-  const cache = new Map<number, PaymentsFeedSnapshot>();
-  const requests = new Map<number, Promise<PaymentsFeedSnapshot>>();
+  const cache = new Map<string, PaymentsFeedSnapshot>();
+  const requests = new Map<string, Promise<PaymentsFeedSnapshot>>();
   const Context = createContext<PaymentsFeedContextValue | null>(null);
 
   function getSeed(
-    days: number,
+    range: StatementRange,
     initialData?: PaymentsFeedSnapshot | null,
   ): PaymentsFeedSnapshot | null {
-    const cachedSnapshot = cache.get(days);
+    const cachedSnapshot = cache.get(statementRangeKey(range));
 
     if (!cachedSnapshot) {
       return initialData ?? null;
@@ -106,9 +110,10 @@ function createPaymentsFeed({
       : initialData;
   }
 
-  async function fetchFeed(days: number, forceRefresh = false) {
+  async function fetchFeed(range: StatementRange, forceRefresh = false) {
+    const key = statementRangeKey(range);
     const now = Date.now();
-    const cachedSnapshot = cache.get(days);
+    const cachedSnapshot = cache.get(key);
 
     if (
       !forceRefresh &&
@@ -118,14 +123,15 @@ function createPaymentsFeed({
       return cachedSnapshot;
     }
 
-    const inflightRequest = requests.get(days);
+    const inflightRequest = requests.get(key);
 
     if (!forceRefresh && inflightRequest) {
       return inflightRequest;
     }
 
     const request = (async () => {
-      const response = await fetch(getUrl(days), {
+      const url = `${basePath}?${statementRangeSearchParams(range).toString()}`;
+      const response = await fetch(url, {
         method: "GET",
         cache: "no-store",
       });
@@ -140,27 +146,28 @@ function createPaymentsFeed({
         fetchedAt: Date.now(),
       };
 
-      cache.set(days, nextSnapshot);
+      cache.set(key, nextSnapshot);
 
       return nextSnapshot;
     })();
 
-    requests.set(days, request);
+    requests.set(key, request);
 
     try {
       return await request;
     } finally {
-      requests.delete(days);
+      requests.delete(key);
     }
   }
 
   function Provider({
     children,
-    days,
+    initialRange,
     initialData = null,
     initialError = null,
   }: PaymentsFeedProviderProps) {
-    const seed = getSeed(days, initialData);
+    const [range, setRangeState] = useState<StatementRange>(initialRange);
+    const seed = getSeed(range, initialData);
     const [rows, setRows] = useState<StatementItem[]>(seed?.rows ?? []);
     const [error, setError] = useState<string | null>(initialError);
     const [status, setStatus] = useState<PaymentsFeedStatus>(
@@ -199,7 +206,7 @@ function createPaymentsFeed({
         }
 
         try {
-          const nextSnapshot = await fetchFeed(days, forceRefresh);
+          const nextSnapshot = await fetchFeed(range, forceRefresh);
 
           if (
             !isMountedRef.current ||
@@ -225,7 +232,7 @@ function createPaymentsFeed({
           setStatus("error");
         }
       },
-      [days],
+      [range],
     );
 
     useEffect(() => {
@@ -233,20 +240,27 @@ function createPaymentsFeed({
         return;
       }
 
-      const cachedSnapshot = cache.get(days);
+      const key = statementRangeKey(initialRange);
+      const cachedSnapshot = cache.get(key);
 
       if (!cachedSnapshot || cachedSnapshot.fetchedAt < initialData.fetchedAt) {
-        cache.set(days, initialData);
+        cache.set(key, initialData);
       }
-    }, [days, initialData]);
+    }, [initialData, initialRange]);
 
     useEffect(() => {
-      if (seed || initialError) {
+      const cachedSnapshot = cache.get(statementRangeKey(range));
+
+      if (cachedSnapshot && Date.now() - cachedSnapshot.fetchedAt < 60_000) {
+        setRows(cachedSnapshot.rows);
+        setLastFetchedAt(cachedSnapshot.fetchedAt);
+        setStatus("ready");
+        setError(null);
         return;
       }
 
       void loadFeed();
-    }, [initialError, loadFeed, seed]);
+    }, [loadFeed, range]);
 
     useEffect(() => {
       if (!autoRefresh) {
@@ -313,6 +327,14 @@ function createPaymentsFeed({
       await loadFeed({ forceRefresh: true });
     }, [loadFeed]);
 
+    const setRange = useCallback((nextRange: StatementRange) => {
+      setRangeState((current) =>
+        statementRangeKey(current) === statementRangeKey(nextRange)
+          ? current
+          : nextRange,
+      );
+    }, []);
+
     const value = useMemo<PaymentsFeedContextValue>(
       () => ({
         state: {
@@ -323,13 +345,14 @@ function createPaymentsFeed({
         },
         actions: {
           refresh,
+          setRange,
         },
         meta: {
-          days,
+          range,
           lastFetchedAt,
         },
       }),
-      [days, error, lastFetchedAt, refresh, rows, status],
+      [error, lastFetchedAt, range, refresh, rows, setRange, status],
     );
 
     return <Context.Provider value={value}>{children}</Context.Provider>;
@@ -354,7 +377,7 @@ function createPaymentsFeed({
 
 const paymentsHistoryFeed = createPaymentsFeed({
   errorMessage: "Failed to load payment history",
-  getUrl: (days) => `/api/payments/history?days=${days}`,
+  basePath: "/api/payments/history",
   normalizeRows: normalizePaymentHistoryRows,
   autoRefresh: {
     intervalMs: 30_000,
@@ -365,24 +388,26 @@ const paymentsHistoryFeed = createPaymentsFeed({
 
 const monobankStatementFeed = createPaymentsFeed({
   errorMessage: "Failed to load statement",
-  getUrl: (days) => `/api/monobank/statement?days=${days}`,
+  basePath: "/api/monobank/statement",
   normalizeRows: normalizeStatementRows,
 });
 
 export function PaymentsHistoryProvider({
   children,
-  days = DEFAULT_PAYMENT_HISTORY_DAYS,
+  initialRange = createDefaultStatementRange(
+    DEFAULT_PAYMENT_HISTORY_RANGE_DAYS,
+  ),
   initialData = null,
   initialError = null,
 }: {
   children: ReactNode;
-  days?: number;
+  initialRange?: StatementRange;
   initialData?: PaymentHistorySnapshot | null;
   initialError?: string | null;
 }) {
   return (
     <paymentsHistoryFeed.Provider
-      days={days}
+      initialRange={initialRange}
       initialData={initialData}
       initialError={initialError}
     >
@@ -393,18 +418,18 @@ export function PaymentsHistoryProvider({
 
 export function MonobankStatementProvider({
   children,
-  days = DEFAULT_STATEMENT_DAYS,
+  initialRange = createDefaultStatementRange(),
   initialData = null,
   initialError = null,
 }: {
   children: ReactNode;
-  days?: number;
+  initialRange?: StatementRange;
   initialData?: MonobankStatementSnapshot | null;
   initialError?: string | null;
 }) {
   return (
     <monobankStatementFeed.Provider
-      days={days}
+      initialRange={initialRange}
       initialData={initialData}
       initialError={initialError}
     >

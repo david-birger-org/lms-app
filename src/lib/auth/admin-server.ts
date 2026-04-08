@@ -33,9 +33,6 @@ type ResolvedAdminAccess =
     }
   | {
       status: "forbidden";
-    }
-  | {
-      status: "unverified";
     };
 
 type ResolvedAdminSuccess = Extract<ResolvedAdminAccess, { status: "ok" }>;
@@ -57,10 +54,6 @@ async function resolveAdminAccess(
 
   if (!isAdminUser(session.user)) {
     return { status: "forbidden" };
-  }
-
-  if (!session.user.emailVerified) {
-    return { status: "unverified" };
   }
 
   return {
@@ -90,10 +83,6 @@ export async function requireAdminPageAccess(): Promise<ResolvedAdminSuccess> {
   }
 
   if (access.status === "forbidden") {
-    redirect("/unauthorized");
-  }
-
-  if (access.status === "unverified") {
     redirect("/unauthorized");
   }
 
@@ -142,16 +131,6 @@ export async function requireAdminApiAccess(
     return {
       ok: false,
       response: NextResponse.json({ error: "Forbidden." }, { status: 403 }),
-    };
-  }
-
-  if (access.status === "unverified") {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: "Email verification required." },
-        { status: 403 },
-      ),
     };
   }
 

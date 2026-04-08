@@ -1,6 +1,6 @@
 import { normalizeStatementRows, type StatementItem } from "@/lib/monobank";
 
-export const DEFAULT_PAYMENT_HISTORY_DAYS = 90;
+export const DEFAULT_PAYMENT_HISTORY_RANGE_DAYS = 90;
 
 export type PaymentDetailsSource = "database" | "provider";
 

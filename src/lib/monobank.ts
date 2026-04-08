@@ -1,4 +1,29 @@
-export const DEFAULT_STATEMENT_DAYS = 90;
+export const DEFAULT_STATEMENT_RANGE_DAYS = 30;
+
+export interface StatementRange {
+  from: number;
+  to: number;
+}
+
+export function createDefaultStatementRange(
+  days = DEFAULT_STATEMENT_RANGE_DAYS,
+): StatementRange {
+  const to = Math.floor(Date.now() / 1000);
+  const from = to - days * 24 * 60 * 60;
+
+  return { from, to };
+}
+
+export function statementRangeKey(range: StatementRange) {
+  return `${range.from}-${range.to}`;
+}
+
+export function statementRangeSearchParams(range: StatementRange) {
+  return new URLSearchParams({
+    from: String(range.from),
+    to: String(range.to),
+  });
+}
 
 export type MonobankCurrency = number | string;
 

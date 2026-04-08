@@ -1,5 +1,6 @@
 "use client";
 
+import { DateRangePicker } from "@/components/admin/DateRangePicker";
 import { MonobankPaymentsDataTable } from "@/components/admin/MonobankPaymentsDataTable";
 import { usePaymentsFeed } from "@/components/admin/PaymentsDataProvider";
 import type { PaymentDetailsSource } from "@/lib/payments";
@@ -44,9 +45,18 @@ export function PaymentsHistoryTable({
   description?: string;
 }) {
   const { state, actions, meta } = usePaymentsFeed(source);
+  const maxDays = source === "provider" ? 31 : undefined;
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <DateRangePicker
+          range={meta.range}
+          onChange={actions.setRange}
+          disabled={state.isLoading}
+          maxDays={maxDays}
+        />
+      </div>
       {state.error ? (
         <p className="text-destructive border-destructive/40 bg-destructive/5 rounded-2xl border px-4 py-3 text-sm">
           {state.error}

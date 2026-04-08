@@ -7,6 +7,7 @@ import {
   Package,
   ScrollText,
   Settings,
+  Users,
 } from "lucide-react";
 
 export interface DashboardRoute {
@@ -18,6 +19,7 @@ export interface DashboardRoute {
     | "paymentHistory"
     | "statementAudit"
     | "products"
+    | "users"
     | "settings";
   icon: LucideIcon;
 }
@@ -52,6 +54,11 @@ export const dashboardRoutes = [
     href: "/admin/products",
     key: "products",
     icon: Package,
+  },
+  {
+    href: "/admin/users",
+    key: "users",
+    icon: Users,
   },
   {
     href: "/admin/settings",
