@@ -8,7 +8,7 @@ export interface PaymentDetails {
   amount?: number;
   ccy?: MonobankCurrency;
   currency?: MonobankCurrency;
-  finalAmount?: number;
+  profitAmount?: number;
   createdDate?: string;
   modifiedDate?: string;
   reference?: string;
@@ -24,6 +24,8 @@ export interface PaymentDetails {
     terminal?: string;
     bank?: string;
     paymentSystem?: string;
+    fee?: number;
+    country?: string;
   };
   error?: string;
 }

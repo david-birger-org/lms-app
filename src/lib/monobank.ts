@@ -61,6 +61,45 @@ export function formatMonobankMoney(
   return `${(minorUnits / 100).toFixed(2)} ${getMonobankCurrencyLabel(ccy)}`;
 }
 
+// ISO 3166-1 numeric → alpha-2. UA, US, and EU member states.
+const COUNTRY_CODE_BY_NUMERIC: Record<string, string> = {
+  "804": "UA",
+  "840": "US",
+  "040": "AT",
+  "056": "BE",
+  "100": "BG",
+  "191": "HR",
+  "196": "CY",
+  "203": "CZ",
+  "208": "DK",
+  "233": "EE",
+  "246": "FI",
+  "250": "FR",
+  "276": "DE",
+  "300": "GR",
+  "348": "HU",
+  "372": "IE",
+  "380": "IT",
+  "428": "LV",
+  "440": "LT",
+  "442": "LU",
+  "470": "MT",
+  "528": "NL",
+  "616": "PL",
+  "620": "PT",
+  "642": "RO",
+  "703": "SK",
+  "705": "SI",
+  "724": "ES",
+  "752": "SE",
+};
+
+export function formatCountryCode(value?: string) {
+  if (!value) return "-";
+  const padded = value.padStart(3, "0");
+  return COUNTRY_CODE_BY_NUMERIC[padded] ?? value;
+}
+
 export function formatMonobankDate(value?: string) {
   if (!value) {
     return "-";

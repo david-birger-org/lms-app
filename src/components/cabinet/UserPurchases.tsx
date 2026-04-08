@@ -26,7 +26,7 @@ interface Purchase {
   id: string;
   status: string;
   amountMinor: number;
-  finalAmountMinor: number | null;
+  profitAmountMinor: number | null;
   currency: string;
   description: string;
   createdAt: string;
@@ -156,10 +156,7 @@ export function UserPurchases() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
-                    {formatPrice(
-                      purchase.finalAmountMinor ?? purchase.amountMinor,
-                      purchase.currency,
-                    )}
+                    {formatPrice(purchase.amountMinor, purchase.currency)}
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge

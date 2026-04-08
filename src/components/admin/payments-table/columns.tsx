@@ -9,13 +9,39 @@ import {
   Eye,
 } from "lucide-react";
 
+import { Info } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   formatMonobankMoney,
   formatMonobankShortDate,
   type StatementItem,
 } from "@/lib/monobank";
+
+function ColumnHint({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={text}
+          className="text-muted-foreground/70 hover:text-muted-foreground inline-flex items-center"
+        >
+          <Info className="size-3" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[260px] text-xs leading-relaxed">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 import {
   isFailedPaymentStatus,
   isSuccessfulPaymentStatus,
@@ -187,13 +213,18 @@ export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = [
     ),
     cell: ({ row }) => (
       <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none sm:text-xs">
-        {row.original.reference ?? "-"}
+        {row.original.reference?.split("-").at(-1) ?? "-"}
       </div>
     ),
   },
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    header: () => (
+      <div className="flex items-center justify-end gap-1.5 text-right">
+        Amount
+        <ColumnHint text="Amount the customer was originally charged on the invoice, before any conversion or fees." />
+      </div>
+    ),
     cell: ({ row }) => (
       <div className="text-right text-xs font-medium sm:text-sm">
         {formatMonobankMoney(row.original.amount, row.original.ccy)}
@@ -202,7 +233,12 @@ export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = [
   },
   {
     accessorKey: "profitAmount",
-    header: () => <div className="text-right">Profit</div>,
+    header: () => (
+      <div className="flex items-center justify-end gap-1.5 text-right">
+        Profit
+        <ColumnHint text="Net amount you actually receive after Monobank's processing fee is deducted." />
+      </div>
+    ),
     cell: ({ row }) => (
       <div className="text-right text-xs font-medium sm:text-sm">
         {formatMonobankMoney(row.original.profitAmount, row.original.ccy)}

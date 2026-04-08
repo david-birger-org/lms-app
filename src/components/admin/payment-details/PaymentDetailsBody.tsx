@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   CreditCard,
   ExternalLink,
+  Info,
   ReceiptText,
   XCircle,
 } from "lucide-react";
@@ -15,11 +16,45 @@ import {
 } from "@/components/admin/payment-details/utils";
 import { Badge } from "@/components/ui/badge";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  formatCountryCode,
   formatMonobankDate,
   formatMonobankMoney,
   type StatementItem,
 } from "@/lib/monobank";
 import { cn } from "@/lib/utils";
+
+const HINTS = {
+  amount:
+    "Amount the customer was originally charged on the invoice, before any conversion or fees.",
+  profitAmount:
+    "Net amount you actually receive after Monobank's currency conversion and processing fee. Matches Monobank's profitAmount on statements.",
+  fee: "Monobank's processing fee. Already deducted from Profit amount.",
+  country: "Card-issuing country (ISO 3166).",
+} as const;
+
+function HintIcon({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={text}
+          className="text-muted-foreground/70 hover:text-muted-foreground inline-flex items-center"
+        >
+          <Info className="size-3" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[260px] text-xs leading-relaxed">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const pendingStatusAppearance = {
   className:
@@ -76,15 +111,18 @@ function DetailCard({
   label,
   value,
   mono = false,
+  hint,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  hint?: string;
 }) {
   return (
     <div className="rounded-xl border border-border/60 bg-background/80 p-4 shadow-xs backdrop-blur-sm">
-      <p className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.18em]">
+      <p className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em]">
         {label}
+        {hint ? <HintIcon text={hint} /> : null}
       </p>
       <p
         className={cn(
@@ -132,13 +170,13 @@ function PaymentSummarySection({
   amount,
   ccy,
   destination,
-  finalAmount,
+  profitAmount,
   pageUrl,
 }: {
   amount?: number;
   ccy?: PaymentDetails["ccy"];
   destination?: string;
-  finalAmount?: number;
+  profitAmount?: number;
   pageUrl?: string;
 }) {
   return (
@@ -149,16 +187,22 @@ function PaymentSummarySection({
         </p>
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <div>
-            <p className="text-muted-foreground text-xs">Amount</p>
+            <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+              Amount
+              <HintIcon text={HINTS.amount} />
+            </p>
             <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {formatMonobankMoney(amount, ccy)}
             </p>
           </div>
-          {typeof finalAmount === "number" ? (
+          {typeof profitAmount === "number" ? (
             <div>
-              <p className="text-muted-foreground text-xs">Final amount</p>
+              <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+                Profit amount
+                <HintIcon text={HINTS.profitAmount} />
+              </p>
               <p className="text-base font-medium sm:text-lg">
-                {formatMonobankMoney(finalAmount, ccy)}
+                {formatMonobankMoney(profitAmount, ccy)}
               </p>
             </div>
           ) : null}
@@ -189,12 +233,12 @@ function PaymentSummarySection({
 
 function QuickFactsSection({
   card,
-  finalAmount,
+  profitAmount,
   amount,
   ccy,
 }: {
   card?: string;
-  finalAmount?: number;
+  profitAmount?: number;
   amount?: number;
   ccy?: PaymentDetails["ccy"];
 }) {
@@ -202,15 +246,20 @@ function QuickFactsSection({
     {
       label: "Amount",
       value: formatMonobankMoney(amount, ccy),
+      hint: HINTS.amount,
     },
-    typeof finalAmount === "number"
+    typeof profitAmount === "number"
       ? {
-          label: "Final amount",
-          value: formatMonobankMoney(finalAmount, ccy),
+          label: "Profit amount",
+          value: formatMonobankMoney(profitAmount, ccy),
+          hint: HINTS.profitAmount,
         }
       : null,
     { label: "Card", value: card ?? "-" },
-  ].filter((item): item is { label: string; value: string } => item !== null);
+  ].filter(
+    (item): item is { label: string; value: string; hint?: string } =>
+      item !== null,
+  );
 
   return (
     <div className="rounded-xl border border-border/60 bg-background/80 p-4 shadow-xs">
@@ -220,7 +269,12 @@ function QuickFactsSection({
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
         {facts.map((item) => (
-          <DetailCard key={item.label} label={item.label} value={item.value} />
+          <DetailCard
+            key={item.label}
+            label={item.label}
+            value={item.value}
+            hint={item.hint}
+          />
         ))}
       </div>
     </div>
@@ -269,6 +323,20 @@ export function PaymentDetailsBody({
     paymentInfo?.tranId
       ? { label: "Transaction ID", value: paymentInfo.tranId, mono: true }
       : null,
+    typeof paymentInfo?.fee === "number"
+      ? {
+          label: "Fee",
+          value: formatMonobankMoney(paymentInfo.fee, displayDetails?.ccy),
+          hint: HINTS.fee,
+        }
+      : null,
+    paymentInfo?.country
+      ? {
+          label: "Country",
+          value: formatCountryCode(paymentInfo.country),
+          hint: HINTS.country,
+        }
+      : null,
     displayDetails?.customerName
       ? { label: "Customer", value: displayDetails.customerName }
       : null,
@@ -288,6 +356,7 @@ export function PaymentDetailsBody({
       label: string;
       value: string;
       mono?: boolean;
+      hint?: string;
     } => item !== null,
   );
 
@@ -349,7 +418,7 @@ export function PaymentDetailsBody({
               amount={displayDetails.amount}
               ccy={displayDetails.ccy}
               destination={displayDetails.destination}
-              finalAmount={displayDetails.finalAmount}
+              profitAmount={displayDetails.profitAmount}
               pageUrl={displayDetails.pageUrl}
             />
           </div>
@@ -359,7 +428,7 @@ export function PaymentDetailsBody({
               amount={displayDetails.amount}
               ccy={displayDetails.ccy}
               card={paymentInfo?.maskedPan}
-              finalAmount={displayDetails.finalAmount}
+              profitAmount={displayDetails.profitAmount}
             />
           </div>
         </div>
@@ -372,6 +441,7 @@ export function PaymentDetailsBody({
             label={item.label}
             value={item.value}
             mono={item.mono}
+            hint={item.hint}
           />
         ))}
       </div>

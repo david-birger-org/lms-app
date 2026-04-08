@@ -110,6 +110,7 @@ export function mergePaymentDetails(
     invoiceId: details?.invoiceId ?? summary?.invoiceId,
     status: details?.status ?? summary?.status,
     amount: details?.amount ?? summary?.amount,
+    profitAmount: details?.profitAmount ?? summary?.profitAmount,
     ccy: details?.ccy ?? details?.currency ?? summary?.ccy,
     createdDate: details?.createdDate ?? summary?.date,
     reference: details?.reference ?? summary?.reference,
