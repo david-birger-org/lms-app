@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { DashboardPageHeading } from "@/components/dashboard/page-heading";
@@ -12,7 +13,7 @@ const pageWidthClasses = {
   wide: "max-w-[1400px]",
 } as const;
 
-export function DashboardPage({
+export async function DashboardPage({
   children,
   route,
   width = "default",
@@ -22,6 +23,7 @@ export function DashboardPage({
   width?: keyof typeof pageWidthClasses;
 }) {
   const page = route ? getDashboardRouteByHref(route) : null;
+  const t = page ? await getTranslations("navigation.dashboard.routes") : null;
 
   return (
     <div
@@ -32,7 +34,11 @@ export function DashboardPage({
     >
       {page ? (
         <DashboardSection>
-          <DashboardPageHeading page={page} />
+          <DashboardPageHeading
+            title={t?.(`${page.key}.title`) ?? ""}
+            description={t?.(`${page.key}.description`) ?? ""}
+            icon={page.icon}
+          />
         </DashboardSection>
       ) : null}
       {children}

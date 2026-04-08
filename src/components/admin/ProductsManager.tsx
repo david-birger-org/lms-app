@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -60,6 +61,7 @@ function InlinePriceCell({
   product: Product;
   onSave: (id: string, priceMinor: number) => Promise<void>;
 }) {
+  const t = useTranslations("admin.products");
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(String(product.priceMinor / 100));
   const [isSaving, setIsSaving] = useState(false);
@@ -77,7 +79,7 @@ function InlinePriceCell({
   async function handleSave() {
     const parsed = Number(value);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      toast.error("Invalid price");
+      toast.error(t("invalidPrice"));
       return;
     }
 
@@ -144,7 +146,7 @@ function InlinePriceCell({
       type="button"
       onClick={() => setIsEditing(true)}
       className="inline-flex items-center gap-1 rounded px-1 py-0.5 font-mono text-sm transition-colors hover:bg-muted"
-      title="Click to edit price"
+      title={t("editPrice")}
     >
       {formatPrice(product.priceMinor, product.currency)}
       <Pencil className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100" />
@@ -153,6 +155,7 @@ function InlinePriceCell({
 }
 
 export function ProductsManager() {
+  const t = useTranslations("admin.products");
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -169,17 +172,15 @@ export function ProductsManager() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(data.error ?? "Failed to fetch");
+      if (!response.ok) throw new Error(data.error ?? t("errors.fetch"));
 
       setProducts(data.products ?? []);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load products",
-      );
+      toast.error(error instanceof Error ? error.message : t("errors.load"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchProducts();
@@ -200,14 +201,14 @@ export function ProductsManager() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(result.error ?? "Failed to create");
+      if (!response.ok) throw new Error(result.error ?? t("errors.create"));
 
-      toast.success("Product created");
+      toast.success(t("success.created"));
       setIsCreateOpen(false);
       await fetchProducts();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create product",
+        error instanceof Error ? error.message : t("errors.createProduct"),
       );
     } finally {
       setIsSubmitting(false);
@@ -230,14 +231,14 @@ export function ProductsManager() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(result.error ?? "Failed to update");
+      if (!response.ok) throw new Error(result.error ?? t("errors.update"));
 
-      toast.success("Product updated");
+      toast.success(t("success.updated"));
       setEditingProduct(null);
       await fetchProducts();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update product",
+        error instanceof Error ? error.message : t("errors.updateProduct"),
       );
     } finally {
       setIsSubmitting(false);
@@ -258,14 +259,14 @@ export function ProductsManager() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(result.error ?? "Failed to delete");
+      if (!response.ok) throw new Error(result.error ?? t("errors.delete"));
 
-      toast.success("Product deleted");
+      toast.success(t("success.deleted"));
       setDeleteTarget(null);
       await fetchProducts();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete product",
+        error instanceof Error ? error.message : t("errors.deleteProduct"),
       );
     } finally {
       setIsDeleting(false);
@@ -285,14 +286,14 @@ export function ProductsManager() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(result.error ?? "Failed to update");
+      if (!response.ok) throw new Error(result.error ?? t("errors.update"));
 
-      toast.success(product.active ? "Product hidden" : "Product visible");
+      toast.success(
+        product.active ? t("success.hidden") : t("success.visible"),
+      );
       await fetchProducts();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to toggle product",
-      );
+      toast.error(error instanceof Error ? error.message : t("errors.toggle"));
     }
   }
 
@@ -310,13 +311,13 @@ export function ProductsManager() {
       };
 
       if (!response.ok)
-        throw new Error(result.error ?? "Failed to update price");
+        throw new Error(result.error ?? t("errors.updatePrice"));
 
-      toast.success("Price updated");
+      toast.success(t("success.priceUpdated"));
       await fetchProducts();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update price",
+        error instanceof Error ? error.message : t("errors.updatePrice"),
       );
     }
   }
@@ -327,15 +328,12 @@ export function ProductsManager() {
         <CardHeader className="border-b px-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Products</CardTitle>
-              <CardDescription>
-                Manage products and pricing. Changes are reflected on the
-                portfolio site in real time.
-              </CardDescription>
+              <CardTitle>{t("title")}</CardTitle>
+              <CardDescription>{t("description")}</CardDescription>
             </div>
             <Button className="h-9 gap-2" onClick={() => setIsCreateOpen(true)}>
               <Plus className="size-4" />
-              Add product
+              {t("addProduct")}
             </Button>
           </div>
         </CardHeader>
@@ -347,19 +345,27 @@ export function ProductsManager() {
             </div>
           ) : products.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              No products yet. Click &ldquo;Add product&rdquo; to create one.
+              {t("empty")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-3 sm:pl-6">Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Order</TableHead>
+                  <TableHead className="pl-3 sm:pl-6">
+                    {t("columns.name")}
+                  </TableHead>
+                  <TableHead>{t("columns.slug")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("columns.price")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("columns.status")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("columns.order")}
+                  </TableHead>
                   <TableHead className="pr-3 text-right sm:pr-6">
-                    Actions
+                    {t("columns.actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -389,7 +395,9 @@ export function ProductsManager() {
                         className="cursor-pointer"
                         onClick={() => handleToggleActive(product)}
                       >
-                        {product.active ? "Active" : "Hidden"}
+                        {product.active
+                          ? t("status.active")
+                          : t("status.hidden")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center text-sm text-muted-foreground">
@@ -424,15 +432,15 @@ export function ProductsManager() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add product</DialogTitle>
+            <DialogTitle>{t("dialogs.create.title")}</DialogTitle>
             <DialogDescription>
-              Create a new product with pricing.
+              {t("dialogs.create.description")}
             </DialogDescription>
           </DialogHeader>
           <ProductForm
             onSubmit={handleCreate}
             isSubmitting={isSubmitting}
-            submitLabel="Create"
+            submitLabel={t("dialogs.create.submit")}
           />
         </DialogContent>
       </Dialog>
@@ -445,9 +453,9 @@ export function ProductsManager() {
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit product</DialogTitle>
+            <DialogTitle>{t("dialogs.edit.title")}</DialogTitle>
             <DialogDescription>
-              Update product details and pricing.
+              {t("dialogs.edit.description")}
             </DialogDescription>
           </DialogHeader>
           {editingProduct && (
@@ -455,7 +463,7 @@ export function ProductsManager() {
               initialData={editingProduct}
               onSubmit={handleUpdate}
               isSubmitting={isSubmitting}
-              submitLabel="Save changes"
+              submitLabel={t("dialogs.edit.submit")}
             />
           )}
         </DialogContent>
@@ -469,22 +477,25 @@ export function ProductsManager() {
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete product</DialogTitle>
+            <DialogTitle>{t("dialogs.delete.title")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteTarget?.nameEn}
-              &rdquo;? This cannot be undone.
+              {t("dialogs.delete.description", {
+                name: deleteTarget?.nameEn ?? "",
+              })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
+              {t("dialogs.delete.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting
+                ? t("dialogs.delete.deleting")
+                : t("dialogs.delete.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

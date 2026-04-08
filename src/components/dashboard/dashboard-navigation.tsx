@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   SidebarGroup,
@@ -12,11 +11,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Link, usePathname } from "@/i18n/routing";
 import { dashboardRoutes } from "@/lib/dashboard-routes";
 
 export function DashboardNavigation({ label }: { label: string }) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+  const t = useTranslations("navigation.dashboard.routes");
 
   return (
     <SidebarGroup>
@@ -27,7 +28,7 @@ export function DashboardNavigation({ label }: { label: string }) {
             const isActive = pathname === item.href;
 
             return (
-              <SidebarMenuItem key={item.title}>
+              <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild isActive={isActive}>
                   <Link
                     href={item.href}
@@ -38,7 +39,7 @@ export function DashboardNavigation({ label }: { label: string }) {
                     }}
                   >
                     <item.icon />
-                    <span>{item.title}</span>
+                    <span>{t(`${item.key}.title`)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

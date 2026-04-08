@@ -11,6 +11,7 @@ import {
   subDays,
 } from "date-fns";
 import { RefreshCw, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis } from "recharts";
 
@@ -36,17 +37,6 @@ import { isSuccessfulPaymentStatus } from "@/lib/payments";
 
 const dayOptions = [30, 60, 90] as const;
 const chartModes = ["total", "daily"] as const;
-
-const chartConfig = {
-  totalVolume: {
-    label: "Total Paid Volume",
-    color: "var(--primary)",
-  },
-  dailyVolume: {
-    label: "Daily Paid Volume",
-    color: "var(--color-chart-2)",
-  },
-} satisfies ChartConfig;
 
 function formatMetricValue(value: number) {
   return new Intl.NumberFormat(undefined, {
@@ -121,6 +111,17 @@ export function PaymentsChart() {
   const [chartMode, setChartMode] =
     useState<(typeof chartModes)[number]>("total");
   const { state, actions, meta } = usePaymentsHistory();
+  const t = useTranslations("admin.paymentsChart");
+  const chartConfig = {
+    totalVolume: {
+      label: t("tooltip.totalPaidVolume"),
+      color: "var(--primary)",
+    },
+    dailyVolume: {
+      label: t("tooltip.dailyPaidVolume"),
+      color: "var(--color-chart-2)",
+    },
+  } satisfies ChartConfig;
 
   const chartState = useMemo(
     () => aggregatePaymentRows(state.rows, selectedRange),
@@ -142,7 +143,7 @@ export function PaymentsChart() {
         month: "short",
         day: "numeric",
       }).format(new Date(meta.lastFetchedAt))
-    : "Not synced yet";
+    : t("notSyncedYet");
 
   return (
     <Card className="shadow-xs">
@@ -152,14 +153,14 @@ export function PaymentsChart() {
             <div className="flex items-center gap-2">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="size-4" />
-                Payment Trends
+                {t("title")}
               </CardTitle>
-              <Badge variant="outline">Payments table</Badge>
+              <Badge variant="outline">{t("badge")}</Badge>
             </div>
             <CardDescription>
               {chartMode === "total"
-                ? "Cumulative paid volume from the payments table for the selected period."
-                : "Daily paid volume from the payments table for the selected period."}
+                ? t("descriptionTotal")
+                : t("descriptionDaily")}
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -174,8 +175,12 @@ export function PaymentsChart() {
               variant="outline"
               size="sm"
             >
-              <ToggleGroupItem value="total">Total volume</ToggleGroupItem>
-              <ToggleGroupItem value="daily">Daily volume</ToggleGroupItem>
+              <ToggleGroupItem value="total">
+                {t("modes.total")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="daily">
+                {t("modes.daily")}
+              </ToggleGroupItem>
             </ToggleGroup>
             <ToggleGroup
               type="single"
@@ -192,7 +197,7 @@ export function PaymentsChart() {
             >
               {dayOptions.map((days) => (
                 <ToggleGroupItem key={days} value={String(days)}>
-                  {days}d
+                  {t("days", { days })}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
@@ -206,7 +211,7 @@ export function PaymentsChart() {
               <RefreshCw
                 className={state.isLoading ? "animate-spin" : undefined}
               />
-              Refresh
+              {t("refresh")}
             </Button>
           </div>
         </div>
@@ -215,7 +220,7 @@ export function PaymentsChart() {
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
             <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
-              Volume
+              {t("stats.volume")}
             </p>
             <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
               {formatMetricValue(totals.volume)}
@@ -223,7 +228,7 @@ export function PaymentsChart() {
           </div>
           <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
             <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
-              Paid
+              {t("stats.paid")}
             </p>
             <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
               {totals.paidPayments}
@@ -231,7 +236,7 @@ export function PaymentsChart() {
           </div>
           <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
             <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
-              Payments
+              {t("stats.payments")}
             </p>
             <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
               {totals.payments}
@@ -245,9 +250,7 @@ export function PaymentsChart() {
           </div>
         ) : !hasChartActivity && !state.isLoading ? (
           <div className="flex min-h-56 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground sm:min-h-72">
-            {chartMode === "total"
-              ? "No payment volume available for the selected range."
-              : "No daily paid volume available for the selected range."}
+            {chartMode === "total" ? t("empty.total") : t("empty.daily")}
           </div>
         ) : (
           <ChartContainer
@@ -312,9 +315,11 @@ export function PaymentsChart() {
         )}
 
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground sm:text-xs">
-          <Badge variant="outline">Last updated {lastUpdated}</Badge>
+          <Badge variant="outline">
+            {t("lastUpdated", { value: lastUpdated })}
+          </Badge>
           {state.error ? (
-            <Badge variant="secondary">Using last available data</Badge>
+            <Badge variant="secondary">{t("staleData")}</Badge>
           ) : null}
         </div>
       </CardContent>

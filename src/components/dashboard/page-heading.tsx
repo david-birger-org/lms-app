@@ -1,10 +1,18 @@
-import { ShieldCheck } from "lucide-react";
+import { type LucideIcon, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
-import type { DashboardRoute } from "@/lib/dashboard-routes";
 
-export function DashboardPageHeading({ page }: { page: DashboardRoute }) {
-  const PageIcon = page.icon;
+export function DashboardPageHeading({
+  title,
+  description,
+  icon: PageIcon,
+}: {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+}) {
+  const t = useTranslations("navigation");
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border bg-background/80 px-4 py-4 shadow-xs sm:flex-row sm:items-start sm:justify-between lg:px-6">
@@ -15,14 +23,14 @@ export function DashboardPageHeading({ page }: { page: DashboardRoute }) {
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
-              {page.title}
+              {title}
             </h1>
             <Badge variant="outline" className="hidden md:inline-flex">
               <ShieldCheck />
-              Protected
+              {t("protected")}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{page.description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
     </div>

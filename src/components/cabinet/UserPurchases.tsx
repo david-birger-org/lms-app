@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, PackageOpen } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,8 +43,8 @@ function formatPrice(priceMinor: number, currency: string) {
   return `${amount.toLocaleString("uk-UA", { minimumFractionDigits: 0 })} ${currency}`;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("uk-UA", {
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -63,22 +64,11 @@ const statusVariants: Record<
   reversed: "destructive",
 };
 
-const statusLabels: Record<string, string> = {
-  draft: "Draft",
-  creating_invoice: "Creating...",
-  creation_failed: "Failed",
-  invoice_created: "Awaiting payment",
-  processing: "Processing",
-  paid: "Paid",
-  failed: "Failed",
-  expired: "Expired",
-  cancelled: "Cancelled",
-  reversed: "Reversed",
-};
-
 export function UserPurchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const locale = useLocale();
+  const t = useTranslations("purchases");
 
   const fetchPurchases = useCallback(async () => {
     try {
@@ -88,17 +78,15 @@ export function UserPurchases() {
         error?: string;
       };
 
-      if (!response.ok) throw new Error(data.error ?? "Failed to fetch");
+      if (!response.ok) throw new Error(data.error ?? t("failedToFetch"));
 
       setPurchases(data.purchases ?? []);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load purchases",
-      );
+      toast.error(error instanceof Error ? error.message : t("failedToLoad"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchPurchases();
@@ -107,10 +95,8 @@ export function UserPurchases() {
   return (
     <Card className="shadow-xs">
       <CardHeader className="border-b px-3 sm:px-6">
-        <CardTitle>Purchase History</CardTitle>
-        <CardDescription>
-          All your purchases and their current status.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
 
       <CardContent className="p-0">
@@ -122,9 +108,9 @@ export function UserPurchases() {
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <PackageOpen className="size-8 text-muted-foreground/50" />
             <div>
-              <p className="text-sm font-medium">No purchases yet</p>
+              <p className="text-sm font-medium">{t("emptyTitle")}</p>
               <p className="text-xs text-muted-foreground">
-                Your purchased products will appear here.
+                {t("emptyDescription")}
               </p>
             </div>
           </div>
@@ -132,10 +118,18 @@ export function UserPurchases() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-3 sm:pl-6">Product</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="pr-3 text-right sm:pr-6">Date</TableHead>
+                <TableHead className="pl-3 sm:pl-6">
+                  {t("columns.product")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("columns.amount")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("columns.status")}
+                </TableHead>
+                <TableHead className="pr-3 text-right sm:pr-6">
+                  {t("columns.date")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -144,13 +138,21 @@ export function UserPurchases() {
                   <TableCell className="pl-3 sm:pl-6">
                     <div>
                       <p className="font-medium">
-                        {purchase.productNameEn ?? purchase.description}
+                        {locale === "ua"
+                          ? (purchase.productNameUk ?? purchase.description)
+                          : (purchase.productNameEn ?? purchase.description)}
                       </p>
-                      {purchase.productNameUk && (
+                      {(
+                        locale === "ua"
+                          ? purchase.productNameEn
+                          : purchase.productNameUk
+                      ) ? (
                         <p className="text-xs text-muted-foreground">
-                          {purchase.productNameUk}
+                          {locale === "ua"
+                            ? purchase.productNameEn
+                            : purchase.productNameUk}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
@@ -163,11 +165,11 @@ export function UserPurchases() {
                     <Badge
                       variant={statusVariants[purchase.status] ?? "secondary"}
                     >
-                      {statusLabels[purchase.status] ?? purchase.status}
+                      {t(`statuses.${purchase.status}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="pr-3 text-right text-sm text-muted-foreground sm:pr-6">
-                    {formatDate(purchase.createdAt)}
+                    {formatDate(purchase.createdAt, locale)}
                   </TableCell>
                 </TableRow>
               ))}

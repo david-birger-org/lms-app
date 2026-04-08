@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -49,6 +50,7 @@ export function ProductForm({
   isSubmitting,
   submitLabel,
 }: ProductFormProps) {
+  const t = useTranslations("admin.products.form");
   const [slug, setSlug] = useState(initialData?.slug ?? "");
   const [nameEn, setNameEn] = useState(initialData?.nameEn ?? "");
   const [nameUk, setNameUk] = useState(initialData?.nameUk ?? "");
@@ -98,18 +100,18 @@ export function ProductForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="nameEn">Name (EN)</Label>
+          <Label htmlFor="nameEn">{t("nameEn")}</Label>
           <Input
             className="h-9"
             id="nameEn"
             value={nameEn}
             onChange={(e) => handleNameEnChange(e.target.value)}
-            placeholder="Online Coaching"
+            placeholder={t("nameEnPlaceholder")}
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="nameUk">Name (UK)</Label>
+          <Label htmlFor="nameUk">{t("nameUk")}</Label>
           <Input
             className="h-9"
             id="nameUk"
@@ -122,7 +124,7 @@ export function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="slug">Slug</Label>
+        <Label htmlFor="slug">{t("slug")}</Label>
         <Input
           className="h-9"
           id="slug"
@@ -138,7 +140,7 @@ export function ProductForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="descriptionEn">Description (EN)</Label>
+          <Label htmlFor="descriptionEn">{t("descriptionEn")}</Label>
           <Textarea
             id="descriptionEn"
             value={descriptionEn}
@@ -148,7 +150,7 @@ export function ProductForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="descriptionUk">Description (UK)</Label>
+          <Label htmlFor="descriptionUk">{t("descriptionUk")}</Label>
           <Textarea
             id="descriptionUk"
             value={descriptionUk}
@@ -161,7 +163,7 @@ export function ProductForm({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor="price">Price</Label>
+          <Label htmlFor="price">{t("price")}</Label>
           <Input
             className="h-9"
             id="price"
@@ -176,7 +178,7 @@ export function ProductForm({
           />
         </div>
         <div className="space-y-2">
-          <Label>Currency</Label>
+          <Label>{t("currency")}</Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger className="h-9 w-full">
               <SelectValue />
@@ -188,7 +190,7 @@ export function ProductForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sortOrder">Sort order</Label>
+          <Label htmlFor="sortOrder">{t("sortOrder")}</Label>
           <Input
             className="h-9"
             id="sortOrder"
@@ -202,8 +204,10 @@ export function ProductForm({
 
       <div className="space-y-2">
         <Label htmlFor="imageUrl">
-          Image URL{" "}
-          <span className="font-normal text-muted-foreground">(optional)</span>
+          {t("imageUrl")}{" "}
+          <span className="font-normal text-muted-foreground">
+            {t("optional")}
+          </span>
         </Label>
         <Input
           className="h-9"
@@ -217,10 +221,8 @@ export function ProductForm({
 
       <div className="flex items-center justify-between rounded-lg border px-3 py-2">
         <div className="space-y-0.5">
-          <Label htmlFor="activeToggle">Active</Label>
-          <p className="text-xs text-muted-foreground">
-            Hidden products won&apos;t appear on the portfolio site.
-          </p>
+          <Label htmlFor="activeToggle">{t("active")}</Label>
+          <p className="text-xs text-muted-foreground">{t("activeHint")}</p>
         </div>
         <Switch
           id="activeToggle"
@@ -231,7 +233,7 @@ export function ProductForm({
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isSubmitting} className="h-9 min-w-28">
-          {isSubmitting ? "Saving..." : submitLabel}
+          {isSubmitting ? t("saving") : submitLabel}
         </Button>
       </div>
     </form>

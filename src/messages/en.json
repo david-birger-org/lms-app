@@ -174,7 +174,7 @@
     "description": "This workspace is limited to users with the Better Auth `admin` role.",
     "body": "Your account is signed in, but it does not have admin permissions for this section. If you are a regular user, you can access your personal dashboard.",
     "dashboard": "Go to dashboard",
-    "signIn": "Go to sign-in"
+    "signIn": "Go to sign in"
   },
   "checkout": {
     "missingProduct": "Missing product.",
@@ -186,6 +186,154 @@
     "total": "Total",
     "creatingInvoice": "Creating invoice...",
     "proceedToPayment": "Proceed to payment",
-    "createCheckoutError": "Failed to create checkout."
+    "createCheckoutError": "Failed to create the checkout."
+  },
+  "purchases": {
+    "title": "Purchase history",
+    "description": "All your purchases and their current status.",
+    "emptyTitle": "No purchases yet",
+    "emptyDescription": "Your purchased products will appear here.",
+    "failedToFetch": "Failed to fetch purchases.",
+    "failedToLoad": "Failed to load purchases.",
+    "columns": {
+      "product": "Product",
+      "amount": "Amount",
+      "status": "Status",
+      "date": "Date"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "creating_invoice": "Creating...",
+      "creation_failed": "Failed",
+      "invoice_created": "Awaiting payment",
+      "processing": "Processing",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "reversed": "Reversed"
+    }
+  },
+  "admin": {
+    "overviewCards": {
+      "title": "Runtime readiness",
+      "healthy": "Healthy",
+      "attention": "Attention",
+      "requiredKeysChecked": "Required keys verified",
+      "description": "Auth and backend services are reachable."
+    },
+    "runtimeCard": {
+      "title": "Runtime checks",
+      "description": "Environment variables required by Auth and the backend proxy.",
+      "readinessScore": "Readiness score",
+      "requiredKeysDetected": "{readyCount} of {totalCount} required keys detected",
+      "healthy": "Healthy",
+      "review": "Review",
+      "ready": "Ready",
+      "missing": "Missing"
+    },
+    "products": {
+      "title": "Products",
+      "description": "Manage products and pricing. Changes are reflected on the portfolio site in real time.",
+      "addProduct": "Add product",
+      "empty": "No products yet. Click \"Add product\" to create one.",
+      "invalidPrice": "Invalid price",
+      "editPrice": "Click to edit price",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "price": "Price",
+        "status": "Status",
+        "order": "Order",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "hidden": "Hidden"
+      },
+      "success": {
+        "created": "Product created",
+        "updated": "Product updated",
+        "deleted": "Product deleted",
+        "hidden": "Product hidden",
+        "visible": "Product visible",
+        "priceUpdated": "Price updated"
+      },
+      "errors": {
+        "fetch": "Failed to fetch products.",
+        "load": "Failed to load products.",
+        "create": "Failed to create product.",
+        "createProduct": "Failed to create product.",
+        "update": "Failed to update product.",
+        "updateProduct": "Failed to update product.",
+        "delete": "Failed to delete product.",
+        "deleteProduct": "Failed to delete product.",
+        "toggle": "Failed to toggle product visibility.",
+        "updatePrice": "Failed to update price."
+      },
+      "dialogs": {
+        "create": {
+          "title": "Add product",
+          "description": "Create a new product with pricing.",
+          "submit": "Create"
+        },
+        "edit": {
+          "title": "Edit product",
+          "description": "Update product details and pricing.",
+          "submit": "Save changes"
+        },
+        "delete": {
+          "title": "Delete product",
+          "description": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "deleting": "Deleting..."
+        }
+      },
+      "form": {
+        "nameEn": "Name (EN)",
+        "nameEnPlaceholder": "Online Coaching",
+        "nameUk": "Name (UA)",
+        "slug": "Slug",
+        "descriptionEn": "Description (EN)",
+        "descriptionUk": "Description (UA)",
+        "price": "Price",
+        "currency": "Currency",
+        "sortOrder": "Sort order",
+        "imageUrl": "Image URL",
+        "optional": "(optional)",
+        "active": "Active",
+        "activeHint": "Hidden products won't appear on the portfolio site.",
+        "saving": "Saving..."
+      }
+    },
+    "paymentsChart": {
+      "title": "Payment trends",
+      "badge": "Payments table",
+      "descriptionTotal": "Cumulative paid volume from the payments table for the selected period.",
+      "descriptionDaily": "Daily paid volume from the payments table for the selected period.",
+      "modes": {
+        "total": "Total volume",
+        "daily": "Daily volume"
+      },
+      "days": "{days}d",
+      "refresh": "Refresh",
+      "stats": {
+        "volume": "Volume",
+        "paid": "Paid",
+        "payments": "Payments"
+      },
+      "empty": {
+        "total": "No payment volume available for the selected range.",
+        "daily": "No daily paid volume available for the selected range."
+      },
+      "notSyncedYet": "Not synced yet",
+      "lastUpdated": "Last updated {value}",
+      "staleData": "Using last available data",
+      "tooltip": {
+        "totalPaidVolume": "Total paid volume",
+        "dailyPaidVolume": "Daily paid volume"
+      }
+    }
   }
 }

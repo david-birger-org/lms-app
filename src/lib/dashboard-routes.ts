@@ -12,62 +12,57 @@ import {
 
 export interface DashboardRoute {
   href: string;
-  title: string;
-  description: string;
+  key:
+    | "overview"
+    | "invoice"
+    | "pending"
+    | "paymentHistory"
+    | "statementAudit"
+    | "products"
+    | "runtime"
+    | "settings";
   icon: LucideIcon;
 }
 
 export const dashboardRoutes = [
   {
     href: "/admin",
-    title: "Overview",
-    description:
-      "Workspace summary and room for future Vercel analytics blocks.",
+    key: "overview",
     icon: LayoutDashboard,
   },
   {
     href: "/admin/invoice",
-    title: "Invoice",
-    description: "Create Monobank invoices and copy checkout links quickly.",
+    key: "invoice",
     icon: CreditCard,
   },
   {
     href: "/admin/pending",
-    title: "Pending Invoices",
-    description: "View and manage invoices awaiting payment.",
+    key: "pending",
     icon: Clock,
   },
   {
     href: "/admin/payment-history",
-    title: "Payment History",
-    description:
-      "Review canonical app payment history from the payments table.",
+    key: "paymentHistory",
     icon: History,
   },
   {
     href: "/admin/statement-audit",
-    title: "Statement Audit",
-    description:
-      "Inspect the live Monobank statement feed for provider reconciliation.",
+    key: "statementAudit",
     icon: ScrollText,
   },
   {
     href: "/admin/products",
-    title: "Products",
-    description: "Manage products, pricing, and availability.",
+    key: "products",
     icon: Package,
   },
   {
     href: "/admin/runtime",
-    title: "Runtime",
-    description: "Monitor environment readiness and protected API surfaces.",
+    key: "runtime",
     icon: ShieldCheck,
   },
   {
     href: "/admin/settings",
-    title: "Settings",
-    description:
-      "Manage your Better Auth account, password, and session settings.",
+    key: "settings",
     icon: Settings,
   },
 ] as const satisfies readonly DashboardRoute[];

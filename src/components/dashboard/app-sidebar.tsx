@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ComponentProps } from "react";
 
 import { AccountMenu } from "@/components/auth/account-menu";
@@ -12,13 +13,15 @@ import {
 import type { DashboardAccount } from "@/lib/dashboard-account";
 
 function SidebarAccount({ account }: { account: DashboardAccount }) {
+  const t = useTranslations("navigation.dashboard");
+
   return (
     <AccountMenu
       email={account.email}
       fullName={account.fullName}
       settingsHref="/admin/settings"
       secondaryHref="/dashboard"
-      secondaryLabel="User dashboard"
+      secondaryLabel={t("userDashboard")}
     />
   );
 }
@@ -29,6 +32,8 @@ export function AppSidebar({
 }: ComponentProps<typeof Sidebar> & {
   account: DashboardAccount;
 }) {
+  const t = useTranslations("navigation.dashboard");
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader className="border-b border-sidebar-border/60">
@@ -38,16 +43,16 @@ export function AppSidebar({
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-sidebar-foreground">
-              LMS Admin
+              {t("workspaceTitle")}
             </p>
             <p className="truncate text-xs text-sidebar-foreground/70">
-              Monobank workspace
+              {t("workspaceSubtitle")}
             </p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <DashboardNavigation label="Operations" />
+        <DashboardNavigation label={t("label")} />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border/60">
         <SidebarAccount account={account} />

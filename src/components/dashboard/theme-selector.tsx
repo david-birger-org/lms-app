@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ChevronDown, Palette } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,11 @@ const STORAGE_KEY = "dashboard-theme-preset";
 const DEFAULT_THEME = "theme-default";
 
 const themeOptions = [
-  { value: "theme-default", label: "Neutral" },
-  { value: "theme-blue", label: "Blue" },
-  { value: "theme-green", label: "Green" },
-  { value: "theme-amber", label: "Amber" },
-  { value: "theme-mono", label: "Mono" },
+  { value: "theme-default", key: "neutral" },
+  { value: "theme-blue", key: "blue" },
+  { value: "theme-green", key: "green" },
+  { value: "theme-amber", key: "amber" },
+  { value: "theme-mono", key: "mono" },
 ];
 
 const legacyThemeMap: Record<string, string> = {
@@ -55,6 +56,7 @@ function applyThemePreset(themePreset: string) {
 
 export function ThemeSelector() {
   const [selectedTheme, setSelectedTheme] = useState(DEFAULT_THEME);
+  const t = useTranslations("theme");
 
   useEffect(() => {
     const storedTheme = normalizeThemePreset(
@@ -78,7 +80,7 @@ export function ThemeSelector() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="hidden sm:flex">
           <Palette />
-          Theme
+          {t("label")}
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
@@ -89,7 +91,7 @@ export function ThemeSelector() {
         >
           {themeOptions.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
+              {t(`options.${option.key}`)}
               {selectedTheme === option.value ? (
                 <Check className="ml-auto" />
               ) : null}

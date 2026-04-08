@@ -1,5 +1,5 @@
 import { ShieldAlert } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { SwitchAccountButton } from "@/components/auth/switch-account-button";
 import { Button } from "@/components/ui/button";
@@ -10,34 +10,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Link } from "@/i18n/routing";
 
-export default function UnauthorizedPage() {
+export default async function UnauthorizedPage() {
+  const t = await getTranslations("unauthorized");
+
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-3xl items-center px-4 py-8 sm:px-6">
       <Card className="w-full shadow-xs">
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2">
             <ShieldAlert className="size-4" />
-            Access restricted
+            {t("title")}
           </CardTitle>
-          <CardDescription>
-            This workspace is limited to users with the Better Auth `admin`
-            role.
-          </CardDescription>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
-          <p className="text-sm text-muted-foreground">
-            Your account is signed in, but it does not have admin permissions
-            for this section. If you are a regular user, you can access your
-            personal dashboard.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("body")}</p>
           <div className="flex flex-wrap gap-2">
             <Button asChild>
-              <Link href="/dashboard">Go to dashboard</Link>
+              <Link href="/dashboard">{t("dashboard")}</Link>
             </Button>
             <SwitchAccountButton />
             <Button variant="outline" asChild>
-              <Link href="/sign-in">Go to sign-in</Link>
+              <Link href="/sign-in">{t("signIn")}</Link>
             </Button>
           </div>
         </CardContent>

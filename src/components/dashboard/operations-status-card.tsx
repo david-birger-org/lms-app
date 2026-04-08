@@ -1,4 +1,5 @@
 import { Activity, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,31 +17,33 @@ interface RuntimeCheck {
 
 export function OperationsStatusCard({ checks }: { checks: RuntimeCheck[] }) {
   const readyCount = checks.filter((check) => check.ready).length;
+  const t = useTranslations("admin.runtimeCard");
 
   return (
     <Card id="runtime-checks" className="scroll-mt-24 shadow-xs">
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-4" />
-          Runtime Checks
+          {t("title")}
         </CardTitle>
-        <CardDescription>
-          Environment keys required by auth and the backend proxy.
-        </CardDescription>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5 pt-4">
         <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
           <div>
-            <p className="text-sm font-medium">Readiness score</p>
+            <p className="text-sm font-medium">{t("readinessScore")}</p>
             <p className="text-xs text-muted-foreground">
-              {readyCount} of {checks.length} required keys detected
+              {t("requiredKeysDetected", {
+                readyCount,
+                totalCount: checks.length,
+              })}
             </p>
           </div>
           <Badge
             variant={readyCount === checks.length ? "outline" : "secondary"}
           >
             <Activity />
-            {readyCount === checks.length ? "Healthy" : "Review"}
+            {readyCount === checks.length ? t("healthy") : t("review")}
           </Badge>
         </div>
         <div className="space-y-2">
@@ -60,7 +63,7 @@ export function OperationsStatusCard({ checks }: { checks: RuntimeCheck[] }) {
                     borderRadius: "9999px",
                   }}
                 />
-                {check.ready ? "Ready" : "Missing"}
+                {check.ready ? t("ready") : t("missing")}
               </Badge>
             </div>
           ))}
