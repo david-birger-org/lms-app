@@ -43,6 +43,7 @@ function HintIcon({ text }: { text: string }) {
       <TooltipTrigger asChild>
         <button
           type="button"
+          tabIndex={-1}
           aria-label={text}
           className="text-muted-foreground/70 hover:text-muted-foreground inline-flex items-center"
         >
@@ -242,7 +243,7 @@ function QuickFactsSection({
   amount?: number;
   ccy?: PaymentDetails["ccy"];
 }) {
-  const facts = [
+  const facts: { label: string; value: string; hint?: string }[] = [
     {
       label: "Amount",
       value: formatMonobankMoney(amount, ccy),
@@ -256,10 +257,7 @@ function QuickFactsSection({
         }
       : null,
     { label: "Card", value: card ?? "-" },
-  ].filter(
-    (item): item is { label: string; value: string; hint?: string } =>
-      item !== null,
-  );
+  ].filter((item) => item !== null);
 
   return (
     <div className="rounded-xl border border-border/60 bg-background/80 p-4 shadow-xs">
@@ -298,7 +296,12 @@ export function PaymentDetailsBody({
   const paymentInfo = displayDetails?.paymentInfo;
   const statusAppearance = getStatusAppearance(displayDetails?.status);
   const StatusIcon = statusAppearance.icon;
-  const secondaryDetails = [
+  const secondaryDetails: {
+    label: string
+    value: string
+    mono?: boolean
+    hint?: string
+  }[] = [
     {
       label: details?.createdDate ? "Created" : "Statement date",
       value: formatMonobankDate(displayDetails?.createdDate),
@@ -349,16 +352,7 @@ export function PaymentDetailsBody({
     displayDetails?.reference
       ? { label: "Reference", value: displayDetails.reference, mono: true }
       : null,
-  ].filter(
-    (
-      item,
-    ): item is {
-      label: string;
-      value: string;
-      mono?: boolean;
-      hint?: string;
-    } => item !== null,
-  );
+  ].filter((item) => item !== null);
 
   if (isLoading && !displayDetails) {
     return (

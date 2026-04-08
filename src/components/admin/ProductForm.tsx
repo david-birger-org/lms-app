@@ -179,7 +179,10 @@ export function ProductForm({
         </div>
         <div className="space-y-2">
           <Label>{t("currency")}</Label>
-          <Select value={currency} onValueChange={setCurrency}>
+          <Select
+            value={currency}
+            onValueChange={(value) => setCurrency(value as string)}
+          >
             <SelectTrigger className="h-9 w-full">
               <SelectValue />
             </SelectTrigger>

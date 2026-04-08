@@ -165,11 +165,11 @@ export function PaymentsChart() {
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             <ToggleGroup
-              type="single"
-              value={chartMode}
+              value={[chartMode]}
               onValueChange={(value) => {
-                if (value === "total" || value === "daily") {
-                  setChartMode(value);
+                const v = value[0];
+                if (v === "total" || v === "daily") {
+                  setChartMode(v);
                 }
               }}
               variant="outline"
@@ -183,12 +183,12 @@ export function PaymentsChart() {
               </ToggleGroupItem>
             </ToggleGroup>
             <ToggleGroup
-              type="single"
-              value={String(selectedRange)}
+              value={[String(selectedRange)]}
               onValueChange={(value) => {
-                if (value) {
+                const v = value[0];
+                if (v) {
                   setSelectedRange(
-                    Number(value) as (typeof dayOptions)[number],
+                    Number(v) as (typeof dayOptions)[number],
                   );
                 }
               }}
