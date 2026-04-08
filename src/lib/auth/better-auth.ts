@@ -44,6 +44,20 @@ function createAuth() {
         },
         update: {
           before: async (user) => ({ data: user }),
+          after: async (user) => {
+            try {
+              await upsertLmsSlsAppUser({
+                authUserId: user.id,
+                email: user.email,
+                fullName: user.name,
+              });
+            } catch (error) {
+              console.error(
+                "Failed to sync app_users row in lms-sls after profile update",
+                error,
+              );
+            }
+          },
         },
       },
     },
