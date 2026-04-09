@@ -8,15 +8,19 @@ import { LectureReader } from "@/components/cabinet/lecture-reader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { requireAuthPageAccess } from "@/lib/auth/auth-server";
+import { getActiveFeatures } from "@/lib/server/user-features";
 import { getUserLecture } from "@/lib/server/user-lectures";
 
 async function LectureContent({ slug }: { slug: string }) {
-  const [lecture, access, t] = await Promise.all([
-    getUserLecture(slug),
+  const [features, access, t] = await Promise.all([
+    getActiveFeatures(),
     requireAuthPageAccess(),
     getTranslations("lectures"),
   ]);
 
+  if (!features.has("lectures")) notFound();
+
+  const lecture = await getUserLecture(slug);
   if (!lecture) notFound();
 
   const watermarkText = access.authenticatedUser.email ?? access.userId;

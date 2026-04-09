@@ -7,15 +7,17 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { requireAuthPageAccess } from "@/lib/auth/auth-server";
 import { getDashboardAccount } from "@/lib/dashboard-account";
+import { getActiveFeatures } from "@/lib/server/user-features";
 
 export default async function UserDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [access, cookieStore] = await Promise.all([
+  const [access, cookieStore, activeFeatures] = await Promise.all([
     requireAuthPageAccess(),
     cookies(),
+    getActiveFeatures(),
   ]);
   const account = getDashboardAccount(access.user);
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
@@ -32,6 +34,7 @@ export default async function UserDashboardLayout({
       >
         <CabinetSidebar
           account={account}
+          activeFeatures={[...activeFeatures]}
           showAdminLink={access.role === "admin"}
           variant="inset"
         />

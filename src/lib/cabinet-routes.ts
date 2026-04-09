@@ -5,6 +5,7 @@ export interface CabinetRoute {
   href: string;
   key: "overview" | "purchases" | "lectures" | "settings";
   icon: LucideIcon;
+  requiredFeature?: string;
 }
 
 export const cabinetRoutes = [
@@ -22,6 +23,7 @@ export const cabinetRoutes = [
     href: "/dashboard/lectures",
     key: "lectures",
     icon: BookOpen,
+    requiredFeature: "lectures",
   },
   {
     href: "/dashboard/settings",

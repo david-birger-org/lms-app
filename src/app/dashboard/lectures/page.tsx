@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
@@ -8,9 +9,13 @@ import {
 } from "@/components/cabinet/cabinet-page-shell";
 import { LectureCard } from "@/components/cabinet/lecture-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getActiveFeatures } from "@/lib/server/user-features";
 import { listUserLectures } from "@/lib/server/user-lectures";
 
 async function LecturesContent() {
+  const features = await getActiveFeatures();
+  if (!features.has("lectures")) notFound();
+
   const t = await getTranslations("lectures");
   const lectures = await listUserLectures();
 

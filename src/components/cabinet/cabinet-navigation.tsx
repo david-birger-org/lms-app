@@ -14,17 +14,29 @@ import {
 import { Link, usePathname } from "@/i18n/routing";
 import { cabinetRoutes } from "@/lib/cabinet-routes";
 
-export function CabinetNavigation({ label }: { label: string }) {
+export function CabinetNavigation({
+  label,
+  activeFeatures,
+}: {
+  label: string;
+  activeFeatures: string[];
+}) {
   const t = useTranslations("navigation.cabinet");
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+
+  const featureSet = new Set(activeFeatures);
+  const visibleRoutes = cabinetRoutes.filter((route) => {
+    const feature = "requiredFeature" in route ? route.requiredFeature : undefined;
+    return !feature || featureSet.has(feature);
+  });
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {cabinetRoutes.map((item) => {
+          {visibleRoutes.map((item) => {
             const isActive = pathname === item.href;
 
             return (
