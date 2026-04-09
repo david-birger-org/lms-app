@@ -18,7 +18,7 @@ export interface LectureSummary {
 }
 
 export interface LectureDetail extends LectureSummary {
-  content: string;
+  pdfBase64: string;
 }
 
 interface LecturesListResponse {

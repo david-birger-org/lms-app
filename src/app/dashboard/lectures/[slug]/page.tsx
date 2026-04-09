@@ -37,7 +37,7 @@ async function LectureContent({ slug }: { slug: string }) {
           {lecture.title}
         </h1>
         <LectureReader
-          content={lecture.content}
+          pdfBase64={lecture.pdfBase64}
           watermarkText={watermarkText}
         />
       </div>

@@ -1,10 +1,15 @@
 "use client";
 
-import "highlight.js/styles/github.css";
+import { useCallback, useMemo, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
 
-import Markdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
 function WatermarkOverlay({ text }: { text: string }) {
   const repeated = Array.from({ length: 20 }, () => text).join("   ");
@@ -35,12 +40,26 @@ function WatermarkOverlay({ text }: { text: string }) {
 }
 
 export function LectureReader({
-  content,
+  pdfBase64,
   watermarkText,
 }: {
-  content: string;
+  pdfBase64: string;
   watermarkText: string;
 }) {
+  const [numPages, setNumPages] = useState<number>(0);
+
+  const pdfData = useMemo(() => {
+    const raw = atob(pdfBase64);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    return { data: bytes };
+  }, [pdfBase64]);
+
+  const onDocumentLoadSuccess = useCallback(
+    ({ numPages: n }: { numPages: number }) => setNumPages(n),
+    [],
+  );
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: intentional anti-copy protection
     <div
@@ -49,10 +68,27 @@ export function LectureReader({
       onCopy={(e) => e.preventDefault()}
     >
       <WatermarkOverlay text={watermarkText} />
-      <div className="prose prose-neutral dark:prose-invert max-w-none select-none">
-        <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-          {content}
-        </Markdown>
+      <div className="flex select-none flex-col items-center gap-4">
+        <Document
+          file={pdfData}
+          onLoadSuccess={onDocumentLoadSuccess}
+          loading={
+            <div className="flex h-[600px] items-center justify-center text-sm text-muted-foreground">
+              Loading PDF...
+            </div>
+          }
+        >
+          {Array.from({ length: numPages }, (_, i) => (
+            <Page
+              key={`page-${i + 1}`}
+              pageNumber={i + 1}
+              width={800}
+              className="mb-4 shadow-sm"
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+            />
+          ))}
+        </Document>
       </div>
     </div>
   );
