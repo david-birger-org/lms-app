@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { DashboardHeaderControls } from "@/components/dashboard/dashboard-header-controls";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -33,6 +34,8 @@ export async function CabinetHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        <div className="flex-1" />
+        <DashboardHeaderControls />
       </div>
     </header>
   );

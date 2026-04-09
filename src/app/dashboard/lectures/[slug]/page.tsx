@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
 import { CabinetSection } from "@/components/cabinet/cabinet-page-shell";
-import { LectureReader } from "@/components/cabinet/lecture-reader";
+import { LazyLectureReader } from "@/components/cabinet/lazy-lecture-reader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { requireAuthPageAccess } from "@/lib/auth/auth-server";
@@ -23,7 +23,7 @@ async function LectureContent({ slug }: { slug: string }) {
   const lecture = await getUserLecture(slug);
   if (!lecture) notFound();
 
-  const watermarkText = access.authenticatedUser.email ?? access.userId;
+  const watermarkText = "David Birger";
 
   return (
     <CabinetSection>
@@ -36,14 +36,22 @@ async function LectureContent({ slug }: { slug: string }) {
           {t("backToList")}
         </Link>
       </div>
-      <div className="rounded-xl border bg-card p-6 shadow-xs md:p-8">
-        <h1 className="mb-6 text-xl font-semibold tracking-tight sm:text-2xl">
+      <div className="rounded-xl border bg-card shadow-xs">
+        <h1 className="mb-6 px-4 pt-4 text-xl font-semibold tracking-tight sm:text-2xl md:px-8 md:pt-8">
           {lecture.title}
         </h1>
-        <LectureReader
-          pdfBase64={lecture.pdfBase64}
-          watermarkText={watermarkText}
-        />
+        <Suspense
+          fallback={
+            <Skeleton className="h-[600px] w-full rounded-xl" />
+          }
+        >
+          <div className="md:px-8 md:pb-8">
+            <LazyLectureReader
+              pdfBase64={lecture.pdfBase64}
+              watermarkText={watermarkText}
+            />
+          </div>
+        </Suspense>
       </div>
     </CabinetSection>
   );

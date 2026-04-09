@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -23,7 +23,7 @@ function WatermarkOverlay({ text }: { text: string }) {
       {rows.map((i) => (
         <div
           key={`wm-${i}`}
-          className="whitespace-nowrap text-sm font-medium text-foreground/[0.04] dark:text-foreground/[0.06]"
+          className="whitespace-nowrap text-lg font-semibold text-foreground/[0.12] dark:text-foreground/[0.15]"
           style={{
             transform: "rotate(-25deg)",
             transformOrigin: "0 0",
@@ -47,6 +47,21 @@ export function LectureReader({
   watermarkText: string;
 }) {
   const [numPages, setNumPages] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(800);
+  const [zoom, setZoom] = useState<number>(100);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) setContainerWidth(width);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const pageWidth = Math.min(containerWidth, 800) * (zoom / 100);
 
   const pdfData = useMemo(() => {
     const raw = atob(pdfBase64);
@@ -61,34 +76,51 @@ export function LectureReader({
   );
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: intentional anti-copy protection
-    <div
-      className="relative"
-      onContextMenu={(e) => e.preventDefault()}
-      onCopy={(e) => e.preventDefault()}
-    >
-      <WatermarkOverlay text={watermarkText} />
-      <div className="flex select-none flex-col items-center gap-4">
-        <Document
-          file={pdfData}
-          onLoadSuccess={onDocumentLoadSuccess}
-          loading={
-            <div className="flex h-[600px] items-center justify-center text-sm text-muted-foreground">
-              Loading PDF...
-            </div>
-          }
-        >
-          {Array.from({ length: numPages }, (_, i) => (
-            <Page
-              key={`page-${i + 1}`}
-              pageNumber={i + 1}
-              width={800}
-              className="mb-4 shadow-sm"
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            />
-          ))}
-        </Document>
+    <div ref={containerRef}>
+      <div className="sticky top-0 z-20 mx-4 mb-4 flex items-center gap-3 rounded-lg bg-muted/80 px-3 py-2 backdrop-blur-sm md:mx-0">
+        <label htmlFor="pdf-zoom" className="shrink-0 text-xs text-muted-foreground">
+          {zoom}%
+        </label>
+        <input
+          id="pdf-zoom"
+          type="range"
+          min={50}
+          max={200}
+          step={10}
+          value={zoom}
+          onChange={(e) => setZoom(Number(e.target.value))}
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-foreground"
+        />
+      </div>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: intentional anti-copy protection */}
+      <div
+        className="relative max-w-full overflow-x-auto"
+        onContextMenu={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+      >
+        <WatermarkOverlay text={watermarkText} />
+        <div className="select-none" style={{ width: pageWidth > containerWidth ? pageWidth : "100%" }}>
+          <Document
+            file={pdfData}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={
+              <div className="flex h-[600px] items-center justify-center text-sm text-muted-foreground">
+                Loading PDF...
+              </div>
+            }
+          >
+            {Array.from({ length: numPages }, (_, i) => (
+              <Page
+                key={`page-${i + 1}`}
+                pageNumber={i + 1}
+                width={pageWidth}
+                className="mx-auto mb-4 shadow-sm"
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            ))}
+          </Document>
+        </div>
       </div>
     </div>
   );
