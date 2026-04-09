@@ -56,9 +56,10 @@ export function AccountMenu({
   );
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(
-    null,
-  );
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
   const [mounted, setMounted] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -159,9 +160,7 @@ export function AccountMenu({
           <p className="truncate text-xs font-medium text-sidebar-foreground">
             {fullName}
           </p>
-          <p className="truncate text-xs text-sidebar-foreground/70">
-            {email}
-          </p>
+          <p className="truncate text-xs text-sidebar-foreground/70">{email}</p>
         </div>
       </button>
 

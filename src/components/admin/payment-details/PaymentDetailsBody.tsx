@@ -222,7 +222,10 @@ export function PaymentDetailsBody({
     label: t("statuses.pending"),
   };
 
-  const paymentStatusAppearances: Record<string, { className: string; icon: typeof AlertTriangle; label: string }> = {
+  const paymentStatusAppearances: Record<
+    string,
+    { className: string; icon: typeof AlertTriangle; label: string }
+  > = {
     cancelled: {
       className:
         "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
@@ -274,8 +277,7 @@ export function PaymentDetailsBody({
       };
     }
 
-    if (normalizedStatus === "created")
-      return pendingStatusAppearance;
+    if (normalizedStatus === "created") return pendingStatusAppearance;
 
     if (normalizedStatus && normalizedStatus in paymentStatusAppearances)
       return paymentStatusAppearances[normalizedStatus];
@@ -291,13 +293,15 @@ export function PaymentDetailsBody({
   const statusAppearance = getStatusAppearance(displayDetails?.status);
   const StatusIcon = statusAppearance!.icon;
   const secondaryDetails: {
-    label: string
-    value: string
-    mono?: boolean
-    hint?: string
+    label: string;
+    value: string;
+    mono?: boolean;
+    hint?: string;
   }[] = [
     {
-      label: details?.createdDate ? t("labels.created") : t("labels.statementDate"),
+      label: details?.createdDate
+        ? t("labels.created")
+        : t("labels.statementDate"),
       value: formatMonobankDate(displayDetails?.createdDate),
     },
     details?.modifiedDate
@@ -306,19 +310,27 @@ export function PaymentDetailsBody({
           value: formatMonobankDate(details.modifiedDate),
         }
       : null,
-    paymentInfo?.bank ? { label: t("labels.bank"), value: paymentInfo.bank } : null,
+    paymentInfo?.bank
+      ? { label: t("labels.bank"), value: paymentInfo.bank }
+      : null,
     paymentInfo?.paymentSystem
       ? { label: t("labels.paymentSystem"), value: paymentInfo.paymentSystem }
       : null,
     paymentInfo?.approvalCode
       ? { label: t("labels.approvalCode"), value: paymentInfo.approvalCode }
       : null,
-    paymentInfo?.rrn ? { label: t("labels.rrn"), value: paymentInfo.rrn } : null,
+    paymentInfo?.rrn
+      ? { label: t("labels.rrn"), value: paymentInfo.rrn }
+      : null,
     paymentInfo?.terminal
       ? { label: t("labels.terminal"), value: paymentInfo.terminal }
       : null,
     paymentInfo?.tranId
-      ? { label: t("labels.transactionId"), value: paymentInfo.tranId, mono: true }
+      ? {
+          label: t("labels.transactionId"),
+          value: paymentInfo.tranId,
+          mono: true,
+        }
       : null,
     typeof paymentInfo?.fee === "number"
       ? {
@@ -344,15 +356,17 @@ export function PaymentDetailsBody({
         }
       : null,
     displayDetails?.reference
-      ? { label: t("labels.reference"), value: displayDetails.reference, mono: true }
+      ? {
+          label: t("labels.reference"),
+          value: displayDetails.reference,
+          mono: true,
+        }
       : null,
   ].filter((item) => item !== null);
 
   if (isLoading && !displayDetails) {
     return (
-      <p className="text-muted-foreground text-sm">
-        {t("loadingDetails")}
-      </p>
+      <p className="text-muted-foreground text-sm">{t("loadingDetails")}</p>
     );
   }
 
@@ -365,11 +379,7 @@ export function PaymentDetailsBody({
   }
 
   if (!displayDetails) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        {t("openPayment")}
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">{t("openPayment")}</p>;
   }
 
   return (

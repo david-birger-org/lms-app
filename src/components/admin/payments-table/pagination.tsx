@@ -19,8 +19,15 @@ export function MonobankPaymentsTablePagination({
   const selectedRowCount = table.getSelectedRowModel().rows.length;
   const selectionLabel =
     visibleSelectedRowCount === selectedRowCount
-      ? t("rowsSelected", { visible: selectedRowCount, filtered: filteredRowCount })
-      : t("rowsSelectedTotal", { visible: visibleSelectedRowCount, filtered: filteredRowCount, total: selectedRowCount });
+      ? t("rowsSelected", {
+          visible: selectedRowCount,
+          filtered: filteredRowCount,
+        })
+      : t("rowsSelectedTotal", {
+          visible: visibleSelectedRowCount,
+          filtered: filteredRowCount,
+          total: selectedRowCount,
+        });
 
   return (
     <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-end">

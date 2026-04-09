@@ -57,9 +57,7 @@ export function MonobankPaymentDetailsPopover({
   });
   const t = useTranslations("admin.paymentDetails");
   const loadingLabel =
-    detailsSource === "provider"
-      ? t("loadingProvider")
-      : t("loadingDatabase");
+    detailsSource === "provider" ? t("loadingProvider") : t("loadingDatabase");
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

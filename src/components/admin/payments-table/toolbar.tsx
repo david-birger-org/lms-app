@@ -75,7 +75,11 @@ export function MonobankPaymentsTableToolbar({
       .replaceAll(/(^-|-$)/g, "") || "payments";
 
   function getColumnLabel(columnId: string) {
-    const labels = { profitAmount: "profit", maskedPan: "card", invoiceId: "invoice id" } as Record<string, string>;
+    const labels = {
+      profitAmount: "profit",
+      maskedPan: "card",
+      invoiceId: "invoice id",
+    } as Record<string, string>;
     return labels[columnId] ?? columnId;
   }
 

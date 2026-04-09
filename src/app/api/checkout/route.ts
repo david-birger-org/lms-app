@@ -16,7 +16,10 @@ import { createTrustedUserHeaders } from "@/lib/server/lms-sls-user";
 export async function POST(request: Request) {
   try {
     if (!requestOriginMatches(request))
-      return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Invalid request origin." },
+        { status: 403 },
+      );
 
     const access = await requireAuthApiAccess(request);
     if (!access.ok) return access.response;
@@ -40,7 +43,10 @@ export async function POST(request: Request) {
       );
 
     const checkoutToken = verifyCheckoutToken(tokenValue);
-    if (!checkoutToken || checkoutToken.userId !== access.authenticatedUser.userId)
+    if (
+      !checkoutToken ||
+      checkoutToken.userId !== access.authenticatedUser.userId
+    )
       return NextResponse.json(
         { error: "Invalid checkout token." },
         { status: 403 },

@@ -89,8 +89,12 @@ function usePendingInvoices() {
 
 export function PendingInvoicesTable() {
   const t = useTranslations("admin.pendingInvoices");
-  const { invoices, error: loadError, isLoading, refresh } =
-    usePendingInvoices();
+  const {
+    invoices,
+    error: loadError,
+    isLoading,
+    refresh,
+  } = usePendingInvoices();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelledIds, setCancelledIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -99,35 +103,36 @@ export function PendingInvoicesTable() {
     (item) => !cancelledIds.has(item.invoiceId),
   );
 
-  const handleCancel = useCallback(async (invoiceId: string) => {
-    if (!window.confirm(t("cancelConfirm"))) return;
+  const handleCancel = useCallback(
+    async (invoiceId: string) => {
+      if (!window.confirm(t("cancelConfirm"))) return;
 
-    setCancellingId(invoiceId);
-    setError(null);
+      setCancellingId(invoiceId);
+      setError(null);
 
-    try {
-      const response = await fetch("/api/monobank/invoice/remove", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId }),
-      });
+      try {
+        const response = await fetch("/api/monobank/invoice/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ invoiceId }),
+        });
 
-      if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
-        throw new Error(data.error ?? t("cancelFailed"));
+        if (!response.ok) {
+          const data = (await response.json()) as { error?: string };
+          throw new Error(data.error ?? t("cancelFailed"));
+        }
+
+        setCancelledIds((prev) => new Set([...prev, invoiceId]));
+      } catch (cancelError) {
+        setError(
+          cancelError instanceof Error ? cancelError.message : t("cancelError"),
+        );
+      } finally {
+        setCancellingId(null);
       }
-
-      setCancelledIds((prev) => new Set([...prev, invoiceId]));
-    } catch (cancelError) {
-      setError(
-        cancelError instanceof Error
-          ? cancelError.message
-          : t("cancelError"),
-      );
-    } finally {
-      setCancellingId(null);
-    }
-  }, [t]);
+    },
+    [t],
+  );
 
   const handleRefresh = useCallback(() => {
     setCancelledIds(new Set());
@@ -180,9 +185,13 @@ export function PendingInvoicesTable() {
                 <TableRow>
                   <TableHead>{t("columns.invoiceId")}</TableHead>
                   <TableHead>{t("columns.description")}</TableHead>
-                  <TableHead className="text-right">{t("columns.amount")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("columns.amount")}
+                  </TableHead>
                   <TableHead>{t("columns.status")}</TableHead>
-                  <TableHead className="hidden sm:table-cell">{t("columns.date")}</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    {t("columns.date")}
+                  </TableHead>
                   <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>

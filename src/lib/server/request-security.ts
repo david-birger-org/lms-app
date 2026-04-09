@@ -41,16 +41,24 @@ export function requestOriginMatches(request: Request) {
   try {
     const requestOrigin = new URL(request.url).origin;
     const normalizedOrigin = normalizeOrigin(originHeader);
-    return normalizedOrigin === requestOrigin && isAllowedOrigin(normalizedOrigin);
+    return (
+      normalizedOrigin === requestOrigin && isAllowedOrigin(normalizedOrigin)
+    );
   } catch {
     return false;
   }
 }
 
-export function buildAllowedRedirectUrl(request: Request, locale: Locale | null) {
+export function buildAllowedRedirectUrl(
+  request: Request,
+  locale: Locale | null,
+) {
   const requestOrigin = new URL(request.url).origin;
-  if (!isAllowedOrigin(requestOrigin)) throw new Error("Checkout origin is not allowed.");
+  if (!isAllowedOrigin(requestOrigin))
+    throw new Error("Checkout origin is not allowed.");
 
-  const pathname = locale ? `/${locale}/dashboard/purchases` : "/dashboard/purchases";
+  const pathname = locale
+    ? `/${locale}/dashboard/purchases`
+    : "/dashboard/purchases";
   return new URL(pathname, requestOrigin).toString();
 }

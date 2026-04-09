@@ -1,24 +1,22 @@
-"use client"
+"use client";
 
-import type * as React from "react"
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
+import type * as React from "react";
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 
-import { cn } from "@/lib/utils"
-import { asChildProps } from "@/lib/slot"
+import { cn } from "@/lib/utils";
+import { asChildProps } from "@/lib/slot";
 
 function TooltipProvider({
   delay = 0,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider delay={delay} {...props} />
-  )
+  return <TooltipPrimitive.Provider delay={delay} {...props} />;
 }
 
 function Tooltip({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 }
 
 function TooltipTrigger({
@@ -26,7 +24,7 @@ function TooltipTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Trigger> & {
-  asChild?: boolean
+  asChild?: boolean;
 }) {
   return (
     <TooltipPrimitive.Trigger
@@ -34,7 +32,7 @@ function TooltipTrigger({
       {...props}
       {...asChildProps(asChild, children)}
     />
-  )
+  );
 }
 
 function TooltipContent({
@@ -47,9 +45,9 @@ function TooltipContent({
 }: React.ComponentProps<typeof TooltipPrimitive.Popup> & {
   sideOffset?: React.ComponentProps<
     typeof TooltipPrimitive.Positioner
-  >["sideOffset"]
-  side?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["side"]
-  align?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["align"]
+  >["sideOffset"];
+  side?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["side"];
+  align?: React.ComponentProps<typeof TooltipPrimitive.Positioner>["align"];
 }) {
   return (
     <TooltipPrimitive.Portal>
@@ -63,7 +61,7 @@ function TooltipContent({
           data-slot="tooltip-content"
           className={cn(
             "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-xl bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-            className
+            className,
           )}
           {...props}
         >
@@ -72,7 +70,7 @@ function TooltipContent({
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Positioner>
     </TooltipPrimitive.Portal>
-  )
+  );
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

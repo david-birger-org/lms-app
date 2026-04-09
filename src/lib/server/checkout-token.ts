@@ -69,15 +69,13 @@ export function verifyCheckoutToken(token: string) {
   if (!timingSafeEqual(actualBuffer, expectedBuffer)) return null;
 
   try {
-    const parsed = JSON.parse(decodeBase64Url(payload)) as Partial<CheckoutTokenPayload>;
+    const parsed = JSON.parse(
+      decodeBase64Url(payload),
+    ) as Partial<CheckoutTokenPayload>;
     if (parsed.v !== 1) return null;
     if (typeof parsed.userId !== "string" || parsed.userId.trim().length === 0)
       return null;
-    if (
-      parsed.currency !== "UAH" &&
-      parsed.currency !== "USD"
-    )
-      return null;
+    if (parsed.currency !== "UAH" && parsed.currency !== "USD") return null;
     if (
       typeof parsed.productSlug !== "string" ||
       parsed.productSlug.trim().length === 0
@@ -85,7 +83,11 @@ export function verifyCheckoutToken(token: string) {
       return null;
     if (typeof parsed.exp !== "number" || parsed.exp < Date.now() / 1000)
       return null;
-    if (parsed.locale !== null && parsed.locale !== undefined && !isLocale(parsed.locale))
+    if (
+      parsed.locale !== null &&
+      parsed.locale !== undefined &&
+      !isLocale(parsed.locale)
+    )
       return null;
 
     return {

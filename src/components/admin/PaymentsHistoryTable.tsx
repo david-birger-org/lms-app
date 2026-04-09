@@ -22,8 +22,7 @@ function buildDescription({
 }) {
   const baseDescription = description ?? defaultDescription;
 
-  if (source !== "database" || !lastFetchedAt)
-    return baseDescription;
+  if (source !== "database" || !lastFetchedAt) return baseDescription;
 
   return `${baseDescription} ${lastSyncedLabel({ time: new Date(lastFetchedAt).toLocaleTimeString() })}`;
 }

@@ -141,7 +141,13 @@ export function MonobankPaymentsDataTable({
   detailsSource?: PaymentDetailsSource;
 }) {
   const t = useTranslations("admin.paymentsTable");
-  const columns = React.useMemo(() => createMonobankPaymentsColumns((key, params) => t(`columns.${key}`, params)), [t]);
+  const columns = React.useMemo(
+    () =>
+      createMonobankPaymentsColumns((key, params) =>
+        t(`columns.${key}`, params),
+      ),
+    [t],
+  );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -291,17 +297,25 @@ export function MonobankPaymentsDataTable({
   }, [table]);
 
   const resolvedEmptyMessage = React.useMemo(() => {
-    if (isLoading && data.length === 0)
-      return t("empty.loading");
+    if (isLoading && data.length === 0) return t("empty.loading");
 
     if (hasActiveState && filteredRowCount === 0)
       return t("empty.noVisibleResults");
 
     return emptyMessage ?? t("empty.noResults");
-  }, [data.length, emptyMessage, filteredRowCount, hasActiveState, isLoading, t]);
+  }, [
+    data.length,
+    emptyMessage,
+    filteredRowCount,
+    hasActiveState,
+    isLoading,
+    t,
+  ]);
 
   const emptyActionLabel =
-    hasActiveState && filteredRowCount === 0 ? t("empty.resetTable") : undefined;
+    hasActiveState && filteredRowCount === 0
+      ? t("empty.resetTable")
+      : undefined;
 
   return (
     <Card className="shadow-xs">

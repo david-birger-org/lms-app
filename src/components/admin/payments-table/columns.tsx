@@ -133,7 +133,9 @@ const statusFilterFn: FilterFn<StatementItem> = (
   return typeof status === "string" ? filterValue.includes(status) : false;
 };
 
-export function createMonobankPaymentsColumns(t: (key: string, params?: Record<string, string>) => string): ColumnDef<StatementItem>[] {
+export function createMonobankPaymentsColumns(
+  t: (key: string, params?: Record<string, string>) => string,
+): ColumnDef<StatementItem>[] {
   return [
     {
       id: "select",
@@ -141,7 +143,8 @@ export function createMonobankPaymentsColumns(t: (key: string, params?: Record<s
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           indeterminate={
-            !table.getIsAllPageRowsSelected() && table.getIsSomePageRowsSelected()
+            !table.getIsAllPageRowsSelected() &&
+            table.getIsSomePageRowsSelected()
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           onClick={(event) => event.stopPropagation()}
@@ -204,7 +207,9 @@ export function createMonobankPaymentsColumns(t: (key: string, params?: Record<s
       accessorKey: "maskedPan",
       header: t("card"),
       cell: ({ row }) => (
-        <div className="text-xs sm:text-sm">{row.original.maskedPan ?? "-"}</div>
+        <div className="text-xs sm:text-sm">
+          {row.original.maskedPan ?? "-"}
+        </div>
       ),
     },
     {
@@ -267,7 +272,9 @@ export function createMonobankPaymentsColumns(t: (key: string, params?: Record<s
             variant="ghost"
             size="icon-xs"
             data-row-interactive="true"
-            aria-label={t("openDetails", { id: row.original.invoiceId ?? row.original.reference ?? "payment" })}
+            aria-label={t("openDetails", {
+              id: row.original.invoiceId ?? row.original.reference ?? "payment",
+            })}
             onClick={(event) => {
               event.stopPropagation();
               table.options.meta?.onOpenPaymentDetails?.(row.original);
@@ -284,22 +291,25 @@ export function createMonobankPaymentsColumns(t: (key: string, params?: Record<s
 }
 
 /** @deprecated Use createMonobankPaymentsColumns(t) instead */
-export const monobankPaymentsColumns: ColumnDef<StatementItem>[] = createMonobankPaymentsColumns((key, params) => {
-  const fallbacks: Record<string, string> = {
-    selectAll: "Select all",
-    selectRow: "Select row",
-    status: "Status",
-    date: "Date",
-    description: "Description",
-    card: "Card",
-    reference: "Reference",
-    amount: "Amount",
-    amountHint: "Amount the customer was originally charged on the invoice, before any conversion or fees.",
-    profit: "Profit",
-    profitHint: "Net amount you actually receive after Monobank's processing fee is deducted.",
-    invoiceId: "Invoice ID",
-    details: "Details",
-    openDetails: `Open details for ${params?.id ?? "payment"}`,
-  };
-  return fallbacks[key] ?? key;
-});
+export const monobankPaymentsColumns: ColumnDef<StatementItem>[] =
+  createMonobankPaymentsColumns((key, params) => {
+    const fallbacks: Record<string, string> = {
+      selectAll: "Select all",
+      selectRow: "Select row",
+      status: "Status",
+      date: "Date",
+      description: "Description",
+      card: "Card",
+      reference: "Reference",
+      amount: "Amount",
+      amountHint:
+        "Amount the customer was originally charged on the invoice, before any conversion or fees.",
+      profit: "Profit",
+      profitHint:
+        "Net amount you actually receive after Monobank's processing fee is deducted.",
+      invoiceId: "Invoice ID",
+      details: "Details",
+      openDetails: `Open details for ${params?.id ?? "payment"}`,
+    };
+    return fallbacks[key] ?? key;
+  });
