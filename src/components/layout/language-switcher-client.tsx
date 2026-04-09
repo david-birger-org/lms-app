@@ -1,9 +1,8 @@
 "use client";
 
 import { Languages } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Locale, localeNames, locales } from "@/i18n/config";
 
+const localeLabels: Record<Locale, string> = {
+  en: "en",
+  ua: "укр",
+};
+
 export function LanguageSwitcherClient() {
-  const t = useTranslations("language");
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -46,20 +49,20 @@ export function LanguageSwitcherClient() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="hidden sm:flex">
+        <Button variant="outline" size="sm" className="flex">
           <Languages />
-          {t("label")}
+          {localeLabels[locale]}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {locales.map((item) => (
           <DropdownMenuItem key={item} asChild>
-            <Link
+            <a
               href={`/${item}${suffix}${queryAndHash}`}
               className={item === locale ? "font-medium" : undefined}
             >
               {localeNames[item]}
-            </Link>
+            </a>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
