@@ -3,6 +3,7 @@ import {
   Clock,
   CreditCard,
   History,
+  Inbox,
   LayoutDashboard,
   Package,
   ScrollText,
@@ -20,6 +21,7 @@ export interface DashboardRoute {
     | "statementAudit"
     | "products"
     | "users"
+    | "requests"
     | "settings";
   icon: LucideIcon;
 }
@@ -59,6 +61,11 @@ export const dashboardRoutes = [
     href: "/admin/users",
     key: "users",
     icon: Users,
+  },
+  {
+    href: "/admin/requests",
+    key: "requests",
+    icon: Inbox,
   },
   {
     href: "/admin/settings",

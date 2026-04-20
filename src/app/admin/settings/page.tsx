@@ -5,6 +5,7 @@ import {
   DashboardPage,
   DashboardSection,
 } from "@/components/dashboard/page-shell";
+import { NotificationsSettingsCard } from "@/components/settings/notifications-settings-card";
 import {
   Card,
   CardContent,
@@ -40,6 +41,9 @@ export default async function AdminSettingsPage() {
             />
           </CardContent>
         </Card>
+      </DashboardSection>
+      <DashboardSection>
+        <NotificationsSettingsCard />
       </DashboardSection>
     </DashboardPage>
   );

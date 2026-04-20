@@ -76,6 +76,10 @@
           "title": "Users",
           "description": "Review users, update access roles, and inspect purchases on demand."
         },
+        "requests": {
+          "title": "Requests",
+          "description": "Contact and service requests submitted from the portfolio site."
+        },
         "settings": {
           "title": "Settings",
           "description": "Manage your Better Auth account, password, and session settings."
@@ -171,6 +175,51 @@
       "description": "This workspace is gated by Better Auth and the admin role.",
       "role": "Role",
       "email": "Email"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Get push notifications on this device for important updates.",
+      "testTitle": "Notifications enabled",
+      "testBody": "You will receive updates on this device.",
+      "enabledToast": "Notifications enabled on this device.",
+      "disabledToast": "Notifications disabled on this device.",
+      "deniedToast": "Notifications blocked. Enable them in your browser or system settings.",
+      "errorToast": "Could not enable notifications on this browser.",
+      "status": {
+        "loading": "Checking...",
+        "default": "Not enabled",
+        "granted": "Enabled",
+        "disabled": "Disabled",
+        "denied": "Blocked",
+        "unsupported": "Not supported"
+      },
+      "buttons": {
+        "enable": "Enable notifications",
+        "enableNow": "Enable now",
+        "disable": "Disable",
+        "howTo": "How to",
+        "test": "Send test",
+        "close": "Close"
+      },
+      "modal": {
+        "title": "Enable notifications",
+        "descriptionIos": "On iPhone and iPad, notifications require installing this site to the Home Screen first.",
+        "descriptionBrowser": "Allow the browser permission prompt to start receiving notifications on this device.",
+        "denied": "Notifications are currently blocked. Open your browser or device Settings → Notifications and allow this site.",
+        "unsupported": "This browser does not support web notifications. Try Safari on iOS 16.4+ (installed to Home Screen), or the latest Chrome / Firefox / Edge on desktop.",
+        "steps": {
+          "iosInstall": {
+            "shareMenu": "Open this site in Safari and tap the Share button.",
+            "addToHome": "Scroll down and choose \"Add to Home Screen\", then tap Add.",
+            "openInstalled": "Open the newly added app icon from your Home Screen.",
+            "allow": "Return to Settings → Notifications and tap Enable, then allow the permission prompt."
+          },
+          "browser": {
+            "click": "Click \"Enable now\" below.",
+            "allow": "Choose Allow on the permission prompt shown by your browser."
+          }
+        }
+      }
     }
   },
   "unauthorized": {
@@ -383,6 +432,39 @@
           "cancelled": "Cancelled",
           "reversed": "Reversed"
         }
+      }
+    },
+    "requests": {
+      "title": "Contact requests",
+      "description": "Submissions from the portfolio contact and service-request forms.",
+      "empty": "No contact requests yet.",
+      "unknownName": "Unknown",
+      "toggleLabel": "Mark as processed",
+      "preferred": "Preferred: {method}",
+      "filter": {
+        "label": "Filter requests",
+        "all": "All",
+        "new": "New",
+        "processed": "Processed"
+      },
+      "columns": {
+        "processed": "Processed",
+        "type": "Type",
+        "contact": "Contact",
+        "reach": "Reach",
+        "message": "Message",
+        "received": "Received"
+      },
+      "types": {
+        "contact": "Contact",
+        "service": "Service"
+      },
+      "success": {
+        "processed": "Marked as processed",
+        "unprocessed": "Marked as unprocessed"
+      },
+      "errors": {
+        "update": "Failed to update contact request."
       }
     },
     "pendingInvoices": {
