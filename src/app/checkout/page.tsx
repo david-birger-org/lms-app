@@ -5,7 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { CheckoutConfirm } from "@/components/checkout/checkout-confirm";
 import { resolveLocale } from "@/i18n/locale";
 import { getAuth } from "@/lib/auth/better-auth";
-import { createCheckoutToken } from "@/lib/server/checkout-token";
+import {
+  type CheckoutCurrency,
+  createCheckoutToken,
+} from "@/lib/server/checkout-token";
 import { forwardLmsSlsRequest } from "@/lib/server/lms-sls";
 
 interface CheckoutSearchParams {
@@ -48,7 +51,7 @@ async function fetchProductBySlug(
   return payload?.product ?? null;
 }
 
-function formatPrice(minor: number, currency: "UAH" | "USD") {
+function formatPrice(minor: number, currency: CheckoutCurrency) {
   const major = minor / 100;
   return new Intl.NumberFormat(currency === "UAH" ? "uk-UA" : "en-US", {
     style: "currency",
@@ -79,7 +82,15 @@ export async function CheckoutPageContent({
       </main>
     );
 
-  const currency: "UAH" | "USD" = params.c === "UAH" ? "UAH" : "USD";
+  const requestedCurrency = params.c?.trim().toUpperCase();
+  if (requestedCurrency !== "UAH" && requestedCurrency !== "USD")
+    return (
+      <main className="flex min-h-svh items-center justify-center p-6">
+        <p className="text-sm text-muted-foreground">{t("notAvailable")}</p>
+      </main>
+    );
+
+  const currency: CheckoutCurrency = requestedCurrency;
   const returnPath = buildLocalizedPath(
     `/checkout?product=${encodeURIComponent(slug)}&c=${currency}`,
     locale,
