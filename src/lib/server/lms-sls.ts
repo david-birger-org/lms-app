@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { env } from "@/lib/env";
 
 export interface TrustedAdminIdentity {
@@ -127,41 +125,4 @@ export async function forwardLmsSlsRequest({
     status: response.status,
     headers: responseHeaders,
   });
-}
-
-export async function proxyLmsSlsRequest({
-  admin,
-  path,
-  request,
-}: {
-  admin: TrustedAdminIdentity;
-  path: string;
-  request: Request;
-}) {
-  try {
-    const incomingUrl = new URL(request.url);
-    const method = request.method.toUpperCase();
-    const contentType = request.headers.get("content-type");
-    const body =
-      method === "GET" || method === "HEAD" ? undefined : await request.text();
-
-    return await forwardLmsSlsRequest({
-      body,
-      contentType,
-      headers: mergeHeaders(
-        createTrustedAdminHeaders(admin),
-        getForwardedSessionHeaders(request.headers),
-      ),
-      method,
-      path,
-      search: incomingUrl.search,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-
-    return NextResponse.json(
-      { error: `Failed to reach lms-sls service: ${message}` },
-      { status: 500 },
-    );
-  }
 }

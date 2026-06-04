@@ -1,16 +1,18 @@
 import "server-only";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { NextResponse } from "next/server";
-import { cache } from "react";
+import type { NextResponse } from "next/server";
 
-import { isAdminUser } from "@/lib/auth/admin";
 import {
-  type AuthSessionRecord,
-  type AuthUser,
-  getAuth,
-} from "@/lib/auth/better-auth";
+  authErrorApiResponse,
+  forbiddenApiResponse,
+  type ResolvedSession,
+  resolveSession,
+  resolveSessionFor,
+  unauthorizedApiResponse,
+} from "@/lib/auth/access-core";
+import { isAdminUser } from "@/lib/auth/admin";
+import type { AuthSessionRecord, AuthUser } from "@/lib/auth/better-auth";
 
 export interface AuthenticatedAdmin {
   email: string | null;
@@ -19,127 +21,53 @@ export interface AuthenticatedAdmin {
   userId: string;
 }
 
-type ResolvedAdminAccess =
-  | {
-      admin: AuthenticatedAdmin;
-      role: "admin";
-      session: AuthSessionRecord;
-      status: "ok";
-      userId: string;
-      user: AuthUser;
-    }
-  | {
-      status: "unauthorized";
-    }
-  | {
-      status: "forbidden";
-    };
-
-type ResolvedAdminSuccess = Extract<ResolvedAdminAccess, { status: "ok" }>;
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Unexpected error";
+interface AdminSuccess {
+  admin: AuthenticatedAdmin;
+  role: "admin";
+  session: AuthSessionRecord;
+  userId: string;
+  user: AuthUser;
 }
 
-async function resolveAdminAccess(
-  requestHeaders: Headers,
-): Promise<ResolvedAdminAccess> {
-  const session = await getAuth().api.getSession({
-    headers: requestHeaders,
-  });
-
-  if (!session) {
-    return { status: "unauthorized" };
-  }
-
-  if (!isAdminUser(session.user)) {
-    return { status: "forbidden" };
-  }
-
+function toAdminSuccess({ session, user }: ResolvedSession): AdminSuccess {
   return {
     admin: {
-      email: session.user.email ?? null,
-      name: session.user.name ?? null,
+      email: user.email ?? null,
+      name: user.name ?? null,
       role: "admin",
-      userId: session.user.id,
+      userId: user.id,
     },
     role: "admin",
-    session: session.session,
-    status: "ok",
-    userId: session.user.id,
-    user: session.user,
+    session,
+    userId: user.id,
+    user,
   };
 }
 
-const resolveCurrentAdminAccess = cache(async () =>
-  resolveAdminAccess(await headers()),
-);
-
-export async function requireAdminPageAccess(): Promise<ResolvedAdminSuccess> {
-  const access = await resolveCurrentAdminAccess();
-
-  if (access.status === "unauthorized") {
-    redirect("/sign-in");
-  }
-
-  if (access.status === "forbidden") {
-    redirect("/unauthorized");
-  }
-
-  return access;
+export async function requireAdminPageAccess(): Promise<AdminSuccess> {
+  const resolved = await resolveSession();
+  if (!resolved) redirect("/sign-in");
+  if (!isAdminUser(resolved.user)) redirect("/unauthorized");
+  return toAdminSuccess(resolved);
 }
 
 type AdminApiAccess =
-  | {
-      admin: AuthenticatedAdmin;
-      ok: true;
-      role: "admin";
-      session: AuthSessionRecord;
-      userId: string;
-      user: AuthUser;
-    }
-  | {
-      ok: false;
-      response: NextResponse;
-    };
+  | (AdminSuccess & { ok: true })
+  | { ok: false; response: NextResponse };
 
 export async function requireAdminApiAccess(
   request: Request,
 ): Promise<AdminApiAccess> {
-  let access: ResolvedAdminAccess;
-
+  let resolved: ResolvedSession | null;
   try {
-    access = await resolveAdminAccess(request.headers);
+    resolved = await resolveSessionFor(request.headers);
   } catch (error) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: `Failed to authorize request: ${getErrorMessage(error)}` },
-        { status: 500 },
-      ),
-    };
+    return { ok: false, response: authErrorApiResponse(error) };
   }
 
-  if (access.status === "unauthorized") {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Unauthorized." }, { status: 401 }),
-    };
-  }
+  if (!resolved) return { ok: false, response: unauthorizedApiResponse() };
+  if (!isAdminUser(resolved.user))
+    return { ok: false, response: forbiddenApiResponse() };
 
-  if (access.status === "forbidden") {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Forbidden." }, { status: 403 }),
-    };
-  }
-
-  return {
-    admin: access.admin,
-    ok: true,
-    role: "admin",
-    session: access.session,
-    userId: access.userId,
-    user: access.user,
-  };
+  return { ok: true, ...toAdminSuccess(resolved) };
 }

@@ -1,16 +1,9 @@
-import { requireAdminApiAccess } from "@/lib/auth/admin-server";
-import { proxyLmsSlsRequest } from "@/lib/server/lms-sls";
+import { createProxyRoute } from "@/lib/server/proxy-route";
 
-export async function GET(request: Request) {
-  const access = await requireAdminApiAccess(request);
-
-  if (!access.ok) {
-    return access.response;
-  }
-
-  return proxyLmsSlsRequest({
-    admin: access.admin,
-    path: "/api/payments/history",
-    request,
-  });
-}
+export const GET = createProxyRoute({
+  auth: "admin",
+  method: "GET",
+  path: "/api/payments/history",
+  search: "incoming",
+  errorMessage: "Failed to load payment history",
+});

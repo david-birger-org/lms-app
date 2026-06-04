@@ -1,28 +1,10 @@
-import { requireAdminApiAccess } from "@/lib/auth/admin-server";
-import {
-  createTrustedAdminHeaders,
-  forwardLmsSlsRequest,
-  getForwardedSessionHeaders,
-  mergeHeaders,
-} from "@/lib/server/lms-sls";
+import { createProxyRoute } from "@/lib/server/proxy-route";
 
-export async function POST(request: Request) {
-  const access = await requireAdminApiAccess(request);
-
-  if (!access.ok) {
-    return access.response;
-  }
-
-  const body = await request.text();
-
-  return forwardLmsSlsRequest({
-    body,
-    contentType: "application/json",
-    headers: mergeHeaders(
-      createTrustedAdminHeaders(access.admin),
-      getForwardedSessionHeaders(request.headers),
-    ),
-    method: "DELETE",
-    path: "/api/monobank/invoice",
-  });
-}
+// Mounted as POST but maps to the backend DELETE /api/monobank/invoice.
+export const POST = createProxyRoute({
+  auth: "admin",
+  method: "DELETE",
+  path: "/api/monobank/invoice",
+  forwardBody: true,
+  errorMessage: "Failed to remove invoice",
+});

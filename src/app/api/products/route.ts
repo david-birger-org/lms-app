@@ -1,110 +1,35 @@
-import { NextResponse } from "next/server";
+import { createProxyRoute } from "@/lib/server/proxy-route";
 
-import { requireAdminApiAccess } from "@/lib/auth/admin-server";
-import {
-  createTrustedAdminHeaders,
-  forwardLmsSlsRequest,
-  getForwardedSessionHeaders,
-  mergeHeaders,
-} from "@/lib/server/lms-sls";
+const PATH = "/api/products/admin";
 
-export async function GET(request: Request) {
-  try {
-    const access = await requireAdminApiAccess(request);
-    if (!access.ok) return access.response;
+export const GET = createProxyRoute({
+  auth: "admin",
+  method: "GET",
+  path: PATH,
+  errorMessage: "Failed to fetch products",
+});
 
-    return await forwardLmsSlsRequest({
-      headers: mergeHeaders(
-        createTrustedAdminHeaders(access.admin),
-        getForwardedSessionHeaders(request.headers),
-      ),
-      method: "GET",
-      path: "/api/products/admin",
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-    return NextResponse.json(
-      { error: `Failed to fetch products: ${message}` },
-      { status: 500 },
-    );
-  }
-}
+export const POST = createProxyRoute({
+  auth: "admin",
+  method: "POST",
+  path: PATH,
+  forwardBody: true,
+  errorMessage: "Failed to create product",
+});
 
-export async function POST(request: Request) {
-  try {
-    const access = await requireAdminApiAccess(request);
-    if (!access.ok) return access.response;
+export const PUT = createProxyRoute({
+  auth: "admin",
+  method: "PUT",
+  path: PATH,
+  forwardBody: true,
+  search: "incoming",
+  errorMessage: "Failed to update product",
+});
 
-    const body = await request.text();
-
-    return await forwardLmsSlsRequest({
-      body,
-      contentType: "application/json",
-      headers: mergeHeaders(
-        createTrustedAdminHeaders(access.admin),
-        getForwardedSessionHeaders(request.headers),
-      ),
-      method: "POST",
-      path: "/api/products/admin",
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-    return NextResponse.json(
-      { error: `Failed to create product: ${message}` },
-      { status: 500 },
-    );
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const access = await requireAdminApiAccess(request);
-    if (!access.ok) return access.response;
-
-    const url = new URL(request.url);
-    const body = await request.text();
-
-    return await forwardLmsSlsRequest({
-      body,
-      contentType: "application/json",
-      headers: mergeHeaders(
-        createTrustedAdminHeaders(access.admin),
-        getForwardedSessionHeaders(request.headers),
-      ),
-      method: "PUT",
-      path: "/api/products/admin",
-      search: url.search,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-    return NextResponse.json(
-      { error: `Failed to update product: ${message}` },
-      { status: 500 },
-    );
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const access = await requireAdminApiAccess(request);
-    if (!access.ok) return access.response;
-
-    const url = new URL(request.url);
-
-    return await forwardLmsSlsRequest({
-      headers: mergeHeaders(
-        createTrustedAdminHeaders(access.admin),
-        getForwardedSessionHeaders(request.headers),
-      ),
-      method: "DELETE",
-      path: "/api/products/admin",
-      search: url.search,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
-    return NextResponse.json(
-      { error: `Failed to delete product: ${message}` },
-      { status: 500 },
-    );
-  }
-}
+export const DELETE = createProxyRoute({
+  auth: "admin",
+  method: "DELETE",
+  path: PATH,
+  search: "incoming",
+  errorMessage: "Failed to delete product",
+});

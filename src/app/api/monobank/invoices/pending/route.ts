@@ -1,16 +1,9 @@
-import { requireAdminApiAccess } from "@/lib/auth/admin-server";
-import { proxyLmsSlsRequest } from "@/lib/server/lms-sls";
+import { createProxyRoute } from "@/lib/server/proxy-route";
 
-export async function GET(request: Request) {
-  const access = await requireAdminApiAccess(request);
-
-  if (!access.ok) {
-    return access.response;
-  }
-
-  return proxyLmsSlsRequest({
-    admin: access.admin,
-    path: "/api/monobank/invoices/pending",
-    request,
-  });
-}
+export const GET = createProxyRoute({
+  auth: "admin",
+  method: "GET",
+  path: "/api/monobank/invoices/pending",
+  search: "incoming",
+  errorMessage: "Failed to load pending invoices",
+});

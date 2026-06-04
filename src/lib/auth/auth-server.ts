@@ -1,16 +1,17 @@
 import "server-only";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { NextResponse } from "next/server";
-import { cache } from "react";
+import type { NextResponse } from "next/server";
 
-import { isAdminUser } from "@/lib/auth/admin";
 import {
-  type AuthSessionRecord,
-  type AuthUser,
-  getAuth,
-} from "@/lib/auth/better-auth";
+  authErrorApiResponse,
+  type ResolvedSession,
+  resolveSession,
+  resolveSessionFor,
+  unauthorizedApiResponse,
+} from "@/lib/auth/access-core";
+import { isAdminUser } from "@/lib/auth/admin";
+import type { AuthSessionRecord, AuthUser } from "@/lib/auth/better-auth";
 
 export type UserRole = "admin" | "user";
 
@@ -21,123 +22,55 @@ export interface AuthenticatedUser {
   userId: string;
 }
 
-type ResolvedAuthAccess =
-  | {
-      authenticatedUser: AuthenticatedUser;
-      role: UserRole;
-      session: AuthSessionRecord;
-      status: "ok";
-      userId: string;
-      user: AuthUser;
-    }
-  | {
-      status: "unauthorized";
-    };
-
-type ResolvedAuthSuccess = Extract<ResolvedAuthAccess, { status: "ok" }>;
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Unexpected error";
+interface AuthSuccess {
+  authenticatedUser: AuthenticatedUser;
+  role: UserRole;
+  session: AuthSessionRecord;
+  userId: string;
+  user: AuthUser;
 }
 
 function resolveRole(user: AuthUser): UserRole {
   return isAdminUser(user) ? "admin" : "user";
 }
 
-async function resolveAuthAccess(
-  requestHeaders: Headers,
-): Promise<ResolvedAuthAccess> {
-  const session = await getAuth().api.getSession({
-    headers: requestHeaders,
-  });
-
-  if (!session) return { status: "unauthorized" };
-
-  const role = resolveRole(session.user);
-
+function toAuthSuccess({ session, user }: ResolvedSession): AuthSuccess {
+  const role = resolveRole(user);
   return {
     authenticatedUser: {
-      email: session.user.email ?? null,
-      name: session.user.name ?? null,
+      email: user.email ?? null,
+      name: user.name ?? null,
       role,
-      userId: session.user.id,
+      userId: user.id,
     },
     role,
-    session: session.session,
-    status: "ok",
-    userId: session.user.id,
-    user: session.user,
+    session,
+    userId: user.id,
+    user,
   };
 }
 
-const resolveCurrentAuthAccess = cache(async () =>
-  resolveAuthAccess(await headers()),
-);
-
-export async function requireAuthPageAccess(): Promise<ResolvedAuthSuccess> {
-  const access = await resolveCurrentAuthAccess();
-
-  if (access.status === "unauthorized") redirect("/sign-in");
-
-  return access;
-}
-
-export async function requireAuthPageAccessWithRedirect(
-  redirectUrl: string,
-): Promise<ResolvedAuthSuccess> {
-  const access = await resolveCurrentAuthAccess();
-
-  if (access.status === "unauthorized") {
-    const params = new URLSearchParams({ redirect_url: redirectUrl });
-    redirect(`/sign-in?${params.toString()}`);
-  }
-
-  return access;
+export async function requireAuthPageAccess(): Promise<AuthSuccess> {
+  const resolved = await resolveSession();
+  if (!resolved) redirect("/sign-in");
+  return toAuthSuccess(resolved);
 }
 
 type AuthApiAccess =
-  | {
-      authenticatedUser: AuthenticatedUser;
-      ok: true;
-      role: UserRole;
-      session: AuthSessionRecord;
-      userId: string;
-      user: AuthUser;
-    }
-  | {
-      ok: false;
-      response: NextResponse;
-    };
+  | (AuthSuccess & { ok: true })
+  | { ok: false; response: NextResponse };
 
 export async function requireAuthApiAccess(
   request: Request,
 ): Promise<AuthApiAccess> {
-  let access: ResolvedAuthAccess;
-
+  let resolved: ResolvedSession | null;
   try {
-    access = await resolveAuthAccess(request.headers);
+    resolved = await resolveSessionFor(request.headers);
   } catch (error) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: `Failed to authorize request: ${getErrorMessage(error)}` },
-        { status: 500 },
-      ),
-    };
+    return { ok: false, response: authErrorApiResponse(error) };
   }
 
-  if (access.status === "unauthorized")
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Unauthorized." }, { status: 401 }),
-    };
+  if (!resolved) return { ok: false, response: unauthorizedApiResponse() };
 
-  return {
-    authenticatedUser: access.authenticatedUser,
-    ok: true,
-    role: access.role,
-    session: access.session,
-    userId: access.userId,
-    user: access.user,
-  };
+  return { ok: true, ...toAuthSuccess(resolved) };
 }
