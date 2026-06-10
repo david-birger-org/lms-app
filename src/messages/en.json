@@ -487,6 +487,7 @@
       "title": "Registration payments",
       "description": "{pending} pending registration payment(s). Paid rows are counted from the canonical payment status.",
       "empty": "No registration payments yet.",
+      "emptyFiltered": "No visible registration payments. Clear filters or search.",
       "unknownName": "Unknown participant",
       "stats": {
         "total": "Total registrations",
@@ -499,8 +500,25 @@
         "status": "Status",
         "invoice": "Invoice",
         "receipt": "Receipt",
+        "source": "Source",
         "externalRef": "External ref",
-        "created": "Created"
+        "created": "Created",
+        "paymentId": "Payment ID"
+      },
+      "toolbar": {
+        "searchPlaceholder": "Search participant, email, ref, invoice...",
+        "status": "Status",
+        "filterStatus": "Filter status",
+        "source": "Source",
+        "filterSource": "Filter source",
+        "columns": "Columns",
+        "rows": "Rows",
+        "reset": "Reset"
+      },
+      "pagination": {
+        "rows": "{filtered} of {total} rows",
+        "previous": "Previous",
+        "next": "Next"
       },
       "sources": {
         "wnbf": "Production",

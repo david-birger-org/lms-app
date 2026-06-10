@@ -487,6 +487,7 @@
       "title": "Оплати реєстрацій",
       "description": "{pending} оплат реєстрацій очікують завершення. Оплачені рядки рахуються з канонічного статусу платежу.",
       "empty": "Оплат реєстрацій ще немає.",
+      "emptyFiltered": "Немає видимих оплат реєстрацій. Очистьте фільтри або пошук.",
       "unknownName": "Невідомий учасник",
       "stats": {
         "total": "Усього реєстрацій",
@@ -499,8 +500,25 @@
         "status": "Статус",
         "invoice": "Інвойс",
         "receipt": "Чек",
+        "source": "Джерело",
         "externalRef": "External ref",
-        "created": "Створено"
+        "created": "Створено",
+        "paymentId": "Payment ID"
+      },
+      "toolbar": {
+        "searchPlaceholder": "Пошук учасника, email, ref, invoice...",
+        "status": "Статус",
+        "filterStatus": "Фільтр статусу",
+        "source": "Джерело",
+        "filterSource": "Фільтр джерела",
+        "columns": "Стовпці",
+        "rows": "Рядки",
+        "reset": "Скинути"
+      },
+      "pagination": {
+        "rows": "{filtered} із {total} рядків",
+        "previous": "Назад",
+        "next": "Далі"
       },
       "sources": {
         "wnbf": "Production",
