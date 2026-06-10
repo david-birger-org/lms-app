@@ -241,6 +241,18 @@
     "proceedToPayment": "Перейти до оплати",
     "createCheckoutError": "Не вдалося створити сторінку оплати."
   },
+  "externalCheckout": {
+    "invalidLink": "Посилання на оплату недійсне або протерміноване.",
+    "title": "Підтвердіть оплату участі",
+    "description": "Після оплати буде створено фіскальний чек.",
+    "product": "Продукт",
+    "productName": "Оплата участі",
+    "customer": "Учасник",
+    "total": "Разом",
+    "creatingInvoice": "Створюємо інвойс...",
+    "proceedToPayment": "Перейти до оплати",
+    "createCheckoutError": "Не вдалося створити сторінку оплати."
+  },
   "purchases": {
     "title": "Історія покупок",
     "description": "Усі ваші покупки та їхній поточний статус.",

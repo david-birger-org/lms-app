@@ -33,5 +33,9 @@ export function getRuntimeChecks(): RuntimeCheck[] {
       label: "LMS SLS API key",
       ready: Boolean(process.env.LMS_SLS_API_KEY),
     },
+    {
+      label: "WNBF checkout secret",
+      ready: Boolean(process.env.WNBF_CHECKOUT_SECRET),
+    },
   ];
 }

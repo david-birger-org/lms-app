@@ -34,6 +34,7 @@ The app runs on `http://localhost:3000` by default.
 - `ADMIN_EMAILS` (optional comma-separated allowlist for auto-admin role assignment)
 - `LMS_SLS_BASE_URL`
 - `LMS_SLS_API_KEY`
+- `WNBF_CHECKOUT_SECRET` (shared HMAC secret for WordPress external checkout links)
 
 ## Available Scripts
 

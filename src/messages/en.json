@@ -241,6 +241,18 @@
     "proceedToPayment": "Proceed to payment",
     "createCheckoutError": "Failed to create the checkout."
   },
+  "externalCheckout": {
+    "invalidLink": "Payment link is invalid or expired.",
+    "title": "Confirm participation payment",
+    "description": "A fiscal receipt will be issued after payment.",
+    "product": "Product",
+    "productName": "Participation fee",
+    "customer": "Participant",
+    "total": "Total",
+    "creatingInvoice": "Creating invoice...",
+    "proceedToPayment": "Proceed to payment",
+    "createCheckoutError": "Failed to create the checkout."
+  },
   "purchases": {
     "title": "Purchase history",
     "description": "All your purchases and their current status.",
