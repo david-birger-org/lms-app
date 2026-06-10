@@ -4,6 +4,7 @@ import {
   buildExternalCheckoutUrl,
   verifyExternalCheckoutToken,
 } from "@/lib/server/external-checkout-token";
+import { forwardLmsSlsRequest } from "@/lib/server/lms-sls";
 
 function parseBody(value: unknown) {
   if (
@@ -21,10 +22,13 @@ function parseBody(value: unknown) {
   return { payload: "", sig: "" };
 }
 
-function responseFor(request: Request, payload: string, sig: string) {
+function dryRunResponse(request: Request, payload: string, sig: string) {
   const verified = verifyExternalCheckoutToken({ payload, sig });
 
-  if (!verified.ok)
+  if (!verified.ok) {
+    console.warn("external checkout test validation failed", {
+      reason: verified.error,
+    });
     return NextResponse.json(
       {
         error: verified.error,
@@ -32,9 +36,16 @@ function responseFor(request: Request, payload: string, sig: string) {
       },
       { status: 400 },
     );
+  }
 
+  console.info("external checkout test validation ok", {
+    amountMinor: verified.payload.amountMinor,
+    externalRef: verified.payload.externalRef,
+    productSlug: verified.payload.productSlug,
+  });
   return NextResponse.json({
     checkoutUrl: buildExternalCheckoutUrl(request.url, payload, sig),
+    mode: "dry-run",
     ok: true,
     payload: verified.payload,
   });
@@ -42,7 +53,7 @@ function responseFor(request: Request, payload: string, sig: string) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  return responseFor(
+  return dryRunResponse(
     request,
     url.searchParams.get("payload") ?? "",
     url.searchParams.get("sig") ?? "",
@@ -50,7 +61,45 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const raw = await request.json().catch(() => null);
-  const { payload, sig } = parseBody(raw);
-  return responseFor(request, payload, sig);
+  try {
+    const raw = await request.json().catch(() => null);
+    const { payload, sig } = parseBody(raw);
+    const verified = verifyExternalCheckoutToken({ payload, sig });
+
+    if (!verified.ok) {
+      console.warn("external checkout test invoice verification failed", {
+        reason: verified.error,
+      });
+      return NextResponse.json(
+        { error: verified.error, ok: false },
+        { status: 400 },
+      );
+    }
+
+    console.info("external checkout test invoice forwarding to backend", {
+      amountMinor: verified.payload.amountMinor,
+      externalRef: verified.payload.externalRef,
+      productSlug: verified.payload.productSlug,
+    });
+    const response = await forwardLmsSlsRequest({
+      body: JSON.stringify({ payload, sig }),
+      contentType: "application/json",
+      method: "POST",
+      path: "/api/external/checkout/test",
+    });
+    console.info("external checkout test invoice backend responded", {
+      externalRef: verified.payload.externalRef,
+      status: response.status,
+    });
+    return response;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected error";
+    console.error("external checkout test invoice route failed", {
+      error: message,
+    });
+    return NextResponse.json(
+      { error: `Failed to create test checkout: ${message}`, ok: false },
+      { status: 500 },
+    );
+  }
 }
