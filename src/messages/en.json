@@ -64,6 +64,10 @@
           "title": "Payment History",
           "description": "Review canonical app payment history from the payments table."
         },
+        "registrationPayments": {
+          "title": "Registration Payments",
+          "description": "Review WNBF registration payments, participants, invoices, and fiscal receipts."
+        },
         "statementAudit": {
           "title": "Statement Audit",
           "description": "Inspect the live Monobank statement feed for provider reconciliation."
@@ -477,6 +481,42 @@
       },
       "errors": {
         "update": "Failed to update contact request."
+      }
+    },
+    "registrationPayments": {
+      "title": "Registration payments",
+      "description": "{pending} pending registration payment(s). Paid rows are counted from the canonical payment status.",
+      "empty": "No registration payments yet.",
+      "unknownName": "Unknown participant",
+      "stats": {
+        "total": "Total registrations",
+        "paid": "Paid",
+        "paidAmount": "Paid amount"
+      },
+      "columns": {
+        "participant": "Participant",
+        "amount": "Amount",
+        "status": "Status",
+        "invoice": "Invoice",
+        "receipt": "Receipt",
+        "externalRef": "External ref",
+        "created": "Created"
+      },
+      "sources": {
+        "wnbf": "Production",
+        "wnbf-test": "Test"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "invoice_created": "Awaiting payment",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed"
       }
     },
     "pendingInvoices": {

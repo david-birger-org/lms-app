@@ -64,6 +64,10 @@
           "title": "Історія оплат",
           "description": "Переглядайте канонічну історію оплат застосунку з таблиці payments."
         },
+        "registrationPayments": {
+          "title": "Оплати реєстрацій",
+          "description": "Переглядайте WNBF-реєстрації, учасників, інвойси та фіскальні чеки."
+        },
         "statementAudit": {
           "title": "Аудит виписки",
           "description": "Перевіряйте live-виписку Monobank для звірки з провайдером."
@@ -477,6 +481,42 @@
       },
       "errors": {
         "update": "Не вдалося оновити заявку."
+      }
+    },
+    "registrationPayments": {
+      "title": "Оплати реєстрацій",
+      "description": "{pending} оплат реєстрацій очікують завершення. Оплачені рядки рахуються з канонічного статусу платежу.",
+      "empty": "Оплат реєстрацій ще немає.",
+      "unknownName": "Невідомий учасник",
+      "stats": {
+        "total": "Усього реєстрацій",
+        "paid": "Оплачено",
+        "paidAmount": "Сума оплат"
+      },
+      "columns": {
+        "participant": "Учасник",
+        "amount": "Сума",
+        "status": "Статус",
+        "invoice": "Інвойс",
+        "receipt": "Чек",
+        "externalRef": "External ref",
+        "created": "Створено"
+      },
+      "sources": {
+        "wnbf": "Production",
+        "wnbf-test": "Test"
+      },
+      "statuses": {
+        "draft": "Чернетка",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "invoice_created": "Очікує оплату",
+        "processing": "Обробка",
+        "paid": "Оплачено",
+        "failed": "Помилка",
+        "expired": "Термін минув",
+        "cancelled": "Скасовано",
+        "reversed": "Повернено"
       }
     },
     "pendingInvoices": {

@@ -6,6 +6,7 @@ import {
   Inbox,
   LayoutDashboard,
   Package,
+  ReceiptText,
   ScrollText,
   Settings,
   Users,
@@ -18,6 +19,7 @@ export interface DashboardRoute {
     | "invoice"
     | "pending"
     | "paymentHistory"
+    | "registrationPayments"
     | "statementAudit"
     | "products"
     | "users"
@@ -46,6 +48,11 @@ export const dashboardRoutes = [
     href: "/admin/payment-history",
     key: "paymentHistory",
     icon: History,
+  },
+  {
+    href: "/admin/registration-payments",
+    key: "registrationPayments",
+    icon: ReceiptText,
   },
   {
     href: "/admin/statement-audit",
