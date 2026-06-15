@@ -338,10 +338,10 @@ export function MonobankInvoiceForm({
                     <div className="space-y-2">
                       <Label>{t("expiresIn")}</Label>
                       <ToggleGroup
-                        value={[selectedExpirationPreset]}
+                        type="single"
+                        value={selectedExpirationPreset}
                         onValueChange={(value) => {
-                          const v = value[0];
-                          if (v) setSelectedExpirationPreset(v);
+                          if (value) setSelectedExpirationPreset(value);
                         }}
                         variant="outline"
                         className="grid w-full grid-cols-3 gap-2"

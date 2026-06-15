@@ -7,9 +7,8 @@ import {
   CircleCheckBig,
   CircleX,
   Eye,
+  Info,
 } from "lucide-react";
-
-import { Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,6 +41,7 @@ function ColumnHint({ text }: { text: string }) {
     </Tooltip>
   );
 }
+
 import {
   isFailedPaymentStatus,
   isSuccessfulPaymentStatus,
@@ -139,18 +139,26 @@ export function createMonobankPaymentsColumns(
   return [
     {
       id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={
-            !table.getIsAllPageRowsSelected() &&
-            table.getIsSomePageRowsSelected()
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          onClick={(event) => event.stopPropagation()}
-          aria-label={t("selectAll")}
-        />
-      ),
+      header: ({ table }) => {
+        const isAllPageRowsSelected = table.getIsAllPageRowsSelected();
+        const isSomePageRowsSelected = table.getIsSomePageRowsSelected();
+
+        return (
+          <Checkbox
+            checked={
+              isAllPageRowsSelected ||
+              (!isAllPageRowsSelected && isSomePageRowsSelected
+                ? "indeterminate"
+                : false)
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(value === true)
+            }
+            onClick={(event) => event.stopPropagation()}
+            aria-label={t("selectAll")}
+          />
+        );
+      },
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
