@@ -509,7 +509,11 @@
         "source": "Source",
         "externalRef": "External ref",
         "created": "Created",
-        "paymentId": "Payment ID"
+        "paymentId": "Payment ID",
+        "details": "Details"
+      },
+      "actions": {
+        "openDetails": "Open payment details for {id}"
       },
       "toolbar": {
         "searchPlaceholder": "Search participant, email, ref, invoice...",

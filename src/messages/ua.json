@@ -509,7 +509,11 @@
         "source": "Джерело",
         "externalRef": "External ref",
         "created": "Створено",
-        "paymentId": "Payment ID"
+        "paymentId": "Payment ID",
+        "details": "Деталі"
+      },
+      "actions": {
+        "openDetails": "Відкрити деталі платежу для {id}"
       },
       "toolbar": {
         "searchPlaceholder": "Пошук учасника, email, ref, invoice...",

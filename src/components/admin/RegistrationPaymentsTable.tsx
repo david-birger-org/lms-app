@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Download,
   ExternalLink,
+  Eye,
   FileSpreadsheet,
   Printer,
   ReceiptText,
@@ -29,6 +30,7 @@ import {
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +65,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { StatementItem } from "@/lib/monobank";
 import type { AdminRegistrationPaymentRecord } from "@/lib/server/admin-registration-payments";
 import { cn } from "@/lib/utils";
 
@@ -188,9 +191,13 @@ function SortableColumnHeader({
 }
 
 type RegistrationPaymentLabels = {
+  actions: {
+    openDetails: (params: { id: string }) => string;
+  };
   columns: {
     amount: string;
     created: string;
+    details: string;
     externalRef: string;
     invoice: string;
     participant: string;
@@ -210,6 +217,25 @@ function labelStatus(status: string, labels: RegistrationPaymentLabels) {
 
 function labelSource(source: string, labels: RegistrationPaymentLabels) {
   return labels.sources[source] ?? source;
+}
+
+function toPaymentDetailsSummary(
+  payment: AdminRegistrationPaymentRecord,
+): StatementItem {
+  return {
+    amount: payment.amountMinor,
+    ccy: payment.currency,
+    customerName: payment.customerName,
+    date:
+      payment.providerModifiedAt ??
+      payment.paymentUpdatedAt ??
+      payment.paymentCreatedAt,
+    destination: payment.description,
+    invoiceId: payment.invoiceId,
+    pageUrl: payment.pageUrl,
+    reference: payment.externalRef,
+    status: payment.providerStatus ?? payment.status,
+  };
 }
 
 function escapeHtml(value: string) {
@@ -549,6 +575,7 @@ function printPdf(rows: Array<Record<string, string>>, title: string) {
 
 function createColumns(
   labels: RegistrationPaymentLabels,
+  onOpenPaymentDetails: (payment: AdminRegistrationPaymentRecord) => void,
 ): ColumnDef<AdminRegistrationPaymentRecord>[] {
   return [
     {
@@ -780,6 +807,40 @@ function createColumns(
         label: labels.columns.paymentId,
       },
     },
+    {
+      id: "details",
+      header: () => <span className="sr-only">{labels.columns.details}</span>,
+      cell: ({ row }) => {
+        const payment = row.original;
+        const identifier =
+          payment.invoiceId ?? payment.externalRef ?? payment.paymentId;
+
+        return (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={labels.actions.openDetails({ id: identifier })}
+              disabled={!payment.invoiceId}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenPaymentDetails(payment);
+              }}
+            >
+              <Eye />
+            </Button>
+          </div>
+        );
+      },
+      enableHiding: false,
+      enableSorting: false,
+      meta: {
+        cellClassName: "text-right",
+        headerClassName: "text-right",
+        label: labels.columns.details,
+      },
+    },
   ];
 }
 
@@ -798,12 +859,19 @@ export function RegistrationPaymentsTable({
   const [searchValue, setSearchValue] = React.useState("");
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
+  const [activePaymentDetails, setActivePaymentDetails] =
+    React.useState<StatementItem | null>(null);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
 
   const labels = React.useMemo<RegistrationPaymentLabels>(
     () => ({
+      actions: {
+        openDetails: (params) => t("actions.openDetails", params),
+      },
       columns: {
         amount: t("columns.amount"),
         created: t("columns.created"),
+        details: t("columns.details"),
         externalRef: t("columns.externalRef"),
         invoice: t("columns.invoice"),
         participant: t("columns.participant"),
@@ -833,7 +901,24 @@ export function RegistrationPaymentsTable({
     [t],
   );
 
-  const columns = React.useMemo(() => createColumns(labels), [labels]);
+  const handleOpenPaymentDetails = React.useCallback(
+    (payment: AdminRegistrationPaymentRecord) => {
+      setActivePaymentDetails(toPaymentDetailsSummary(payment));
+      setDetailsOpen(true);
+    },
+    [],
+  );
+  const handleDetailsOpenChange = React.useCallback((open: boolean) => {
+    setDetailsOpen(open);
+
+    if (!open) {
+      setActivePaymentDetails(null);
+    }
+  }, []);
+  const columns = React.useMemo(
+    () => createColumns(labels, handleOpenPaymentDetails),
+    [handleOpenPaymentDetails, labels],
+  );
   const table = useReactTable({
     data: payments,
     columns,
@@ -1126,6 +1211,16 @@ export function RegistrationPaymentsTable({
                 </Button>
               </div>
             </div>
+          ) : null}
+          {activePaymentDetails ? (
+            <MonobankPaymentDetailsPopover
+              invoiceId={activePaymentDetails.invoiceId}
+              payment={activePaymentDetails}
+              detailsSource="database"
+              open={detailsOpen}
+              onOpenChange={handleDetailsOpenChange}
+              hideTrigger
+            />
           ) : null}
         </CardContent>
       </Card>
