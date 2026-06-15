@@ -1,5 +1,5 @@
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-
 import { RegistrationPaymentsTable } from "@/components/admin/RegistrationPaymentsTable";
 import {
   DashboardPage,
@@ -18,9 +18,27 @@ async function RegistrationPaymentsContent() {
   );
 }
 
-export default function AdminRegistrationPaymentsPage() {
+async function RegistrationPaymentsHeading() {
+  const t = await getTranslations("navigation.dashboard.routes");
+
   return (
-    <DashboardPage route="/admin/registration-payments" width="wide">
+    <DashboardSection>
+      <div className="flex flex-col gap-1 border-b pb-3">
+        <h1 className="text-base font-semibold tracking-tight sm:text-lg">
+          {t("registrationPayments.title")}
+        </h1>
+        <p className="max-w-3xl text-xs text-muted-foreground sm:text-sm">
+          {t("registrationPayments.description")}
+        </p>
+      </div>
+    </DashboardSection>
+  );
+}
+
+export default async function AdminRegistrationPaymentsPage() {
+  return (
+    <DashboardPage width="wide">
+      <RegistrationPaymentsHeading />
       <Suspense
         fallback={
           <DashboardSection>

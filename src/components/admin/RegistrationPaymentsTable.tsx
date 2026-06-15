@@ -5,8 +5,8 @@ import {
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
-  flexRender,
   type FilterFn,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -19,7 +19,10 @@ import {
 import {
   ArrowUpDown,
   ChevronDown,
+  Download,
   ExternalLink,
+  FileSpreadsheet,
+  Printer,
   ReceiptText,
   X,
 } from "lucide-react";
@@ -40,6 +43,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -183,17 +187,6 @@ function SortableColumnHeader({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
-  return (
-    <Card className="shadow-xs">
-      <CardHeader className="p-3 sm:p-4">
-        <CardDescription className="text-xs">{label}</CardDescription>
-        <CardTitle className="text-lg sm:text-2xl">{value}</CardTitle>
-      </CardHeader>
-    </Card>
-  );
-}
-
 type RegistrationPaymentLabels = {
   columns: {
     amount: string;
@@ -217,6 +210,341 @@ function labelStatus(status: string, labels: RegistrationPaymentLabels) {
 
 function labelSource(source: string, labels: RegistrationPaymentLabels) {
   return labels.sources[source] ?? source;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function escapeXml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function fileTimestamp() {
+  return new Date().toISOString().replaceAll(/[:.]/g, "-");
+}
+
+function exportFileName(extension: "pdf" | "xlsx") {
+  return `registration-payments-${fileTimestamp()}.${extension}`;
+}
+
+function getHttpUrl(value?: string) {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function sanitizeFileNamePart(value: string) {
+  return value.replaceAll(/[^a-zA-Z0-9._-]+/g, "-").replaceAll(/^-|-$/g, "");
+}
+
+function receiptFileName(payment: AdminRegistrationPaymentRecord) {
+  const identifier =
+    payment.checkId ?? payment.invoiceId ?? payment.externalRef ?? payment.id;
+  return `receipt-${sanitizeFileNamePart(identifier) || "payment"}.pdf`;
+}
+
+function createPdfBlobFromBase64(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^data:application\/pdf[^,]*,(.+)$/i);
+  const source = (match?.[1] ?? trimmed)
+    .replaceAll(/\s/g, "")
+    .replaceAll("-", "+")
+    .replaceAll("_", "/");
+  const padded = source.padEnd(
+    source.length + ((4 - (source.length % 4)) % 4),
+    "=",
+  );
+  const binary = window.atob(padded);
+  const buffer = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(buffer);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([buffer], { type: "application/pdf" });
+}
+
+function openReceiptFile(value: string, fileName: string) {
+  const url = getHttpUrl(value);
+  if (url) {
+    window.open(url, "_blank");
+    return;
+  }
+
+  const blob = createPdfBlobFromBase64(value);
+  const objectUrl = URL.createObjectURL(blob);
+  const popup = window.open(objectUrl, "_blank");
+
+  if (!popup) {
+    downloadBlob(blob, fileName);
+  }
+
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+}
+
+function getReceiptExportValue(payment: AdminRegistrationPaymentRecord) {
+  const receiptUrl =
+    getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
+  if (receiptUrl) return receiptUrl;
+  if (payment.checkFile) return payment.checkStatus ?? payment.checkId ?? "PDF";
+  return "";
+}
+
+function getExportRows(
+  rows: AdminRegistrationPaymentRecord[],
+  labels: RegistrationPaymentLabels,
+) {
+  return rows.map((payment) => ({
+    [labels.columns.participant]: payment.customerName,
+    Email: payment.customerEmail,
+    [labels.columns.amount]: (payment.amountMinor / 100).toFixed(2),
+    Currency: payment.currency,
+    [labels.columns.status]: labelStatus(payment.status, labels),
+    Provider: payment.providerStatus ?? "",
+    [labels.columns.source]: labelSource(payment.source, labels),
+    [labels.columns.externalRef]: payment.externalRef,
+    [labels.columns.paymentId]: payment.paymentId,
+    [labels.columns.invoice]: payment.invoiceId ?? "",
+    "Invoice URL": payment.pageUrl ?? "",
+    [labels.columns.receipt]: payment.checkStatus ?? payment.checkId ?? "",
+    "Receipt URL": getReceiptExportValue(payment),
+    [labels.columns.created]: formatDateTime(payment.paymentCreatedAt),
+  }));
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function crc32(data: Uint8Array) {
+  let crc = -1;
+  for (const byte of data) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i += 1) {
+      crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+    }
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+function uint16(value: number) {
+  return [value & 0xff, (value >>> 8) & 0xff];
+}
+
+function uint32(value: number) {
+  return [
+    value & 0xff,
+    (value >>> 8) & 0xff,
+    (value >>> 16) & 0xff,
+    (value >>> 24) & 0xff,
+  ];
+}
+
+function stringBytes(value: string) {
+  return new TextEncoder().encode(value);
+}
+
+function createZip(files: Array<{ name: string; content: string }>) {
+  const chunks: Uint8Array[] = [];
+  const centralDirectory: Uint8Array[] = [];
+  let offset = 0;
+
+  for (const file of files) {
+    const name = stringBytes(file.name);
+    const content = stringBytes(file.content);
+    const checksum = crc32(content);
+    const localHeader = new Uint8Array([
+      0x50,
+      0x4b,
+      0x03,
+      0x04,
+      ...uint16(20),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint32(checksum),
+      ...uint32(content.length),
+      ...uint32(content.length),
+      ...uint16(name.length),
+      ...uint16(0),
+      ...name,
+    ]);
+    chunks.push(localHeader, content);
+
+    const centralHeader = new Uint8Array([
+      0x50,
+      0x4b,
+      0x01,
+      0x02,
+      ...uint16(20),
+      ...uint16(20),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint32(checksum),
+      ...uint32(content.length),
+      ...uint32(content.length),
+      ...uint16(name.length),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint16(0),
+      ...uint32(0),
+      ...uint32(offset),
+      ...name,
+    ]);
+    centralDirectory.push(centralHeader);
+    offset += localHeader.length + content.length;
+  }
+
+  const centralOffset = offset;
+  const centralSize = centralDirectory.reduce(
+    (sum, chunk) => sum + chunk.length,
+    0,
+  );
+  const end = new Uint8Array([
+    0x50,
+    0x4b,
+    0x05,
+    0x06,
+    ...uint16(0),
+    ...uint16(0),
+    ...uint16(files.length),
+    ...uint16(files.length),
+    ...uint32(centralSize),
+    ...uint32(centralOffset),
+    ...uint16(0),
+  ]);
+
+  const parts = [...chunks, ...centralDirectory, end].map((chunk) => {
+    const buffer = new ArrayBuffer(chunk.byteLength);
+    new Uint8Array(buffer).set(chunk);
+    return buffer;
+  });
+
+  return new Blob(parts, {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+}
+
+function columnName(index: number) {
+  let value = "";
+  let n = index + 1;
+  while (n > 0) {
+    const remainder = (n - 1) % 26;
+    value = String.fromCharCode(65 + remainder) + value;
+    n = Math.floor((n - 1) / 26);
+  }
+  return value;
+}
+
+function createXlsxBlob(rows: Array<Record<string, string>>) {
+  const headers = Object.keys(rows[0] ?? {});
+  const sheetRows = [headers, ...rows.map((row) => headers.map((h) => row[h]))];
+  const sheetData = sheetRows
+    .map(
+      (row, rowIndex) =>
+        `<row r="${rowIndex + 1}">${row
+          .map((value, columnIndex) => {
+            const cell = `${columnName(columnIndex)}${rowIndex + 1}`;
+            return `<c r="${cell}" t="inlineStr"><is><t>${escapeXml(
+              value ?? "",
+            )}</t></is></c>`;
+          })
+          .join("")}</row>`,
+    )
+    .join("");
+
+  return createZip([
+    {
+      name: "[Content_Types].xml",
+      content:
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
+    },
+    {
+      name: "_rels/.rels",
+      content:
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    },
+    {
+      name: "xl/workbook.xml",
+      content:
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Registration payments" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      content:
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
+    },
+    {
+      name: "xl/worksheets/sheet1.xml",
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetData}</sheetData></worksheet>`,
+    },
+  ]);
+}
+
+function printPdf(rows: Array<Record<string, string>>, title: string) {
+  const headers = Object.keys(rows[0] ?? {});
+  const body = rows
+    .map(
+      (row) =>
+        `<tr>${headers
+          .map((header) => `<td>${escapeHtml(row[header] ?? "")}</td>`)
+          .join("")}</tr>`,
+    )
+    .join("");
+  const table = `<table><thead><tr>${headers
+    .map((header) => `<th>${escapeHtml(header)}</th>`)
+    .join("")}</tr></thead><tbody>${body}</tbody></table>`;
+  const popup = window.open("", "_blank", "width=1200,height=800");
+  if (!popup) return;
+  popup.document.write(`<!doctype html>
+<html>
+<head>
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 24px; color: #111; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    th, td { border: 1px solid #ddd; padding: 4px 5px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 700; }
+    @media print { body { margin: 12mm; } }
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(title)}</h1>
+  ${table}
+  <script>window.addEventListener("load", () => setTimeout(() => window.print(), 100));</script>
+</body>
+</html>`);
+  popup.document.close();
 }
 
 function createColumns(
@@ -336,20 +664,37 @@ function createColumns(
         <SortableColumnHeader column={column} title={labels.columns.receipt} />
       ),
       cell: ({ row }) => {
-        const checkHref = row.original.checkTaxUrl ?? row.original.checkFile;
-        if (checkHref) {
-          return (
+        const payment = row.original;
+        const checkHref =
+          getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
+        if (checkHref || payment.checkFile) {
+          const label = payment.checkStatus ?? payment.checkId ?? "PDF";
+          const className =
+            "inline-flex max-w-[5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[9rem] sm:text-xs";
+          return checkHref ? (
             <a
               href={checkHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex max-w-[5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[9rem] sm:text-xs"
+              className={className}
             >
               <ReceiptText className="size-3 shrink-0" />
-              <span className="truncate">
-                {row.original.checkStatus ?? row.original.checkId}
-              </span>
+              <span className="truncate">{label}</span>
             </a>
+          ) : (
+            <button
+              type="button"
+              className={className}
+              onClick={() =>
+                openReceiptFile(
+                  payment.checkFile ?? "",
+                  receiptFileName(payment),
+                )
+              }
+            >
+              <ReceiptText className="size-3 shrink-0" />
+              <span className="truncate">{label}</span>
+            </button>
           );
         }
         if (row.original.checkStatus) {
@@ -551,6 +896,10 @@ export function RegistrationPaymentsTable({
           column.getIsVisible() !==
             (defaultColumnVisibility[column.id] ?? true),
       );
+  const exportPayments = table
+    .getSortedRowModel()
+    .rows.map((row) => row.original);
+  const exportRows = getExportRows(exportPayments, labels);
 
   function handleArrayFilterToggle(
     columnId: string,
@@ -579,25 +928,34 @@ export function RegistrationPaymentsTable({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <StatCard label={t("stats.total")} value={payments.length} />
-        <StatCard label={t("stats.paid")} value={paidCount} />
-        <StatCard
-          label={t("stats.paidAmount")}
-          value={formatMoney(totalAmount, "UAH")}
-        />
-      </div>
-      <Card className="shadow-xs">
-        <CardHeader className="border-b px-3 py-3 sm:px-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-1">
-              <CardTitle>{t("title")}</CardTitle>
-              <CardDescription>
+    <div className="space-y-2">
+      <Card className="gap-0 rounded-xl py-0 shadow-xs">
+        <CardHeader className="rounded-t-xl border-b px-3 py-2 !pb-2 sm:px-4">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <CardTitle className="text-sm font-semibold sm:text-base">
+                  {t("title")}
+                </CardTitle>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
+                  <span>{t("summary.total", { count: payments.length })}</span>
+                  <span className="text-border">/</span>
+                  <span>{t("summary.paid", { count: paidCount })}</span>
+                  <span className="text-border">/</span>
+                  <span>
+                    {t("summary.amount", {
+                      amount: formatMoney(totalAmount, "UAH"),
+                    })}
+                  </span>
+                  <span className="text-border">/</span>
+                  <span>{t("summary.pending", { count: pendingCount })}</span>
+                </div>
+              </div>
+              <CardDescription className="text-xs">
                 {t("description", { pending: pendingCount })}
               </CardDescription>
             </div>
-            <div className="flex flex-col gap-2 md:flex-row lg:justify-end">
+            <div className="flex flex-col gap-1.5 md:flex-row xl:justify-end">
               <Input
                 value={searchValue}
                 onChange={(event) => {
@@ -605,9 +963,9 @@ export function RegistrationPaymentsTable({
                   table.setPageIndex(0);
                 }}
                 placeholder={t("toolbar.searchPlaceholder")}
-                className="h-8 text-xs md:w-64"
+                className="h-7 rounded-lg text-xs md:w-64"
               />
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 <FilterMenu
                   label={t("toolbar.status")}
                   menuLabel={t("toolbar.filterStatus")}
@@ -629,6 +987,19 @@ export function RegistrationPaymentsTable({
                   }
                 />
                 <ColumnsMenu table={table} label={t("toolbar.columns")} />
+                <ExportMenu
+                  disabled={exportRows.length === 0}
+                  label={t("toolbar.export")}
+                  pdfLabel={t("toolbar.exportPdf")}
+                  xlsxLabel={t("toolbar.exportXlsx")}
+                  onExportPdf={() => printPdf(exportRows, t("title"))}
+                  onExportXlsx={() =>
+                    downloadBlob(
+                      createXlsxBlob(exportRows),
+                      exportFileName("xlsx"),
+                    )
+                  }
+                />
                 <Select
                   value={String(table.getState().pagination.pageSize)}
                   onValueChange={(value) => {
@@ -636,7 +1007,7 @@ export function RegistrationPaymentsTable({
                     table.setPageIndex(0);
                   }}
                 >
-                  <SelectTrigger className="h-8 w-16 text-xs">
+                  <SelectTrigger className="h-7 w-16 rounded-lg text-xs">
                     <SelectValue placeholder={t("toolbar.rows")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -651,7 +1022,7 @@ export function RegistrationPaymentsTable({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2 text-xs"
+                    className="h-7 rounded-lg px-2 text-xs"
                     onClick={resetTable}
                   >
                     <X className="size-3" />
@@ -674,7 +1045,7 @@ export function RegistrationPaymentsTable({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "h-7 px-1.5 py-1 sm:px-2",
+                            "h-6 px-1.5 py-1 sm:px-2",
                             meta?.headerClassName,
                           )}
                         >
@@ -700,7 +1071,7 @@ export function RegistrationPaymentsTable({
                           <TableCell
                             key={cell.id}
                             className={cn(
-                              "px-1.5 py-1.5 align-top sm:px-2",
+                              "px-1.5 py-1 align-top sm:px-2",
                               meta?.cellClassName,
                             )}
                           >
@@ -727,7 +1098,7 @@ export function RegistrationPaymentsTable({
             </Table>
           </div>
           {payments.length > 0 ? (
-            <div className="flex items-center justify-between gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between gap-3 border-t px-3 py-1.5 text-xs text-muted-foreground">
               <span>
                 {t("pagination.rows", {
                   filtered: table.getFilteredRowModel().rows.length,
@@ -738,7 +1109,7 @@ export function RegistrationPaymentsTable({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2 text-xs"
+                  className="h-7 rounded-lg px-2 text-xs"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
                 >
@@ -747,7 +1118,7 @@ export function RegistrationPaymentsTable({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2 text-xs"
+                  className="h-7 rounded-lg px-2 text-xs"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                 >
@@ -787,7 +1158,11 @@ function FilterMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 rounded-lg px-2 text-xs"
+        >
           {label}
           <ChevronDown className="size-3" />
         </Button>
@@ -820,7 +1195,11 @@ function ColumnsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 rounded-lg px-2 text-xs"
+        >
           {label}
           <ChevronDown className="size-3" />
         </Button>
@@ -844,6 +1223,51 @@ function ColumnsMenu({
                 </DropdownMenuCheckboxItem>
               );
             })}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ExportMenu({
+  disabled,
+  label,
+  onExportPdf,
+  onExportXlsx,
+  pdfLabel,
+  xlsxLabel,
+}: {
+  disabled: boolean;
+  label: string;
+  onExportPdf: () => void;
+  onExportXlsx: () => void;
+  pdfLabel: string;
+  xlsxLabel: string;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 rounded-lg px-2 text-xs"
+          disabled={disabled}
+        >
+          <Download className="size-3" />
+          {label}
+          <ChevronDown className="size-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={onExportXlsx}>
+            <FileSpreadsheet className="size-4" />
+            {xlsxLabel}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportPdf}>
+            <Printer className="size-4" />
+            {pdfLabel}
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

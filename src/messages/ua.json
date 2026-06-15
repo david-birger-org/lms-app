@@ -494,6 +494,12 @@
         "paid": "Оплачено",
         "paidAmount": "Сума оплат"
       },
+      "summary": {
+        "total": "{count} усього",
+        "paid": "{count} оплачено",
+        "amount": "{amount}",
+        "pending": "{count} очікує"
+      },
       "columns": {
         "participant": "Учасник",
         "amount": "Сума",
@@ -512,6 +518,9 @@
         "source": "Джерело",
         "filterSource": "Фільтр джерела",
         "columns": "Стовпці",
+        "export": "Експорт",
+        "exportPdf": "PDF",
+        "exportXlsx": "XLSX",
         "rows": "Рядки",
         "reset": "Скинути"
       },

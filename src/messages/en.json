@@ -494,6 +494,12 @@
         "paid": "Paid",
         "paidAmount": "Paid amount"
       },
+      "summary": {
+        "total": "{count} total",
+        "paid": "{count} paid",
+        "amount": "{amount}",
+        "pending": "{count} pending"
+      },
       "columns": {
         "participant": "Participant",
         "amount": "Amount",
@@ -512,6 +518,9 @@
         "source": "Source",
         "filterSource": "Filter source",
         "columns": "Columns",
+        "export": "Export",
+        "exportPdf": "PDF",
+        "exportXlsx": "XLSX",
         "rows": "Rows",
         "reset": "Reset"
       },
