@@ -106,11 +106,11 @@ export function ContactRequestsManager({
           <CardDescription>{t("description")}</CardDescription>
         </div>
         <ToggleGroup
+          type="single"
           aria-label={t("filter.label")}
-          value={[filter]}
+          value={filter}
           onValueChange={(value) => {
-            const next = value[0] as RequestsFilter | undefined;
-            if (next) setFilter(next);
+            if (value) setFilter(value as RequestsFilter);
           }}
           variant="outline"
           className="self-start sm:self-auto"
