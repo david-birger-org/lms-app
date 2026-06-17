@@ -149,7 +149,6 @@ function getSearchValue(payment: AdminRegistrationPaymentRecord) {
     payment.invoiceId,
     payment.pageUrl,
     payment.checkId,
-    payment.checkStatus,
     payment.checkTaxUrl,
     payment.productSlug,
     payment.source,
@@ -294,6 +293,19 @@ function receiptFileName(payment: AdminRegistrationPaymentRecord) {
   return `receipt-${sanitizeFileNamePart(identifier) || "payment"}.pdf`;
 }
 
+function getReceiptFile(payment: AdminRegistrationPaymentRecord) {
+  const url = getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
+  if (url) return { kind: "url" as const, value: url };
+  if (payment.checkFile) {
+    return { kind: "pdf" as const, value: payment.checkFile };
+  }
+  return undefined;
+}
+
+function getReceiptLabel(payment: AdminRegistrationPaymentRecord) {
+  return payment.checkId ?? "PDF";
+}
+
 function createPdfBlobFromBase64(value: string) {
   const trimmed = value.trim();
   const match = trimmed.match(/^data:application\/pdf[^,]*,(.+)$/i);
@@ -335,11 +347,10 @@ function openReceiptFile(value: string, fileName: string) {
 }
 
 function getReceiptExportValue(payment: AdminRegistrationPaymentRecord) {
-  const receiptUrl =
-    getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
-  if (receiptUrl) return receiptUrl;
-  if (payment.checkFile) return payment.checkStatus ?? payment.checkId ?? "PDF";
-  return "";
+  const receiptFile = getReceiptFile(payment);
+  if (!receiptFile) return "";
+  if (receiptFile.kind === "url") return receiptFile.value;
+  return payment.checkId ?? "PDF saved";
 }
 
 function getExportRows(
@@ -358,8 +369,7 @@ function getExportRows(
     [labels.columns.paymentId]: payment.paymentId,
     [labels.columns.invoice]: payment.invoiceId ?? "",
     "Invoice URL": payment.pageUrl ?? "",
-    [labels.columns.receipt]: payment.checkStatus ?? payment.checkId ?? "",
-    "Receipt URL": getReceiptExportValue(payment),
+    [labels.columns.receipt]: getReceiptExportValue(payment),
     [labels.columns.created]: formatDateTime(payment.paymentCreatedAt),
   }));
 }
@@ -697,52 +707,45 @@ function createColumns(
       },
     },
     {
-      accessorKey: "checkStatus",
+      id: "receipt",
+      accessorFn: (payment) =>
+        getReceiptFile(payment) ? getReceiptLabel(payment) : "",
       header: ({ column }) => (
         <SortableColumnHeader column={column} title={labels.columns.receipt} />
       ),
       cell: ({ row }) => {
         const payment = row.original;
-        const checkHref =
-          getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
-        if (checkHref || payment.checkFile) {
-          const label = payment.checkStatus ?? payment.checkId ?? "PDF";
-          const className =
-            "inline-flex max-w-[5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[9rem] sm:text-xs";
-          return checkHref ? (
-            <a
-              href={checkHref}
-              target="_blank"
-              rel="noreferrer"
-              className={className}
-            >
-              <ReceiptText className="size-3 shrink-0" />
-              <span className="truncate">{label}</span>
-            </a>
-          ) : (
-            <button
-              type="button"
-              className={className}
-              onClick={() =>
-                openReceiptFile(
-                  payment.checkFile ?? "",
-                  receiptFileName(payment),
-                )
-              }
-            >
-              <ReceiptText className="size-3 shrink-0" />
-              <span className="truncate">{label}</span>
-            </button>
-          );
+        const receiptFile = getReceiptFile(payment);
+        if (!receiptFile) {
+          return <span className="text-muted-foreground">-</span>;
         }
-        if (row.original.checkStatus) {
-          return (
-            <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
-              {row.original.checkStatus}
-            </Badge>
-          );
-        }
-        return <span className="text-muted-foreground">-</span>;
+
+        const label = getReceiptLabel(payment);
+        const className =
+          "inline-flex max-w-[5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[9rem] sm:text-xs";
+
+        return receiptFile.kind === "url" ? (
+          <a
+            href={receiptFile.value}
+            target="_blank"
+            rel="noreferrer"
+            className={className}
+          >
+            <ReceiptText className="size-3 shrink-0" />
+            <span className="truncate">{label}</span>
+          </a>
+        ) : (
+          <button
+            type="button"
+            className={className}
+            onClick={() =>
+              openReceiptFile(receiptFile.value, receiptFileName(payment))
+            }
+          >
+            <ReceiptText className="size-3 shrink-0" />
+            <span className="truncate">{label}</span>
+          </button>
+        );
       },
       meta: {
         label: labels.columns.receipt,
