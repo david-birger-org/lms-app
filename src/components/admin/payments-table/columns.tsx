@@ -10,6 +10,7 @@ import {
   Info,
 } from "lucide-react";
 
+import { adminDataTableStyles } from "@/components/admin/AdminDataTableShell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -22,6 +23,7 @@ import {
   formatMonobankShortDate,
   type StatementItem,
 } from "@/lib/monobank";
+import { getPaymentStatusKind, normalizePaymentStatus } from "@/lib/payments";
 
 function ColumnHint({ text }: { text: string }) {
   return (
@@ -41,8 +43,6 @@ function ColumnHint({ text }: { text: string }) {
     </Tooltip>
   );
 }
-
-import { getPaymentStatusKind, normalizePaymentStatus } from "@/lib/payments";
 
 function StatusIcon({ status }: { status?: string | null }) {
   const statusKind = getPaymentStatusKind(status);
@@ -96,10 +96,12 @@ function SortableColumnHeader({
   return (
     <Button
       variant="ghost"
+      size="sm"
+      className={adminDataTableStyles.sortButton}
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <ArrowUpDown />
+      <ArrowUpDown className={adminDataTableStyles.icon} />
     </Button>
   );
 }
@@ -184,7 +186,7 @@ export function createMonobankPaymentsColumns(
         }
 
         return (
-          <div className="text-xs sm:text-sm">
+          <div className="whitespace-nowrap text-[11px] text-muted-foreground">
             {formatMonobankShortDate(value)}
           </div>
         );
@@ -196,7 +198,7 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("description")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[8.5rem] truncate text-xs sm:max-w-72 sm:text-sm">
+        <div className="max-w-[8.5rem] truncate text-xs sm:max-w-72">
           {row.original.destination ?? "-"}
         </div>
       ),
@@ -205,7 +207,7 @@ export function createMonobankPaymentsColumns(
       accessorKey: "maskedPan",
       header: t("card"),
       cell: ({ row }) => (
-        <div className="text-xs sm:text-sm">
+        <div className="whitespace-nowrap text-[11px] text-muted-foreground">
           {row.original.maskedPan ?? "-"}
         </div>
       ),
@@ -216,7 +218,7 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("reference")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none sm:text-xs">
+        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none">
           {row.original.reference?.split("-").at(-1) ?? "-"}
         </div>
       ),
@@ -230,7 +232,7 @@ export function createMonobankPaymentsColumns(
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right text-xs font-medium sm:text-sm">
+        <div className="whitespace-nowrap text-right text-xs font-medium">
           {formatMonobankMoney(row.original.amount, row.original.ccy)}
         </div>
       ),
@@ -244,7 +246,7 @@ export function createMonobankPaymentsColumns(
         </div>
       ),
       cell: ({ row }) => (
-        <div className="text-right text-xs font-medium sm:text-sm">
+        <div className="whitespace-nowrap text-right text-xs font-medium">
           {formatMonobankMoney(row.original.profitAmount, row.original.ccy)}
         </div>
       ),
@@ -255,7 +257,7 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("invoiceId")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none sm:text-xs">
+        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none">
           {row.original.invoiceId ?? "-"}
         </div>
       ),

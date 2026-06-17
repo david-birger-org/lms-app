@@ -559,8 +559,21 @@
       "title": "Pending invoices",
       "description": "Invoices awaiting payment from the Monobank statement. Cancel invoices that are no longer needed.",
       "refresh": "Refresh",
+      "reset": "Reset",
+      "rows": "Rows",
+      "searchPlaceholder": "Search invoice, customer, ref...",
       "loading": "Loading statement...",
       "empty": "No pending invoices.",
+      "emptyFiltered": "No visible pending invoices. Clear filters or search.",
+      "summary": {
+        "total": "{count} pending",
+        "visible": "{count} visible"
+      },
+      "pagination": {
+        "rows": "{filtered} of {total} rows",
+        "previous": "Previous",
+        "next": "Next"
+      },
       "columns": {
         "invoiceId": "Invoice ID",
         "description": "Description",
