@@ -792,8 +792,11 @@ function createColumns(
         />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[11rem] truncate font-mono text-[11px]">
-          {row.original.externalRef}
+        <div
+          className="max-w-[8rem] whitespace-nowrap font-mono text-[11px]"
+          title={row.original.externalRef}
+        >
+          {compactIdentifier(row.original.externalRef, 9, 5)}
         </div>
       ),
       meta: {
