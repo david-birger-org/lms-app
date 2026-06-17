@@ -30,16 +30,15 @@ import {
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import {
+  AdminDataTableCard,
+  AdminDataTablePagination,
+  AdminDataTableScroll,
+  adminDataTableStyles,
+} from "@/components/admin/AdminDataTableShell";
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -180,11 +179,11 @@ function SortableColumnHeader({
     <Button
       variant="ghost"
       size="sm"
-      className={cn("h-7 gap-1 px-1.5 text-[11px] sm:text-xs", className)}
+      className={cn(adminDataTableStyles.sortButton, className)}
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <ArrowUpDown className="size-3" />
+      <ArrowUpDown className={adminDataTableStyles.icon} />
     </Button>
   );
 }
@@ -1028,216 +1027,196 @@ export function RegistrationPaymentsTable({
 
   return (
     <div className="space-y-2">
-      <Card className="gap-0 rounded-xl py-0 shadow-xs">
-        <CardHeader className="rounded-t-xl border-b px-3 py-2 !pb-2 sm:px-4">
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0 space-y-1">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <CardTitle className="text-sm font-semibold sm:text-base">
-                  {t("title")}
-                </CardTitle>
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground sm:text-xs">
-                  <span>{t("summary.total", { count: payments.length })}</span>
-                  <span className="text-border">/</span>
-                  <span>{t("summary.paid", { count: paidCount })}</span>
-                  <span className="text-border">/</span>
-                  <span>
-                    {t("summary.amount", {
-                      amount: formatMoney(totalAmount, "UAH"),
-                    })}
-                  </span>
-                  <span className="text-border">/</span>
-                  <span>{t("summary.pending", { count: pendingCount })}</span>
-                </div>
-              </div>
-              <CardDescription className="text-xs">
-                {t("description", { pending: pendingCount })}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col gap-1.5 md:flex-row xl:justify-end">
-              <Input
-                value={searchValue}
-                onChange={(event) => {
-                  setSearchValue(event.target.value);
+      <AdminDataTableCard
+        title={t("title")}
+        description={t("description", { pending: pendingCount })}
+        summaryItems={[
+          {
+            content: t("summary.total", { count: payments.length }),
+            id: "total",
+          },
+          { content: t("summary.paid", { count: paidCount }), id: "paid" },
+          {
+            content: t("summary.amount", {
+              amount: formatMoney(totalAmount, "UAH"),
+            }),
+            id: "amount",
+          },
+          {
+            content: t("summary.pending", { count: pendingCount }),
+            id: "pending",
+          },
+        ]}
+        toolbar={
+          <div className={adminDataTableStyles.toolbar}>
+            <Input
+              value={searchValue}
+              onChange={(event) => {
+                setSearchValue(event.target.value);
+                table.setPageIndex(0);
+              }}
+              placeholder={t("toolbar.searchPlaceholder")}
+              className={adminDataTableStyles.search}
+            />
+            <div className={adminDataTableStyles.actionRow}>
+              <FilterMenu
+                label={t("toolbar.status")}
+                menuLabel={t("toolbar.filterStatus")}
+                options={statusOptions}
+                selectedOptions={selectedStatuses}
+                getOptionLabel={(status) => labelStatus(status, labels)}
+                onToggle={(status, checked) =>
+                  handleArrayFilterToggle("status", status, checked)
+                }
+              />
+              <FilterMenu
+                label={t("toolbar.source")}
+                menuLabel={t("toolbar.filterSource")}
+                options={sourceOptions}
+                selectedOptions={selectedSources}
+                getOptionLabel={(source) => labelSource(source, labels)}
+                onToggle={(source, checked) =>
+                  handleArrayFilterToggle("source", source, checked)
+                }
+              />
+              <ColumnsMenu table={table} label={t("toolbar.columns")} />
+              <ExportMenu
+                disabled={exportRows.length === 0}
+                label={t("toolbar.export")}
+                pdfLabel={t("toolbar.exportPdf")}
+                xlsxLabel={t("toolbar.exportXlsx")}
+                onExportPdf={() => printPdf(exportRows, t("title"))}
+                onExportXlsx={() =>
+                  downloadBlob(
+                    createXlsxBlob(exportRows),
+                    exportFileName("xlsx"),
+                  )
+                }
+              />
+              <Select
+                value={String(table.getState().pagination.pageSize)}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
                   table.setPageIndex(0);
                 }}
-                placeholder={t("toolbar.searchPlaceholder")}
-                className="h-7 rounded-lg text-xs md:w-64"
-              />
-              <div className="flex flex-wrap gap-1">
-                <FilterMenu
-                  label={t("toolbar.status")}
-                  menuLabel={t("toolbar.filterStatus")}
-                  options={statusOptions}
-                  selectedOptions={selectedStatuses}
-                  getOptionLabel={(status) => labelStatus(status, labels)}
-                  onToggle={(status, checked) =>
-                    handleArrayFilterToggle("status", status, checked)
-                  }
-                />
-                <FilterMenu
-                  label={t("toolbar.source")}
-                  menuLabel={t("toolbar.filterSource")}
-                  options={sourceOptions}
-                  selectedOptions={selectedSources}
-                  getOptionLabel={(source) => labelSource(source, labels)}
-                  onToggle={(source, checked) =>
-                    handleArrayFilterToggle("source", source, checked)
-                  }
-                />
-                <ColumnsMenu table={table} label={t("toolbar.columns")} />
-                <ExportMenu
-                  disabled={exportRows.length === 0}
-                  label={t("toolbar.export")}
-                  pdfLabel={t("toolbar.exportPdf")}
-                  xlsxLabel={t("toolbar.exportXlsx")}
-                  onExportPdf={() => printPdf(exportRows, t("title"))}
-                  onExportXlsx={() =>
-                    downloadBlob(
-                      createXlsxBlob(exportRows),
-                      exportFileName("xlsx"),
-                    )
-                  }
-                />
-                <Select
-                  value={String(table.getState().pagination.pageSize)}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value));
-                    table.setPageIndex(0);
-                  }}
+              >
+                <SelectTrigger className={adminDataTableStyles.select}>
+                  <SelectValue placeholder={t("toolbar.rows")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {pageSizeOptions.map((pageSize) => (
+                    <SelectItem key={pageSize} value={String(pageSize)}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {hasActiveState ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={adminDataTableStyles.control}
+                  onClick={resetTable}
                 >
-                  <SelectTrigger className="h-7 w-16 rounded-lg text-xs">
-                    <SelectValue placeholder={t("toolbar.rows")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pageSizeOptions.map((pageSize) => (
-                      <SelectItem key={pageSize} value={String(pageSize)}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {hasActiveState ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 rounded-lg px-2 text-xs"
-                    onClick={resetTable}
-                  >
-                    <X className="size-3" />
-                    {t("toolbar.reset")}
-                  </Button>
-                ) : null}
-              </div>
+                  <X className={adminDataTableStyles.icon} />
+                  {t("toolbar.reset")}
+                </Button>
+              ) : null}
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table className="text-[11px] sm:text-xs">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const meta = getColumnMeta(header.column);
+        }
+      >
+        <AdminDataTableScroll>
+          <Table className={adminDataTableStyles.table}>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const meta = getColumnMeta(header.column);
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          adminDataTableStyles.headerCell,
+                          meta?.headerClassName,
+                        )}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => {
+                      const meta = getColumnMeta(cell.column);
                       return (
-                        <TableHead
-                          key={header.id}
+                        <TableCell
+                          key={cell.id}
                           className={cn(
-                            "h-6 px-1.5 py-1 sm:px-2",
-                            meta?.headerClassName,
+                            adminDataTableStyles.cell,
+                            meta?.cellClassName,
                           )}
                         >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
                       );
                     })}
                   </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => {
-                        const meta = getColumnMeta(cell.column);
-                        return (
-                          <TableCell
-                            key={cell.id}
-                            className={cn(
-                              "px-1.5 py-1 align-top sm:px-2",
-                              meta?.cellClassName,
-                            )}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={table.getVisibleLeafColumns().length}
-                      className="h-24 text-center text-sm text-muted-foreground"
-                    >
-                      {payments.length === 0 ? t("empty") : t("emptyFiltered")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          {payments.length > 0 ? (
-            <div className="flex items-center justify-between gap-3 border-t px-3 py-1.5 text-xs text-muted-foreground">
-              <span>
-                {t("pagination.rows", {
-                  filtered: table.getFilteredRowModel().rows.length,
-                  total: payments.length,
-                })}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 rounded-lg px-2 text-xs"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  {t("pagination.previous")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 rounded-lg px-2 text-xs"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  {t("pagination.next")}
-                </Button>
-              </div>
-            </div>
-          ) : null}
-          {activePaymentDetails ? (
-            <MonobankPaymentDetailsPopover
-              invoiceId={activePaymentDetails.invoiceId}
-              payment={activePaymentDetails}
-              detailsSource="database"
-              open={detailsOpen}
-              onOpenChange={handleDetailsOpenChange}
-              hideTrigger
-            />
-          ) : null}
-        </CardContent>
-      </Card>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getVisibleLeafColumns().length}
+                    className={adminDataTableStyles.emptyCell}
+                  >
+                    {payments.length === 0 ? t("empty") : t("emptyFiltered")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </AdminDataTableScroll>
+        <AdminDataTablePagination
+          hidden={payments.length === 0}
+          label={
+            <span>
+              {t("pagination.rows", {
+                filtered: table.getFilteredRowModel().rows.length,
+                total: payments.length,
+              })}
+            </span>
+          }
+          previousLabel={t("pagination.previous")}
+          nextLabel={t("pagination.next")}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+        />
+        {activePaymentDetails ? (
+          <MonobankPaymentDetailsPopover
+            invoiceId={activePaymentDetails.invoiceId}
+            payment={activePaymentDetails}
+            detailsSource="database"
+            open={detailsOpen}
+            onOpenChange={handleDetailsOpenChange}
+            hideTrigger
+          />
+        ) : null}
+      </AdminDataTableCard>
     </div>
   );
 }
@@ -1270,10 +1249,10 @@ function FilterMenu({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 rounded-lg px-2 text-xs"
+          className={adminDataTableStyles.control}
         >
           {label}
-          <ChevronDown className="size-3" />
+          <ChevronDown className={adminDataTableStyles.icon} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -1307,10 +1286,10 @@ function ColumnsMenu({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 rounded-lg px-2 text-xs"
+          className={adminDataTableStyles.control}
         >
           {label}
-          <ChevronDown className="size-3" />
+          <ChevronDown className={adminDataTableStyles.icon} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -1359,12 +1338,12 @@ function ExportMenu({
         <Button
           variant="outline"
           size="sm"
-          className="h-7 rounded-lg px-2 text-xs"
+          className={adminDataTableStyles.control}
           disabled={disabled}
         >
-          <Download className="size-3" />
+          <Download className={adminDataTableStyles.icon} />
           {label}
-          <ChevronDown className="size-3" />
+          <ChevronDown className={adminDataTableStyles.icon} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

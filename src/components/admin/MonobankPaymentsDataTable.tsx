@@ -16,19 +16,14 @@ import {
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import {
+  AdminDataTableCard,
+  AdminDataTablePagination,
+} from "@/components/admin/AdminDataTableShell";
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
 import { createMonobankPaymentsColumns } from "@/components/admin/payments-table/columns";
-import { MonobankPaymentsTablePagination } from "@/components/admin/payments-table/pagination";
-import { MonobankPaymentsTableStats } from "@/components/admin/payments-table/stats";
 import { MonobankPaymentsTableContent } from "@/components/admin/payments-table/table-content";
 import { MonobankPaymentsTableToolbar } from "@/components/admin/payments-table/toolbar";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   formatMonobankDate,
   formatMonobankMoney,
@@ -329,64 +324,88 @@ export function MonobankPaymentsDataTable({
     hasActiveState && filteredRowCount === 0
       ? t("empty.resetTable")
       : undefined;
+  const visibleSelectedRowCount =
+    table.getFilteredSelectedRowModel().rows.length;
+  const selectedRowCount = table.getSelectedRowModel().rows.length;
+  const selectionLabel =
+    visibleSelectedRowCount === selectedRowCount
+      ? t("pagination.rowsSelected", {
+          visible: selectedRowCount,
+          filtered: filteredRowCount,
+        })
+      : t("pagination.rowsSelectedTotal", {
+          visible: visibleSelectedRowCount,
+          filtered: filteredRowCount,
+          total: selectedRowCount,
+        });
 
   return (
-    <Card className="shadow-xs">
-      <CardHeader className="border-b px-3 sm:px-6">
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="px-3 pb-3 pt-4 sm:px-6 sm:pb-6">
-        <div className="w-full">
-          <MonobankPaymentsTableToolbar
-            table={table}
-            exportFilePrefix={
-              detailsSource === "provider" ? "statement" : "payment-history"
-            }
-            isLoading={isLoading}
-            onRefresh={onRefresh}
-            onSearchChange={table.setGlobalFilter}
-            selectedStatuses={selectedStatuses}
-            selectedRows={selectedRows}
-            searchValue={searchValue}
-            statusOptions={statusOptions}
-            getStatusLabel={getStatusLabel}
-            selectedPaymentIdentifiers={selectedPaymentIdentifiers}
-            hasActiveState={hasActiveState}
-            onStatusToggle={handleStatusToggle}
-            onReset={resetTable}
-            onClearSelection={() => table.resetRowSelection(true)}
+    <AdminDataTableCard
+      title={title}
+      description={description}
+      summaryItems={
+        showStats
+          ? [
+              { content: `${t("stats.total")} ${data.length}`, id: "total" },
+              {
+                content: `${t("stats.settled")} ${successfulCount}`,
+                id: "settled",
+              },
+            ]
+          : undefined
+      }
+      toolbar={
+        <MonobankPaymentsTableToolbar
+          table={table}
+          exportFilePrefix={
+            detailsSource === "provider" ? "statement" : "payment-history"
+          }
+          isLoading={isLoading}
+          onRefresh={onRefresh}
+          onSearchChange={table.setGlobalFilter}
+          selectedStatuses={selectedStatuses}
+          selectedRows={selectedRows}
+          searchValue={searchValue}
+          statusOptions={statusOptions}
+          getStatusLabel={getStatusLabel}
+          selectedPaymentIdentifiers={selectedPaymentIdentifiers}
+          hasActiveState={hasActiveState}
+          onStatusToggle={handleStatusToggle}
+          onReset={resetTable}
+          onClearSelection={() => table.resetRowSelection(true)}
+        />
+      }
+    >
+      <div className="w-full">
+        <MonobankPaymentsTableContent
+          table={table}
+          emptyActionLabel={emptyActionLabel}
+          emptyMessage={resolvedEmptyMessage}
+          onEmptyAction={emptyActionLabel ? resetTable : undefined}
+        />
+
+        {activePayment ? (
+          <MonobankPaymentDetailsPopover
+            invoiceId={activePayment.invoiceId}
+            payment={activePayment}
+            detailsSource={detailsSource}
+            open={detailsOpen}
+            onOpenChange={handleDetailsOpenChange}
+            onInvoiceChanged={onInvoiceChanged}
+            hideTrigger
           />
+        ) : null}
 
-          {showStats ? (
-            <MonobankPaymentsTableStats
-              totalCount={data.length}
-              successfulCount={successfulCount}
-            />
-          ) : null}
-
-          <MonobankPaymentsTableContent
-            table={table}
-            emptyActionLabel={emptyActionLabel}
-            emptyMessage={resolvedEmptyMessage}
-            onEmptyAction={emptyActionLabel ? resetTable : undefined}
-          />
-
-          {activePayment ? (
-            <MonobankPaymentDetailsPopover
-              invoiceId={activePayment.invoiceId}
-              payment={activePayment}
-              detailsSource={detailsSource}
-              open={detailsOpen}
-              onOpenChange={handleDetailsOpenChange}
-              onInvoiceChanged={onInvoiceChanged}
-              hideTrigger
-            />
-          ) : null}
-
-          <MonobankPaymentsTablePagination table={table} />
-        </div>
-      </CardContent>
-    </Card>
+        <AdminDataTablePagination
+          label={selectionLabel}
+          previousLabel={t("pagination.previous")}
+          nextLabel={t("pagination.next")}
+          canPreviousPage={table.getCanPreviousPage()}
+          canNextPage={table.getCanNextPage()}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+        />
+      </div>
+    </AdminDataTableCard>
   );
 }

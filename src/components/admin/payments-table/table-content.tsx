@@ -4,6 +4,10 @@
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import type * as React from "react";
 
+import {
+  AdminDataTableScroll,
+  adminDataTableStyles,
+} from "@/components/admin/AdminDataTableShell";
 import { Button } from "@/components/ui/button";
 import {
   Table as DataTable,
@@ -49,13 +53,16 @@ export function MonobankPaymentsTableContent({
   table: Table<StatementItem>;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border bg-background">
-      <DataTable className="text-xs sm:text-sm">
+    <AdminDataTableScroll>
+      <DataTable className={adminDataTableStyles.table}>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="h-9 px-1.5 sm:px-2">
+                <TableHead
+                  key={header.id}
+                  className={adminDataTableStyles.headerCell}
+                >
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -95,7 +102,10 @@ export function MonobankPaymentsTableContent({
                 tabIndex={0}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="px-1.5 py-2 sm:px-2">
+                  <TableCell
+                    key={cell.id}
+                    className={adminDataTableStyles.cell}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -105,7 +115,7 @@ export function MonobankPaymentsTableContent({
             <TableRow>
               <TableCell
                 colSpan={table.getVisibleLeafColumns().length}
-                className="h-24 text-center"
+                className={adminDataTableStyles.emptyCell}
               >
                 <div className="flex flex-col items-center gap-3 py-4">
                   <p className="text-sm text-muted-foreground">
@@ -122,6 +132,6 @@ export function MonobankPaymentsTableContent({
           )}
         </TableBody>
       </DataTable>
-    </div>
+    </AdminDataTableScroll>
   );
 }

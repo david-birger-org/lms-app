@@ -559,8 +559,21 @@
       "title": "Очікуючі інвойси",
       "description": "Інвойси, що очікують оплату з виписки Monobank. Скасуйте ті, що більше не потрібні.",
       "refresh": "Оновити",
+      "reset": "Скинути",
+      "rows": "Рядки",
+      "searchPlaceholder": "Пошук інвойсу, клієнта, ref...",
       "loading": "Завантаження виписки...",
       "empty": "Немає очікуючих інвойсів.",
+      "emptyFiltered": "Немає видимих очікуючих інвойсів. Очистьте фільтри або пошук.",
+      "summary": {
+        "total": "{count} очікує",
+        "visible": "{count} видимих"
+      },
+      "pagination": {
+        "rows": "{filtered} із {total} рядків",
+        "previous": "Назад",
+        "next": "Далі"
+      },
       "columns": {
         "invoiceId": "ID інвойсу",
         "description": "Опис",

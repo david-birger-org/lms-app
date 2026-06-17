@@ -5,6 +5,8 @@ import type { Table } from "@tanstack/react-table";
 import { CheckCheck, ChevronDown, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+
+import { adminDataTableStyles } from "@/components/admin/AdminDataTableShell";
 import {
   downloadTextFile,
   formatStatementItemsAsCsv,
@@ -121,22 +123,26 @@ export function MonobankPaymentsTableToolbar({
   }
 
   return (
-    <div className="flex flex-col gap-2 py-3 md:flex-row md:items-center">
+    <div className={adminDataTableStyles.toolbar}>
       <Input
         placeholder={t("searchPlaceholder")}
         value={searchValue}
         onChange={(event) => onSearchChange(event.target.value)}
-        className="h-9 md:max-w-sm"
+        className={adminDataTableStyles.search}
       />
 
-      <div className="flex flex-wrap items-center gap-1.5 md:ml-auto">
+      <div className={adminDataTableStyles.actionRow}>
         {selectedRowCount > 0 ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 px-3">
-                <CheckCheck />
+              <Button
+                variant="outline"
+                size="sm"
+                className={adminDataTableStyles.control}
+              >
+                <CheckCheck className={adminDataTableStyles.icon} />
                 {t("actions")}
-                <ChevronDown />
+                <ChevronDown className={adminDataTableStyles.icon} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -172,9 +178,13 @@ export function MonobankPaymentsTableToolbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 px-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className={adminDataTableStyles.control}
+            >
               {t("status")}
-              <ChevronDown />
+              <ChevronDown className={adminDataTableStyles.icon} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -198,9 +208,13 @@ export function MonobankPaymentsTableToolbar({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 px-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className={adminDataTableStyles.control}
+            >
               {t("columns")}
-              <ChevronDown />
+              <ChevronDown className={adminDataTableStyles.icon} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -228,7 +242,7 @@ export function MonobankPaymentsTableToolbar({
           value={String(table.getState().pagination.pageSize)}
           onValueChange={(value) => table.setPageSize(Number(value))}
         >
-          <SelectTrigger className="h-9 w-20">
+          <SelectTrigger className={adminDataTableStyles.select}>
             <SelectValue placeholder={t("rows")} />
           </SelectTrigger>
           <SelectContent>
@@ -243,11 +257,13 @@ export function MonobankPaymentsTableToolbar({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 px-3"
+          className={adminDataTableStyles.control}
           onClick={onRefresh}
           disabled={isLoading}
         >
-          <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+          <RefreshCw
+            className={`${adminDataTableStyles.icon} ${isLoading ? "animate-spin" : ""}`}
+          />
           {t("refresh")}
         </Button>
 
@@ -255,10 +271,10 @@ export function MonobankPaymentsTableToolbar({
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 px-3"
+            className={adminDataTableStyles.control}
             onClick={onReset}
           >
-            <X />
+            <X className={adminDataTableStyles.icon} />
             {t("reset")}
           </Button>
         ) : null}
