@@ -491,6 +491,7 @@
       "empty": "Оплат реєстрацій ще немає.",
       "emptyFiltered": "Немає видимих оплат реєстрацій. Очистьте фільтри або пошук.",
       "unknownName": "Невідомий учасник",
+      "providerStatusPrefix": "Mono",
       "stats": {
         "total": "Усього реєстрацій",
         "paid": "Оплачено",
@@ -733,7 +734,8 @@
         "amount": "Сума, яку клієнт сплатив за інвойсом, до конвертації та комісій.",
         "profitAmount": "Чиста сума, яку ви отримуєте після конвертації та комісії Monobank. Відповідає profitAmount у виписці Monobank.",
         "fee": "Комісія Monobank. Вже вирахувана із суми прибутку.",
-        "country": "Країна випуску картки (ISO 3166)."
+        "country": "Країна випуску картки (ISO 3166).",
+        "providerStatus": "Сирий статус інвойсу Monobank. Показує hold окремо від app-статусу processing."
       },
       "statuses": {
         "cancelled": "Скасовано",
@@ -761,6 +763,7 @@
         "transactionId": "ID транзакції",
         "fee": "Комісія",
         "country": "Країна",
+        "providerStatus": "Статус Monobank",
         "customer": "Клієнт",
         "expires": "Діє до",
         "reference": "Референс"

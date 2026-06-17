@@ -159,11 +159,17 @@ export function createMonobankPaymentsColumns(
       accessorKey: "status",
       header: t("status"),
       filterFn: statusFilterFn,
-      cell: ({ row }) => (
-        <div className="flex justify-center" title={row.original.status ?? "-"}>
-          <StatusIcon status={row.original.status} />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const statusTitle = row.original.providerStatus
+          ? `App status: ${row.original.status ?? "-"} / Monobank status: ${row.original.providerStatus}`
+          : `App status: ${row.original.status ?? "-"}`;
+
+        return (
+          <div className="flex justify-center" title={statusTitle}>
+            <StatusIcon status={row.original.status} />
+          </div>
+        );
+      },
     },
     {
       accessorKey: "date",

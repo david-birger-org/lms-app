@@ -207,6 +207,7 @@ type RegistrationPaymentLabels = {
   };
   sources: Record<string, string>;
   statuses: Record<string, string>;
+  providerStatusPrefix: string;
   unknownSource: (params: { source: string }) => string;
   unknownStatus: (params: { status: string }) => string;
   unknownName: string;
@@ -239,6 +240,7 @@ function toPaymentDetailsSummary(
     destination: payment.description,
     invoiceId: payment.invoiceId,
     pageUrl: payment.pageUrl,
+    providerStatus: payment.providerStatus,
     reference: payment.externalRef,
     status: payment.status,
   };
@@ -350,7 +352,7 @@ function getExportRows(
     [labels.columns.amount]: (payment.amountMinor / 100).toFixed(2),
     Currency: payment.currency,
     [labels.columns.status]: labelStatus(payment.status, labels),
-    Provider: payment.providerStatus ?? "",
+    [labels.providerStatusPrefix]: payment.providerStatus ?? "",
     [labels.columns.source]: labelSource(payment.source, labels),
     [labels.columns.externalRef]: payment.externalRef,
     [labels.columns.paymentId]: payment.paymentId,
@@ -656,8 +658,11 @@ function createColumns(
               {row.original.failureReason}
             </span>
           ) : row.original.providerStatus ? (
-            <span className="truncate text-[10px] text-muted-foreground">
-              {row.original.providerStatus}
+            <span
+              className="truncate text-[10px] text-muted-foreground"
+              title={`Monobank status: ${row.original.providerStatus}`}
+            >
+              {labels.providerStatusPrefix}: {row.original.providerStatus}
             </span>
           ) : null}
         </div>
@@ -902,6 +907,7 @@ export function RegistrationPaymentsTable({
         processing: t("statuses.processing"),
         reversed: t("statuses.reversed"),
       },
+      providerStatusPrefix: t("providerStatusPrefix"),
       unknownSource: (params) => t("sources.unknown", params),
       unknownStatus: (params) => t("statuses.unknown", params),
       unknownName: t("unknownName"),

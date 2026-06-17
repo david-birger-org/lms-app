@@ -312,6 +312,13 @@ export function PaymentDetailsBody({
           value: formatMonobankDate(details.modifiedDate),
         }
       : null,
+    displayDetails?.providerStatus
+      ? {
+          label: t("labels.providerStatus"),
+          value: displayDetails.providerStatus,
+          hint: t("hints.providerStatus"),
+        }
+      : null,
     paymentInfo?.bank
       ? { label: t("labels.bank"), value: paymentInfo.bank }
       : null,

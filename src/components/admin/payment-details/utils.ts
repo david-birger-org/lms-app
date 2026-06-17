@@ -40,6 +40,10 @@ export function mergeUpdatedDetails({
     expiresAt: payload.expiresAt ?? current?.expiresAt ?? payment?.expiresAt,
     invoiceId: payload.invoiceId ?? invoiceId,
     pageUrl: payload.pageUrl ?? current?.pageUrl ?? payment?.pageUrl,
+    providerStatus:
+      payload.providerStatus ??
+      current?.providerStatus ??
+      payment?.providerStatus,
     status: payload.status ?? current?.status ?? payment?.status,
   } satisfies PaymentDetails;
 }
@@ -94,6 +98,7 @@ export function mergePaymentDetails(
     customerName: details?.customerName ?? summary?.customerName,
     invoiceId: details?.invoiceId ?? summary?.invoiceId,
     status: details?.status ?? summary?.status,
+    providerStatus: details?.providerStatus ?? summary?.providerStatus,
     amount: details?.amount ?? summary?.amount,
     profitAmount: details?.profitAmount ?? summary?.profitAmount,
     ccy: details?.ccy ?? details?.currency ?? summary?.ccy,
