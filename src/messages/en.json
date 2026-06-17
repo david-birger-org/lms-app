@@ -280,7 +280,8 @@
       "failed": "Failed",
       "expired": "Expired",
       "cancelled": "Cancelled",
-      "reversed": "Reversed"
+      "reversed": "Reversed",
+      "unknown": "Unknown ({status})"
     }
   },
   "admin": {
@@ -446,7 +447,8 @@
           "failed": "Failed",
           "expired": "Expired",
           "cancelled": "Cancelled",
-          "reversed": "Reversed"
+          "reversed": "Reversed",
+          "unknown": "Unknown ({status})"
         }
       }
     },
@@ -489,6 +491,7 @@
       "empty": "No registration payments yet.",
       "emptyFiltered": "No visible registration payments. Clear filters or search.",
       "unknownName": "Unknown participant",
+      "providerStatusPrefix": "Mono",
       "stats": {
         "total": "Total registrations",
         "paid": "Paid",
@@ -535,7 +538,8 @@
       },
       "sources": {
         "wnbf": "Production",
-        "wnbf-test": "Test"
+        "wnbf-test": "Test",
+        "unknown": "Unknown ({source})"
       },
       "statuses": {
         "draft": "Draft",
@@ -547,7 +551,8 @@
         "failed": "Failed",
         "expired": "Expired",
         "cancelled": "Cancelled",
-        "reversed": "Reversed"
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
       }
     },
     "pendingInvoices": {
@@ -566,7 +571,20 @@
       "cancel": "Cancel",
       "cancelFailed": "Cancel failed",
       "cancelConfirm": "Cancel this unpaid invoice? This action cannot be undone.",
-      "cancelError": "Failed to cancel invoice"
+      "cancelError": "Failed to cancel invoice",
+      "statuses": {
+        "draft": "Draft",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "invoice_created": "Awaiting payment",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
+      }
     },
     "invoiceForm": {
       "title": "Generate payment link",
@@ -652,6 +670,19 @@
         "refresh": "Refresh",
         "reset": "Reset"
       },
+      "statuses": {
+        "draft": "Draft",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "invoice_created": "Awaiting payment",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
+      },
       "toasts": {
         "copyIdsFailed": "Failed to copy selected IDs.",
         "copyIdsSuccess": "Selected IDs copied.",
@@ -703,17 +734,22 @@
         "amount": "Amount the customer was originally charged on the invoice, before any conversion or fees.",
         "profitAmount": "Net amount you actually receive after Monobank's currency conversion and processing fee. Matches Monobank's profitAmount on statements.",
         "fee": "Monobank's processing fee. Already deducted from Profit amount.",
-        "country": "Card-issuing country (ISO 3166)."
+        "country": "Card-issuing country (ISO 3166).",
+        "providerStatus": "Raw Monobank invoice status. Shows hold separately from the app processing status."
       },
       "statuses": {
-        "pending": "Pending",
         "cancelled": "Cancelled",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "draft": "Draft",
         "expired": "Expired",
         "failed": "Failed",
-        "failure": "Failure",
+        "invoice_created": "Awaiting payment",
         "paid": "Paid",
-        "success": "Success",
-        "unknown": "Unknown"
+        "processing": "Processing",
+        "reversed": "Reversed",
+        "unknown": "Unknown",
+        "unknownWithValue": "Unknown ({status})"
       },
       "labels": {
         "created": "Created",
@@ -727,6 +763,7 @@
         "transactionId": "Transaction ID",
         "fee": "Fee",
         "country": "Country",
+        "providerStatus": "Monobank status",
         "customer": "Customer",
         "expires": "Expires",
         "reference": "Reference"

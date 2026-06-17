@@ -3,6 +3,7 @@ import type { MonobankCurrency } from "@/lib/monobank";
 export interface PaymentDetails {
   invoiceId?: string;
   status?: string;
+  providerStatus?: string;
   failureReason?: number | string;
   errCode?: number | string;
   amount?: number;

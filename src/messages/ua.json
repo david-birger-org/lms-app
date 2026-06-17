@@ -280,7 +280,8 @@
       "failed": "Помилка",
       "expired": "Термін минув",
       "cancelled": "Скасовано",
-      "reversed": "Повернено"
+      "reversed": "Повернено",
+      "unknown": "Невідомий статус ({status})"
     }
   },
   "admin": {
@@ -446,7 +447,8 @@
           "failed": "Помилка",
           "expired": "Термін минув",
           "cancelled": "Скасовано",
-          "reversed": "Повернено"
+          "reversed": "Повернено",
+          "unknown": "Невідомий статус ({status})"
         }
       }
     },
@@ -489,6 +491,7 @@
       "empty": "Оплат реєстрацій ще немає.",
       "emptyFiltered": "Немає видимих оплат реєстрацій. Очистьте фільтри або пошук.",
       "unknownName": "Невідомий учасник",
+      "providerStatusPrefix": "Mono",
       "stats": {
         "total": "Усього реєстрацій",
         "paid": "Оплачено",
@@ -535,7 +538,8 @@
       },
       "sources": {
         "wnbf": "Production",
-        "wnbf-test": "Test"
+        "wnbf-test": "Test",
+        "unknown": "Невідоме джерело ({source})"
       },
       "statuses": {
         "draft": "Чернетка",
@@ -547,7 +551,8 @@
         "failed": "Помилка",
         "expired": "Термін минув",
         "cancelled": "Скасовано",
-        "reversed": "Повернено"
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
       }
     },
     "pendingInvoices": {
@@ -566,7 +571,20 @@
       "cancel": "Скасувати",
       "cancelFailed": "Скасування не вдалося",
       "cancelConfirm": "Скасувати цей неоплачений інвойс? Цю дію не можна скасувати.",
-      "cancelError": "Не вдалося скасувати інвойс"
+      "cancelError": "Не вдалося скасувати інвойс",
+      "statuses": {
+        "draft": "Чернетка",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "invoice_created": "Очікує оплату",
+        "processing": "Обробка",
+        "paid": "Оплачено",
+        "failed": "Помилка",
+        "expired": "Термін минув",
+        "cancelled": "Скасовано",
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
+      }
     },
     "invoiceForm": {
       "title": "Згенерувати посилання на оплату",
@@ -652,6 +670,19 @@
         "refresh": "Оновити",
         "reset": "Скинути"
       },
+      "statuses": {
+        "draft": "Чернетка",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "invoice_created": "Очікує оплату",
+        "processing": "Обробка",
+        "paid": "Оплачено",
+        "failed": "Помилка",
+        "expired": "Термін минув",
+        "cancelled": "Скасовано",
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
+      },
       "toasts": {
         "copyIdsFailed": "Не вдалося скопіювати обрані ID.",
         "copyIdsSuccess": "Обрані ID скопійовано.",
@@ -703,17 +734,22 @@
         "amount": "Сума, яку клієнт сплатив за інвойсом, до конвертації та комісій.",
         "profitAmount": "Чиста сума, яку ви отримуєте після конвертації та комісії Monobank. Відповідає profitAmount у виписці Monobank.",
         "fee": "Комісія Monobank. Вже вирахувана із суми прибутку.",
-        "country": "Країна випуску картки (ISO 3166)."
+        "country": "Країна випуску картки (ISO 3166).",
+        "providerStatus": "Сирий статус інвойсу Monobank. Показує hold окремо від app-статусу processing."
       },
       "statuses": {
-        "pending": "Очікування",
         "cancelled": "Скасовано",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "draft": "Чернетка",
         "expired": "Термін минув",
         "failed": "Помилка",
-        "failure": "Збій",
+        "invoice_created": "Очікує оплату",
         "paid": "Оплачено",
-        "success": "Успішно",
-        "unknown": "Невідомо"
+        "processing": "Обробка",
+        "reversed": "Повернено",
+        "unknown": "Невідомо",
+        "unknownWithValue": "Невідомий статус ({status})"
       },
       "labels": {
         "created": "Створено",
@@ -727,6 +763,7 @@
         "transactionId": "ID транзакції",
         "fee": "Комісія",
         "country": "Країна",
+        "providerStatus": "Статус Monobank",
         "customer": "Клієнт",
         "expires": "Діє до",
         "reference": "Референс"

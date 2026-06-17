@@ -11,10 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { PaymentDetails } from "@/components/admin/payment-details/types";
-import {
-  mergePaymentDetails,
-  normalizePaymentStatus,
-} from "@/components/admin/payment-details/utils";
+import { mergePaymentDetails } from "@/components/admin/payment-details/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -27,6 +24,7 @@ import {
   formatMonobankMoney,
   type StatementItem,
 } from "@/lib/monobank";
+import { normalizePaymentStatus, resolvePaymentStatus } from "@/lib/payments";
 import { cn } from "@/lib/utils";
 
 function HintIcon({ text }: { text: string }) {
@@ -215,11 +213,11 @@ export function PaymentDetailsBody({
   const displayDetails = mergePaymentDetails(summary, details);
   const paymentInfo = displayDetails?.paymentInfo;
 
-  const pendingStatusAppearance = {
+  const processingStatusAppearance = {
     className:
       "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-500/10 dark:text-sky-300",
     icon: AlertTriangle,
-    label: t("statuses.pending"),
+    label: t("statuses.processing"),
   };
 
   const paymentStatusAppearances: Record<
@@ -231,6 +229,19 @@ export function PaymentDetailsBody({
         "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
       icon: XCircle,
       label: t("statuses.cancelled"),
+    },
+    creating_invoice: processingStatusAppearance,
+    creation_failed: {
+      className:
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
+      icon: XCircle,
+      label: t("statuses.creation_failed"),
+    },
+    draft: {
+      className:
+        "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
+      icon: ReceiptText,
+      label: t("statuses.draft"),
     },
     expired: {
       className:
@@ -244,46 +255,37 @@ export function PaymentDetailsBody({
       icon: XCircle,
       label: t("statuses.failed"),
     },
-    failure: {
+    invoice_created: {
       className:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
-      icon: XCircle,
-      label: t("statuses.failure"),
+        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-500/10 dark:text-sky-300",
+      icon: AlertTriangle,
+      label: t("statuses.invoice_created"),
     },
-    invoice_created: pendingStatusAppearance,
     paid: {
       className:
         "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-500/10 dark:text-emerald-300",
       icon: CheckCircle2,
       label: t("statuses.paid"),
     },
-    success: {
+    processing: processingStatusAppearance,
+    reversed: {
       className:
-        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-500/10 dark:text-emerald-300",
-      icon: CheckCircle2,
-      label: t("statuses.success"),
+        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
+      icon: XCircle,
+      label: t("statuses.reversed"),
     },
   };
 
   function getStatusAppearance(status?: string) {
-    const normalizedStatus = normalizePaymentStatus(status);
+    const canonicalStatus = resolvePaymentStatus(status);
 
-    if (normalizedStatus === "processing" || normalizedStatus === "hold") {
-      return {
-        label: status ?? t("statuses.pending"),
-        icon: AlertTriangle,
-        className:
-          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-500/10 dark:text-amber-300",
-      };
-    }
+    if (canonicalStatus) return paymentStatusAppearances[canonicalStatus];
 
-    if (normalizedStatus === "created") return pendingStatusAppearance;
-
-    if (normalizedStatus && normalizedStatus in paymentStatusAppearances)
-      return paymentStatusAppearances[normalizedStatus];
-
+    const rawStatus = normalizePaymentStatus(status);
     return {
-      label: status ?? t("statuses.unknown"),
+      label: rawStatus
+        ? t("statuses.unknownWithValue", { status: rawStatus })
+        : t("statuses.unknown"),
       icon: ReceiptText,
       className:
         "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
@@ -291,7 +293,7 @@ export function PaymentDetailsBody({
   }
 
   const statusAppearance = getStatusAppearance(displayDetails?.status);
-  const StatusIcon = statusAppearance!.icon;
+  const StatusIcon = statusAppearance.icon;
   const secondaryDetails: {
     label: string;
     value: string;
@@ -308,6 +310,13 @@ export function PaymentDetailsBody({
       ? {
           label: t("labels.updated"),
           value: formatMonobankDate(details.modifiedDate),
+        }
+      : null,
+    displayDetails?.providerStatus
+      ? {
+          label: t("labels.providerStatus"),
+          value: displayDetails.providerStatus,
+          hint: t("hints.providerStatus"),
         }
       : null,
     paymentInfo?.bank
@@ -398,11 +407,11 @@ export function PaymentDetailsBody({
                 variant="outline"
                 className={cn(
                   "h-7 gap-1.5 rounded-full px-3 text-xs capitalize",
-                  statusAppearance!.className,
+                  statusAppearance.className,
                 )}
               >
                 <StatusIcon className="size-3.5" />
-                {statusAppearance!.label}
+                {statusAppearance.label}
               </Badge>
               <Badge
                 variant="outline"

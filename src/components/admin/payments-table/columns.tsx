@@ -42,64 +42,48 @@ function ColumnHint({ text }: { text: string }) {
   );
 }
 
-import {
-  isFailedPaymentStatus,
-  isSuccessfulPaymentStatus,
-  normalizePaymentStatus,
-} from "@/lib/payments";
+import { getPaymentStatusKind, normalizePaymentStatus } from "@/lib/payments";
 
 function StatusIcon({ status }: { status?: string | null }) {
-  const normalizedStatus = normalizePaymentStatus(status);
+  const statusKind = getPaymentStatusKind(status);
+  const statusLabel = normalizePaymentStatus(status) ?? "unknown";
 
-  if (isSuccessfulPaymentStatus(status)) {
+  if (statusKind === "paid") {
     return (
       <CircleCheckBig
         className="size-4 text-emerald-600"
-        aria-label={status ?? undefined}
+        aria-label={statusLabel}
       />
     );
   }
 
-  if (normalizedStatus === "processing" || normalizedStatus === "hold") {
+  if (statusKind === "pending") {
+    return (
+      <CircleAlert className="size-4 text-amber-500" aria-label={statusLabel} />
+    );
+  }
+
+  if (statusKind === "failed") {
+    return (
+      <CircleX className="size-4 text-rose-600" aria-label={statusLabel} />
+    );
+  }
+
+  if (statusKind === "draft") {
     return (
       <CircleAlert
-        className="size-4 text-amber-500"
-        aria-label={status ?? undefined}
-      />
-    );
-  }
-
-  if (isFailedPaymentStatus(status)) {
-    return (
-      <CircleX
-        className="size-4 text-rose-600"
-        aria-label={status ?? undefined}
-      />
-    );
-  }
-
-  if (
-    normalizedStatus === "invoice_created" ||
-    normalizedStatus === "created"
-  ) {
-    return (
-      <CircleAlert
-        className="size-4 text-sky-600"
-        aria-label={status ?? undefined}
-      />
-    );
-  }
-
-  if (normalizedStatus === "cancelled") {
-    return (
-      <CircleX
         className="size-4 text-muted-foreground"
-        aria-label={status ?? undefined}
+        aria-label={statusLabel}
       />
     );
   }
 
-  return <div className="text-xs text-muted-foreground">-</div>;
+  return (
+    <CircleAlert
+      className="size-4 text-muted-foreground"
+      aria-label={statusLabel}
+    />
+  );
 }
 
 function SortableColumnHeader({
@@ -175,11 +159,17 @@ export function createMonobankPaymentsColumns(
       accessorKey: "status",
       header: t("status"),
       filterFn: statusFilterFn,
-      cell: ({ row }) => (
-        <div className="flex justify-center" title={row.original.status ?? "-"}>
-          <StatusIcon status={row.original.status} />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const statusTitle = row.original.providerStatus
+          ? `App status: ${row.original.status ?? "-"} / Monobank status: ${row.original.providerStatus}`
+          : `App status: ${row.original.status ?? "-"}`;
+
+        return (
+          <div className="flex justify-center" title={statusTitle}>
+            <StatusIcon status={row.original.status} />
+          </div>
+        );
+      },
     },
     {
       accessorKey: "date",

@@ -43,6 +43,7 @@ export function MonobankPaymentsTableToolbar({
   selectedRows,
   searchValue,
   statusOptions,
+  getStatusLabel,
   selectedPaymentIdentifiers,
   hasActiveState,
   onStatusToggle,
@@ -58,6 +59,7 @@ export function MonobankPaymentsTableToolbar({
   selectedRows: StatementItem[];
   searchValue: string;
   statusOptions: string[];
+  getStatusLabel: (status: string) => string;
   selectedPaymentIdentifiers: string[];
   hasActiveState: boolean;
   onStatusToggle: (status: string, checked: boolean) => void;
@@ -187,7 +189,7 @@ export function MonobankPaymentsTableToolbar({
                     onStatusToggle(status, Boolean(value))
                   }
                 >
-                  {status}
+                  {getStatusLabel(status)}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuGroup>

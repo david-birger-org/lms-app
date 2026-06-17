@@ -66,24 +66,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { StatementItem } from "@/lib/monobank";
+import {
+  getPaymentStatusKind,
+  normalizePaymentStatus,
+  resolvePaymentStatus,
+} from "@/lib/payments";
 import type { AdminRegistrationPaymentRecord } from "@/lib/server/admin-registration-payments";
 import { cn } from "@/lib/utils";
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
-
-const paidStatuses = new Set(["paid"]);
-const pendingStatuses = new Set([
-  "creating_invoice",
-  "invoice_created",
-  "processing",
-]);
-const failedStatuses = new Set([
-  "cancelled",
-  "creation_failed",
-  "expired",
-  "failed",
-  "reversed",
-]);
 
 const defaultColumnVisibility: VisibilityState = {
   paymentId: false,
@@ -136,9 +127,17 @@ function formatDateTime(value?: string) {
 }
 
 function statusVariant(status: string) {
-  if (paidStatuses.has(status)) return "default";
-  if (failedStatuses.has(status)) return "destructive";
-  return "secondary";
+  switch (getPaymentStatusKind(status)) {
+    case "paid":
+      return "default";
+    case "failed":
+    case "unknown":
+      return "destructive";
+    case "draft":
+      return "outline";
+    case "pending":
+      return "secondary";
+  }
 }
 
 function getSearchValue(payment: AdminRegistrationPaymentRecord) {
@@ -208,15 +207,23 @@ type RegistrationPaymentLabels = {
   };
   sources: Record<string, string>;
   statuses: Record<string, string>;
+  providerStatusPrefix: string;
+  unknownSource: (params: { source: string }) => string;
+  unknownStatus: (params: { status: string }) => string;
   unknownName: string;
 };
 
 function labelStatus(status: string, labels: RegistrationPaymentLabels) {
-  return labels.statuses[status] ?? status;
+  const canonicalStatus = resolvePaymentStatus(status);
+  if (canonicalStatus) return labels.statuses[canonicalStatus];
+
+  return labels.unknownStatus({
+    status: normalizePaymentStatus(status) ?? "-",
+  });
 }
 
 function labelSource(source: string, labels: RegistrationPaymentLabels) {
-  return labels.sources[source] ?? source;
+  return labels.sources[source] ?? labels.unknownSource({ source });
 }
 
 function toPaymentDetailsSummary(
@@ -233,8 +240,9 @@ function toPaymentDetailsSummary(
     destination: payment.description,
     invoiceId: payment.invoiceId,
     pageUrl: payment.pageUrl,
+    providerStatus: payment.providerStatus,
     reference: payment.externalRef,
-    status: payment.providerStatus ?? payment.status,
+    status: payment.status,
   };
 }
 
@@ -344,7 +352,7 @@ function getExportRows(
     [labels.columns.amount]: (payment.amountMinor / 100).toFixed(2),
     Currency: payment.currency,
     [labels.columns.status]: labelStatus(payment.status, labels),
-    Provider: payment.providerStatus ?? "",
+    [labels.providerStatusPrefix]: payment.providerStatus ?? "",
     [labels.columns.source]: labelSource(payment.source, labels),
     [labels.columns.externalRef]: payment.externalRef,
     [labels.columns.paymentId]: payment.paymentId,
@@ -650,8 +658,11 @@ function createColumns(
               {row.original.failureReason}
             </span>
           ) : row.original.providerStatus ? (
-            <span className="truncate text-[10px] text-muted-foreground">
-              {row.original.providerStatus}
+            <span
+              className="truncate text-[10px] text-muted-foreground"
+              title={`Monobank status: ${row.original.providerStatus}`}
+            >
+              {labels.providerStatusPrefix}: {row.original.providerStatus}
             </span>
           ) : null}
         </div>
@@ -896,6 +907,9 @@ export function RegistrationPaymentsTable({
         processing: t("statuses.processing"),
         reversed: t("statuses.reversed"),
       },
+      providerStatusPrefix: t("providerStatusPrefix"),
+      unknownSource: (params) => t("sources.unknown", params),
+      unknownStatus: (params) => t("statuses.unknown", params),
       unknownName: t("unknownName"),
     }),
     [t],
@@ -955,14 +969,14 @@ export function RegistrationPaymentsTable({
   );
   const selectedStatuses = getArrayFilter(columnFilters, "status");
   const selectedSources = getArrayFilter(columnFilters, "source");
-  const paidCount = payments.filter((payment) =>
-    paidStatuses.has(payment.status),
+  const paidCount = payments.filter(
+    (payment) => getPaymentStatusKind(payment.status) === "paid",
   ).length;
-  const pendingCount = payments.filter((payment) =>
-    pendingStatuses.has(payment.status),
+  const pendingCount = payments.filter(
+    (payment) => getPaymentStatusKind(payment.status) === "pending",
   ).length;
   const totalAmount = payments
-    .filter((payment) => paidStatuses.has(payment.status))
+    .filter((payment) => getPaymentStatusKind(payment.status) === "paid")
     .reduce((sum, payment) => sum + payment.amountMinor, 0);
   const hasDefaultSort =
     sorting.length === 1 &&

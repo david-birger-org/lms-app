@@ -55,6 +55,7 @@ export type MonobankCurrency = number | string;
 export interface StatementItem {
   invoiceId?: string;
   status?: string;
+  providerStatus?: string;
   maskedPan?: string;
   date?: string;
   amount?: number;
