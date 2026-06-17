@@ -22,6 +22,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  getPaymentStatusKind,
+  normalizePaymentStatus,
+  resolvePaymentStatus,
+} from "@/lib/payments";
 
 interface PurchaseRecord {
   amountMinor: number;
@@ -35,18 +40,19 @@ interface PurchaseRecord {
   status: string;
 }
 
-const statusVariants: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  paid: "default",
-  processing: "secondary",
-  invoice_created: "outline",
-  failed: "destructive",
-  expired: "destructive",
-  cancelled: "destructive",
-  reversed: "destructive",
-};
+function statusVariant(status: string) {
+  switch (getPaymentStatusKind(status)) {
+    case "paid":
+      return "default";
+    case "failed":
+    case "unknown":
+      return "destructive";
+    case "draft":
+      return "outline";
+    case "pending":
+      return "secondary";
+  }
+}
 
 function formatPrice(priceMinor: number, currency: string, locale: string) {
   const amount = priceMinor / 100;
@@ -85,6 +91,15 @@ export function UserPurchasesDialog({
   const locale = useLocale();
   const t = useTranslations("admin.users.purchases");
   const requestIdRef = useRef(0);
+
+  function labelStatus(status: string) {
+    const canonicalStatus = resolvePaymentStatus(status);
+    if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
+
+    return t("statuses.unknown", {
+      status: normalizePaymentStatus(status) ?? "-",
+    });
+  }
 
   const loadPurchases = useCallback(async () => {
     const requestId = requestIdRef.current + 1;
@@ -203,10 +218,8 @@ export function UserPurchasesDialog({
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={statusVariants[purchase.status] ?? "secondary"}
-                      >
-                        {t(`statuses.${purchase.status}`)}
+                      <Badge variant={statusVariant(purchase.status)}>
+                        {labelStatus(purchase.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">

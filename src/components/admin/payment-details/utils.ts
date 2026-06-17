@@ -1,5 +1,6 @@
 import type { PaymentDetails } from "@/components/admin/payment-details/types";
 import type { StatementItem } from "@/lib/monobank";
+import { isPendingPaymentStatus, resolvePaymentStatus } from "@/lib/payments";
 
 const EXTENDED_DETAILS_FALLBACK_MESSAGE =
   "Extended payment details are temporarily unavailable. Showing statement data instead.";
@@ -14,28 +15,12 @@ export function getPaymentDetailsErrorMessage(error: unknown) {
   return rawMessage || EXTENDED_DETAILS_FALLBACK_MESSAGE;
 }
 
-export function normalizePaymentStatus(status?: string) {
-  const normalizedStatus = status?.trim().toLowerCase();
-  return normalizedStatus ? normalizedStatus : null;
-}
-
 export function isCancelableInvoiceStatus(status?: string) {
-  const normalizedStatus = normalizePaymentStatus(status);
-
-  return (
-    normalizedStatus === "created" || normalizedStatus === "invoice_created"
-  );
+  return resolvePaymentStatus(status) === "invoice_created";
 }
 
 export function shouldAutoRefreshInvoiceStatus(status?: string) {
-  const normalizedStatus = normalizePaymentStatus(status);
-
-  return (
-    normalizedStatus === "created" ||
-    normalizedStatus === "invoice_created" ||
-    normalizedStatus === "processing" ||
-    normalizedStatus === "hold"
-  );
+  return isPendingPaymentStatus(status);
 }
 
 export function mergeUpdatedDetails({
@@ -55,7 +40,7 @@ export function mergeUpdatedDetails({
     expiresAt: payload.expiresAt ?? current?.expiresAt ?? payment?.expiresAt,
     invoiceId: payload.invoiceId ?? invoiceId,
     pageUrl: payload.pageUrl ?? current?.pageUrl ?? payment?.pageUrl,
-    status: payload.status ?? current?.status ?? "cancelled",
+    status: payload.status ?? current?.status ?? payment?.status,
   } satisfies PaymentDetails;
 }
 

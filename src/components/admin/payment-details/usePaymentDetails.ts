@@ -219,6 +219,9 @@ export function usePaymentDetails({
       if (!response.ok) {
         throw new Error(payload.error ?? "Failed to cancel invoice");
       }
+      if (typeof payload.status !== "string" || !payload.status.trim()) {
+        throw new Error("Cancel response did not include payment status");
+      }
 
       if (
         !isMountedRef.current ||

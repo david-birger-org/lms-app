@@ -22,6 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatMonobankDate, formatMonobankMoney } from "@/lib/monobank";
+import {
+  getPaymentStatusKind,
+  normalizePaymentStatus,
+  resolvePaymentStatus,
+} from "@/lib/payments";
 
 interface PendingInvoice {
   amount: number;
@@ -40,6 +45,20 @@ interface PendingInvoice {
 interface PendingInvoicesResponse {
   list?: PendingInvoice[];
   error?: string;
+}
+
+function statusVariant(status: string) {
+  switch (getPaymentStatusKind(status)) {
+    case "paid":
+      return "default";
+    case "failed":
+    case "unknown":
+      return "destructive";
+    case "draft":
+      return "outline";
+    case "pending":
+      return "secondary";
+  }
 }
 
 function usePendingInvoices() {
@@ -141,6 +160,15 @@ export function PendingInvoicesTable() {
 
   const displayError = error ?? loadError;
 
+  function labelStatus(status: string) {
+    const canonicalStatus = resolvePaymentStatus(status);
+    if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
+
+    return t("statuses.unknown", {
+      status: normalizePaymentStatus(status) ?? "-",
+    });
+  }
+
   return (
     <Card className="shadow-xs">
       <CardHeader className="border-b px-3 sm:px-6">
@@ -208,7 +236,9 @@ export function PendingInvoicesTable() {
                       {formatMonobankMoney(item.amount, item.currency)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{item.status}</Badge>
+                      <Badge variant={statusVariant(item.status)}>
+                        {labelStatus(item.status)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="hidden text-muted-foreground sm:table-cell">
                       {formatMonobankDate(item.createdDate)}

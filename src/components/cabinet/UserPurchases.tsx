@@ -20,6 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  getPaymentStatusKind,
+  normalizePaymentStatus,
+  resolvePaymentStatus,
+} from "@/lib/payments";
 import type { UserPurchaseRecord } from "@/lib/server/user-purchases";
 
 type Purchase = UserPurchaseRecord;
@@ -37,18 +42,19 @@ function formatDate(iso: string, locale: string) {
   });
 }
 
-const statusVariants: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  paid: "default",
-  processing: "secondary",
-  invoice_created: "outline",
-  failed: "destructive",
-  expired: "destructive",
-  cancelled: "destructive",
-  reversed: "destructive",
-};
+function statusVariant(status: string) {
+  switch (getPaymentStatusKind(status)) {
+    case "paid":
+      return "default";
+    case "failed":
+    case "unknown":
+      return "destructive";
+    case "draft":
+      return "outline";
+    case "pending":
+      return "secondary";
+  }
+}
 
 export function UserPurchases({
   initialPurchases,
@@ -58,6 +64,15 @@ export function UserPurchases({
   const [purchases] = useState<Purchase[]>(initialPurchases);
   const locale = useLocale();
   const t = useTranslations("purchases");
+
+  function labelStatus(status: string) {
+    const canonicalStatus = resolvePaymentStatus(status);
+    if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
+
+    return t("statuses.unknown", {
+      status: normalizePaymentStatus(status) ?? "-",
+    });
+  }
 
   return (
     <Card className="shadow-xs">
@@ -122,10 +137,8 @@ export function UserPurchases({
                     {formatPrice(purchase.amountMinor, purchase.currency)}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge
-                      variant={statusVariants[purchase.status] ?? "secondary"}
-                    >
-                      {t(`statuses.${purchase.status}`)}
+                    <Badge variant={statusVariant(purchase.status)}>
+                      {labelStatus(purchase.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="pr-3 text-right text-sm text-muted-foreground sm:pr-6">

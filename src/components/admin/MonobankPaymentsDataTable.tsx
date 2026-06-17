@@ -13,9 +13,8 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import * as React from "react";
-
 import { useTranslations } from "next-intl";
+import * as React from "react";
 
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
 import { createMonobankPaymentsColumns } from "@/components/admin/payments-table/columns";
@@ -39,7 +38,9 @@ import {
 } from "@/lib/monobank";
 import {
   isSuccessfulPaymentStatus,
+  normalizePaymentStatus,
   type PaymentDetailsSource,
+  resolvePaymentStatus,
 } from "@/lib/payments";
 
 declare module "@tanstack/react-table" {
@@ -287,6 +288,18 @@ export function MonobankPaymentsDataTable({
     [statusColumn],
   );
 
+  const getStatusLabel = React.useCallback(
+    (status: string) => {
+      const canonicalStatus = resolvePaymentStatus(status);
+      if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
+
+      return t("statuses.unknown", {
+        status: normalizePaymentStatus(status) ?? "-",
+      });
+    },
+    [t],
+  );
+
   const resetTable = React.useCallback(() => {
     table.resetSorting(true);
     table.resetColumnFilters(true);
@@ -337,6 +350,7 @@ export function MonobankPaymentsDataTable({
             selectedRows={selectedRows}
             searchValue={searchValue}
             statusOptions={statusOptions}
+            getStatusLabel={getStatusLabel}
             selectedPaymentIdentifiers={selectedPaymentIdentifiers}
             hasActiveState={hasActiveState}
             onStatusToggle={handleStatusToggle}

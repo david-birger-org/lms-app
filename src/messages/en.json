@@ -248,7 +248,7 @@
   "externalCheckout": {
     "invalidLink": "Payment link is invalid or expired.",
     "title": "Confirm participation payment",
-    "description": "A fiscal receipt will be issued after payment.",
+    "description": "Online payment is available only with a card issued by a Ukrainian bank. A fiscal receipt is issued after the payment is confirmed.",
     "product": "Product",
     "productName": "Participation fee",
     "customer": "Participant",
@@ -280,7 +280,8 @@
       "failed": "Failed",
       "expired": "Expired",
       "cancelled": "Cancelled",
-      "reversed": "Reversed"
+      "reversed": "Reversed",
+      "unknown": "Unknown ({status})"
     }
   },
   "admin": {
@@ -446,7 +447,8 @@
           "failed": "Failed",
           "expired": "Expired",
           "cancelled": "Cancelled",
-          "reversed": "Reversed"
+          "reversed": "Reversed",
+          "unknown": "Unknown ({status})"
         }
       }
     },
@@ -535,7 +537,8 @@
       },
       "sources": {
         "wnbf": "Production",
-        "wnbf-test": "Test"
+        "wnbf-test": "Test",
+        "unknown": "Unknown ({source})"
       },
       "statuses": {
         "draft": "Draft",
@@ -547,7 +550,8 @@
         "failed": "Failed",
         "expired": "Expired",
         "cancelled": "Cancelled",
-        "reversed": "Reversed"
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
       }
     },
     "pendingInvoices": {
@@ -566,7 +570,20 @@
       "cancel": "Cancel",
       "cancelFailed": "Cancel failed",
       "cancelConfirm": "Cancel this unpaid invoice? This action cannot be undone.",
-      "cancelError": "Failed to cancel invoice"
+      "cancelError": "Failed to cancel invoice",
+      "statuses": {
+        "draft": "Draft",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "invoice_created": "Awaiting payment",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
+      }
     },
     "invoiceForm": {
       "title": "Generate payment link",
@@ -652,6 +669,19 @@
         "refresh": "Refresh",
         "reset": "Reset"
       },
+      "statuses": {
+        "draft": "Draft",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "invoice_created": "Awaiting payment",
+        "processing": "Processing",
+        "paid": "Paid",
+        "failed": "Failed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "reversed": "Reversed",
+        "unknown": "Unknown ({status})"
+      },
       "toasts": {
         "copyIdsFailed": "Failed to copy selected IDs.",
         "copyIdsSuccess": "Selected IDs copied.",
@@ -706,14 +736,18 @@
         "country": "Card-issuing country (ISO 3166)."
       },
       "statuses": {
-        "pending": "Pending",
         "cancelled": "Cancelled",
+        "creating_invoice": "Creating invoice",
+        "creation_failed": "Creation failed",
+        "draft": "Draft",
         "expired": "Expired",
         "failed": "Failed",
-        "failure": "Failure",
+        "invoice_created": "Awaiting payment",
         "paid": "Paid",
-        "success": "Success",
-        "unknown": "Unknown"
+        "processing": "Processing",
+        "reversed": "Reversed",
+        "unknown": "Unknown",
+        "unknownWithValue": "Unknown ({status})"
       },
       "labels": {
         "created": "Created",

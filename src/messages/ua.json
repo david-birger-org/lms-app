@@ -248,7 +248,7 @@
   "externalCheckout": {
     "invalidLink": "Посилання на оплату недійсне або протерміноване.",
     "title": "Підтвердіть оплату участі",
-    "description": "Після оплати буде створено фіскальний чек.",
+    "description": "Онлайн-оплата доступна тільки карткою українського банку. Фіскальний чек буде створено після підтвердження оплати.",
     "product": "Продукт",
     "productName": "Оплата участі",
     "customer": "Учасник",
@@ -280,7 +280,8 @@
       "failed": "Помилка",
       "expired": "Термін минув",
       "cancelled": "Скасовано",
-      "reversed": "Повернено"
+      "reversed": "Повернено",
+      "unknown": "Невідомий статус ({status})"
     }
   },
   "admin": {
@@ -446,7 +447,8 @@
           "failed": "Помилка",
           "expired": "Термін минув",
           "cancelled": "Скасовано",
-          "reversed": "Повернено"
+          "reversed": "Повернено",
+          "unknown": "Невідомий статус ({status})"
         }
       }
     },
@@ -535,7 +537,8 @@
       },
       "sources": {
         "wnbf": "Production",
-        "wnbf-test": "Test"
+        "wnbf-test": "Test",
+        "unknown": "Невідоме джерело ({source})"
       },
       "statuses": {
         "draft": "Чернетка",
@@ -547,7 +550,8 @@
         "failed": "Помилка",
         "expired": "Термін минув",
         "cancelled": "Скасовано",
-        "reversed": "Повернено"
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
       }
     },
     "pendingInvoices": {
@@ -566,7 +570,20 @@
       "cancel": "Скасувати",
       "cancelFailed": "Скасування не вдалося",
       "cancelConfirm": "Скасувати цей неоплачений інвойс? Цю дію не можна скасувати.",
-      "cancelError": "Не вдалося скасувати інвойс"
+      "cancelError": "Не вдалося скасувати інвойс",
+      "statuses": {
+        "draft": "Чернетка",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "invoice_created": "Очікує оплату",
+        "processing": "Обробка",
+        "paid": "Оплачено",
+        "failed": "Помилка",
+        "expired": "Термін минув",
+        "cancelled": "Скасовано",
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
+      }
     },
     "invoiceForm": {
       "title": "Згенерувати посилання на оплату",
@@ -652,6 +669,19 @@
         "refresh": "Оновити",
         "reset": "Скинути"
       },
+      "statuses": {
+        "draft": "Чернетка",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "invoice_created": "Очікує оплату",
+        "processing": "Обробка",
+        "paid": "Оплачено",
+        "failed": "Помилка",
+        "expired": "Термін минув",
+        "cancelled": "Скасовано",
+        "reversed": "Повернено",
+        "unknown": "Невідомий статус ({status})"
+      },
       "toasts": {
         "copyIdsFailed": "Не вдалося скопіювати обрані ID.",
         "copyIdsSuccess": "Обрані ID скопійовано.",
@@ -706,14 +736,18 @@
         "country": "Країна випуску картки (ISO 3166)."
       },
       "statuses": {
-        "pending": "Очікування",
         "cancelled": "Скасовано",
+        "creating_invoice": "Створення інвойсу",
+        "creation_failed": "Помилка створення",
+        "draft": "Чернетка",
         "expired": "Термін минув",
         "failed": "Помилка",
-        "failure": "Збій",
+        "invoice_created": "Очікує оплату",
         "paid": "Оплачено",
-        "success": "Успішно",
-        "unknown": "Невідомо"
+        "processing": "Обробка",
+        "reversed": "Повернено",
+        "unknown": "Невідомо",
+        "unknownWithValue": "Невідомий статус ({status})"
       },
       "labels": {
         "created": "Створено",
