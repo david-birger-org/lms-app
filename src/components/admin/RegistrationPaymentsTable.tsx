@@ -287,6 +287,11 @@ function sanitizeFileNamePart(value: string) {
   return value.replaceAll(/[^a-zA-Z0-9._-]+/g, "-").replaceAll(/^-|-$/g, "");
 }
 
+function compactIdentifier(value: string, headLength = 6, tailLength = 4) {
+  if (value.length <= headLength + tailLength + 3) return value;
+  return `${value.slice(0, headLength)}...${value.slice(-tailLength)}`;
+}
+
 function receiptFileName(payment: AdminRegistrationPaymentRecord) {
   const identifier =
     payment.checkId ?? payment.invoiceId ?? payment.externalRef ?? payment.id;
@@ -686,22 +691,27 @@ function createColumns(
       header: ({ column }) => (
         <SortableColumnHeader column={column} title={labels.columns.invoice} />
       ),
-      cell: ({ row }) =>
-        row.original.pageUrl ? (
+      cell: ({ row }) => {
+        const payment = row.original;
+        if (!payment.pageUrl) {
+          return <span className="text-muted-foreground">-</span>;
+        }
+
+        const invoiceLabel = payment.invoiceId ?? payment.pageUrl;
+        return (
           <a
-            href={row.original.pageUrl}
+            href={payment.pageUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex max-w-[5.5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[10rem] sm:text-xs"
+            title={invoiceLabel}
+            aria-label={invoiceLabel}
+            className="inline-flex max-w-[6.75rem] items-center gap-1 whitespace-nowrap text-[11px] text-primary hover:underline sm:text-xs"
           >
             <ExternalLink className="size-3 shrink-0" />
-            <span className="truncate">
-              {row.original.invoiceId ?? row.original.pageUrl}
-            </span>
+            <span>{compactIdentifier(invoiceLabel)}</span>
           </a>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        ),
+        );
+      },
       meta: {
         label: labels.columns.invoice,
       },
