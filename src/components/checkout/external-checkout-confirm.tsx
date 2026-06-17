@@ -31,11 +31,16 @@ export function ExternalCheckoutConfirm({
       });
 
       const data = (await response.json().catch(() => null)) as {
+        error?: string;
         pageUrl?: string;
       } | null;
 
       if (!response.ok || !data?.pageUrl) {
-        setError(t("createCheckoutError"));
+        setError(
+          typeof data?.error === "string" && data.error.trim() !== ""
+            ? data.error
+            : t("createCheckoutError"),
+        );
         setIsSubmitting(false);
         return;
       }
