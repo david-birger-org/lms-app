@@ -248,7 +248,7 @@
   "externalCheckout": {
     "invalidLink": "Payment link is invalid or expired.",
     "title": "Confirm participation payment",
-    "description": "Online payment is available only with a card issued by a Ukrainian bank. A fiscal receipt is issued after the payment is confirmed.",
+    "description": "A fiscal receipt will be issued after payment.",
     "product": "Product",
     "productName": "Participation fee",
     "customer": "Participant",
