@@ -111,6 +111,7 @@ const searchFilter: FilterFn<AdminRegistrationPaymentRecord> = (
 function formatMoney(amountMinor: number, currency: string) {
   return new Intl.NumberFormat(undefined, {
     currency,
+    currencyDisplay: "narrowSymbol",
     style: "currency",
   }).format(amountMinor / 100);
 }
@@ -151,6 +152,7 @@ function getSearchValue(payment: AdminRegistrationPaymentRecord) {
     payment.checkId,
     payment.checkTaxUrl,
     payment.productSlug,
+    payment.currency,
     payment.source,
     payment.status,
     payment.providerStatus,
