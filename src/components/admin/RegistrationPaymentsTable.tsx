@@ -974,6 +974,13 @@ export function RegistrationPaymentsTable({
 
     return null;
   }, [activePaymentId]);
+  const canDeleteRegistrationPayment = React.useCallback(
+    ({ status }: { invoiceId?: string; status?: string }) => {
+      const resolvedStatus = resolvePaymentStatus(status);
+      return resolvedStatus !== "paid" && resolvedStatus !== "processing";
+    },
+    [],
+  );
   const handleRegistrationPaymentDeleted = React.useCallback(() => {
     setDetailsOpen(false);
     setActivePaymentDetails(null);
@@ -1265,8 +1272,12 @@ export function RegistrationPaymentsTable({
             detailsSource="database"
             open={detailsOpen}
             onOpenChange={handleDetailsOpenChange}
-            onInvoiceChanged={handleRegistrationPaymentDeleted}
+            onCancelInvoiceCompleted={handleRegistrationPaymentDeleted}
             cancelInvoiceRequest={handleDeleteRegistrationPayment}
+            canCancelInvoice={canDeleteRegistrationPayment}
+            cancelButtonLabel={t("actions.deleteRecord")}
+            cancellingButtonLabel={t("deleting")}
+            cancelConfirmMessage={t("deleteConfirm")}
             hideTrigger
           />
         ) : null}

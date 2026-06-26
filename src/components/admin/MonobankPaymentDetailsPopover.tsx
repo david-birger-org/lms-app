@@ -25,7 +25,12 @@ export function MonobankPaymentDetailsPopover({
   open: controlledOpen,
   onOpenChange,
   onInvoiceChanged,
+  onCancelInvoiceCompleted,
   cancelInvoiceRequest,
+  canCancelInvoice: canCancelInvoiceOverride,
+  cancelButtonLabel,
+  cancellingButtonLabel,
+  cancelConfirmMessage,
   hideTrigger = false,
 }: {
   invoiceId?: string;
@@ -34,7 +39,15 @@ export function MonobankPaymentDetailsPopover({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onInvoiceChanged?: () => void;
-  cancelInvoiceRequest?: (invoiceId: string) => Promise<PaymentDetails | null>;
+  onCancelInvoiceCompleted?: () => void;
+  cancelInvoiceRequest?: (invoiceId?: string) => Promise<PaymentDetails | null>;
+  canCancelInvoice?: (params: {
+    invoiceId?: string;
+    status?: string;
+  }) => boolean;
+  cancelButtonLabel?: string;
+  cancellingButtonLabel?: string;
+  cancelConfirmMessage?: string;
   hideTrigger?: boolean;
 }) {
   const {
@@ -56,7 +69,10 @@ export function MonobankPaymentDetailsPopover({
     controlledOpen,
     onOpenChange,
     onInvoiceChanged,
+    onCancelInvoiceCompleted,
     cancelInvoiceRequest,
+    canCancelInvoice: canCancelInvoiceOverride,
+    cancelConfirmMessage,
     hideTrigger,
   });
   const t = useTranslations("admin.paymentDetails");
@@ -108,10 +124,10 @@ export function MonobankPaymentDetailsPopover({
                   {isCancelling ? (
                     <>
                       <LoaderCircle className="animate-spin" />
-                      {t("cancelling")}
+                      {cancellingButtonLabel ?? t("cancelling")}
                     </>
                   ) : (
-                    t("cancelInvoice")
+                    (cancelButtonLabel ?? t("cancelInvoice"))
                   )}
                 </Button>
               ) : null}

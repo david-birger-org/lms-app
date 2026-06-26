@@ -492,6 +492,8 @@
       "emptyFiltered": "No visible registration payments. Clear filters or search.",
       "unknownName": "Unknown participant",
       "providerStatusPrefix": "Mono",
+      "deleting": "Deleting...",
+      "deleteConfirm": "Delete this local registration payment record? This will not cancel the Monobank invoice.",
       "stats": {
         "total": "Total registrations",
         "paid": "Paid",
@@ -516,6 +518,7 @@
         "details": "Details"
       },
       "actions": {
+        "deleteRecord": "Delete record",
         "openDetails": "Open payment details for {id}"
       },
       "toolbar": {

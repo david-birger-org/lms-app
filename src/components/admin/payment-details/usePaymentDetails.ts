@@ -16,8 +16,16 @@ import type { StatementItem } from "@/lib/monobank";
 import type { PaymentDetailsSource } from "@/lib/payments";
 
 type CancelInvoiceRequest = (
-  invoiceId: string,
+  invoiceId?: string,
 ) => Promise<PaymentDetails | null>;
+
+type CanCancelInvoice = ({
+  invoiceId,
+  status,
+}: {
+  invoiceId?: string;
+  status?: string;
+}) => boolean;
 
 async function cancelMonobankInvoice(invoiceId: string) {
   const response = await fetch("/api/monobank/invoice/remove", {
@@ -42,7 +50,10 @@ export function usePaymentDetails({
   controlledOpen,
   onOpenChange,
   onInvoiceChanged,
+  onCancelInvoiceCompleted,
   cancelInvoiceRequest,
+  canCancelInvoice: canCancelInvoiceOverride,
+  cancelConfirmMessage,
   hideTrigger,
 }: {
   invoiceId?: string;
@@ -51,7 +62,10 @@ export function usePaymentDetails({
   controlledOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onInvoiceChanged?: () => void;
+  onCancelInvoiceCompleted?: () => void;
   cancelInvoiceRequest?: CancelInvoiceRequest;
+  canCancelInvoice?: CanCancelInvoice;
+  cancelConfirmMessage?: string;
   hideTrigger: boolean;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -201,12 +215,16 @@ export function usePaymentDetails({
 
   const displayDetails = mergePaymentDetails(payment, details);
   const canCancelInvoice =
-    Boolean(effectiveInvoiceId) &&
-    isCancelableInvoiceStatus(displayDetails?.status);
+    canCancelInvoiceOverride?.({
+      invoiceId: effectiveInvoiceId,
+      status: displayDetails?.status,
+    }) ??
+    (Boolean(effectiveInvoiceId) &&
+      isCancelableInvoiceStatus(displayDetails?.status));
 
   const handleCancelInvoice = useCallback(async () => {
     if (
-      !effectiveInvoiceId ||
+      (!effectiveInvoiceId && !cancelInvoiceRequest) ||
       !canCancelInvoice ||
       isCancelling ||
       !isMountedRef.current
@@ -216,7 +234,8 @@ export function usePaymentDetails({
 
     if (
       !window.confirm(
-        "Cancel this unpaid invoice? This action cannot be undone.",
+        cancelConfirmMessage ??
+          "Cancel this unpaid invoice? This action cannot be undone.",
       )
     ) {
       return;
@@ -229,9 +248,9 @@ export function usePaymentDetails({
     setCancellationError(null);
 
     try {
-      const payload = await (cancelInvoiceRequest ?? cancelMonobankInvoice)(
-        effectiveInvoiceId,
-      );
+      const payload = cancelInvoiceRequest
+        ? await cancelInvoiceRequest(effectiveInvoiceId)
+        : await cancelMonobankInvoice(effectiveInvoiceId ?? "");
 
       if (!payload) {
         if (
@@ -241,11 +260,15 @@ export function usePaymentDetails({
           return;
         }
 
-        onInvoiceChanged?.();
+        onCancelInvoiceCompleted?.();
         return;
       }
       if (typeof payload.status !== "string" || !payload.status.trim()) {
         throw new Error("Cancel response did not include payment status");
+      }
+      const payloadInvoiceId = effectiveInvoiceId ?? payload.invoiceId;
+      if (!payloadInvoiceId) {
+        throw new Error("Cancel response did not include invoice id");
       }
 
       if (
@@ -260,7 +283,7 @@ export function usePaymentDetails({
           current,
           payload,
           payment,
-          invoiceId: effectiveInvoiceId,
+          invoiceId: payloadInvoiceId,
         });
 
         lastKnownStatus.current = nextDetails.status;
@@ -268,6 +291,7 @@ export function usePaymentDetails({
 
         return nextDetails;
       });
+      onCancelInvoiceCompleted?.();
       onInvoiceChanged?.();
     } catch (cancelError) {
       if (
@@ -288,9 +312,11 @@ export function usePaymentDetails({
     }
   }, [
     canCancelInvoice,
+    cancelConfirmMessage,
     cancelInvoiceRequest,
     effectiveInvoiceId,
     isCancelling,
+    onCancelInvoiceCompleted,
     onInvoiceChanged,
     payment,
   ]);

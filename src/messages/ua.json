@@ -492,6 +492,8 @@
       "emptyFiltered": "Немає видимих оплат реєстрацій. Очистьте фільтри або пошук.",
       "unknownName": "Невідомий учасник",
       "providerStatusPrefix": "Mono",
+      "deleting": "Видалення...",
+      "deleteConfirm": "Видалити локальний запис оплати реєстрації? Це не скасує інвойс Monobank.",
       "stats": {
         "total": "Усього реєстрацій",
         "paid": "Оплачено",
@@ -516,6 +518,7 @@
         "details": "Деталі"
       },
       "actions": {
+        "deleteRecord": "Видалити запис",
         "openDetails": "Відкрити деталі платежу для {id}"
       },
       "toolbar": {
