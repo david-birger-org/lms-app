@@ -519,7 +519,11 @@
       },
       "actions": {
         "deleteRecord": "Delete record",
-        "openDetails": "Open payment details for {id}"
+        "openDetails": "Open payment details for {id}",
+        "syncReceipt": "Refresh receipt for {id}",
+        "syncReceiptFailed": "Failed to refresh receipt.",
+        "syncReceiptNotReady": "Receipt is not ready yet.",
+        "syncReceiptSuccess": "Receipt refreshed."
       },
       "toolbar": {
         "searchPlaceholder": "Search participant, email, ref, invoice...",

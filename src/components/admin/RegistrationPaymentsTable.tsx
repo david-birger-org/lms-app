@@ -23,13 +23,16 @@ import {
   ExternalLink,
   Eye,
   FileSpreadsheet,
+  Loader2,
   Printer,
   ReceiptText,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
+import { toast } from "sonner";
 
 import {
   AdminDataTableCard,
@@ -38,6 +41,12 @@ import {
   adminDataTableStyles,
 } from "@/components/admin/AdminDataTableShell";
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
+import {
+  getHttpUrl,
+  getReceiptFile,
+  getReceiptLabel,
+  receiptFileName,
+} from "@/components/admin/registration-payments/receipt-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +74,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { StatementItem } from "@/lib/monobank";
 import {
   getPaymentStatusKind,
@@ -192,7 +206,12 @@ function SortableColumnHeader({
 
 type RegistrationPaymentLabels = {
   actions: {
+    deleteRecord: string;
     openDetails: (params: { id: string }) => string;
+    syncReceipt: (params: { id: string }) => string;
+    syncReceiptFailed: string;
+    syncReceiptNotReady: string;
+    syncReceiptSuccess: string;
   };
   columns: {
     amount: string;
@@ -273,44 +292,9 @@ function exportFileName(extension: "pdf" | "xlsx") {
   return `registration-payments-${fileTimestamp()}.${extension}`;
 }
 
-function getHttpUrl(value?: string) {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:"
-      ? url.toString()
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function sanitizeFileNamePart(value: string) {
-  return value.replaceAll(/[^a-zA-Z0-9._-]+/g, "-").replaceAll(/^-|-$/g, "");
-}
-
 function compactIdentifier(value: string, headLength = 6, tailLength = 4) {
   if (value.length <= headLength + tailLength + 3) return value;
   return `${value.slice(0, headLength)}...${value.slice(-tailLength)}`;
-}
-
-function receiptFileName(payment: AdminRegistrationPaymentRecord) {
-  const identifier =
-    payment.checkId ?? payment.invoiceId ?? payment.externalRef ?? payment.id;
-  return `receipt-${sanitizeFileNamePart(identifier) || "payment"}.pdf`;
-}
-
-function getReceiptFile(payment: AdminRegistrationPaymentRecord) {
-  const url = getHttpUrl(payment.checkTaxUrl) ?? getHttpUrl(payment.checkFile);
-  if (url) return { kind: "url" as const, value: url };
-  if (payment.checkFile) {
-    return { kind: "pdf" as const, value: payment.checkFile };
-  }
-  return undefined;
-}
-
-function getReceiptLabel(payment: AdminRegistrationPaymentRecord) {
-  return payment.checkId ?? "PDF";
 }
 
 function createPdfBlobFromBase64(value: string) {
@@ -355,7 +339,7 @@ function openReceiptFile(value: string, fileName: string) {
 
 function getReceiptExportValue(payment: AdminRegistrationPaymentRecord) {
   const receiptFile = getReceiptFile(payment);
-  if (!receiptFile) return "";
+  if (!receiptFile) return payment.checkStatus ?? payment.checkId ?? "";
   if (receiptFile.kind === "url") return receiptFile.value;
   return payment.checkId ?? "PDF saved";
 }
@@ -601,6 +585,8 @@ function printPdf(rows: Array<Record<string, string>>, title: string) {
 function createColumns(
   labels: RegistrationPaymentLabels,
   onOpenPaymentDetails: (payment: AdminRegistrationPaymentRecord) => void,
+  onSyncReceipt: (payment: AdminRegistrationPaymentRecord) => void,
+  syncingReceiptIds: Set<string>,
 ): ColumnDef<AdminRegistrationPaymentRecord>[] {
   return [
     {
@@ -729,6 +715,13 @@ function createColumns(
         const payment = row.original;
         const receiptFile = getReceiptFile(payment);
         if (!receiptFile) {
+          if (payment.checkStatus) {
+            return (
+              <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                {payment.checkStatus}
+              </Badge>
+            );
+          }
           return <span className="text-muted-foreground">-</span>;
         }
 
@@ -843,22 +836,54 @@ function createColumns(
         const payment = row.original;
         const identifier =
           payment.invoiceId ?? payment.externalRef ?? payment.paymentId;
+        const isSyncingReceipt = syncingReceiptIds.has(payment.paymentId);
 
         return (
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label={labels.actions.openDetails({ id: identifier })}
-              disabled={!payment.invoiceId}
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpenPaymentDetails(payment);
-              }}
-            >
-              <Eye />
-            </Button>
+          <div className="flex justify-end gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={labels.actions.syncReceipt({ id: identifier })}
+                  disabled={!payment.invoiceId || isSyncingReceipt}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSyncReceipt(payment);
+                  }}
+                >
+                  {isSyncingReceipt ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <RefreshCw />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {labels.actions.syncReceipt({ id: identifier })}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={labels.actions.openDetails({ id: identifier })}
+                  disabled={!payment.invoiceId}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenPaymentDetails(payment);
+                  }}
+                >
+                  <Eye />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {labels.actions.openDetails({ id: identifier })}
+              </TooltipContent>
+            </Tooltip>
           </div>
         );
       },
@@ -894,12 +919,20 @@ export function RegistrationPaymentsTable({
   const [activePaymentId, setActivePaymentId] = React.useState<string | null>(
     null,
   );
+  const [syncingReceiptIds, setSyncingReceiptIds] = React.useState<Set<string>>(
+    () => new Set(),
+  );
   const [detailsOpen, setDetailsOpen] = React.useState(false);
 
   const labels = React.useMemo<RegistrationPaymentLabels>(
     () => ({
       actions: {
+        deleteRecord: t("actions.deleteRecord"),
         openDetails: (params) => t("actions.openDetails", params),
+        syncReceipt: (params) => t("actions.syncReceipt", params),
+        syncReceiptFailed: t("actions.syncReceiptFailed"),
+        syncReceiptNotReady: t("actions.syncReceiptNotReady"),
+        syncReceiptSuccess: t("actions.syncReceiptSuccess"),
       },
       columns: {
         amount: t("columns.amount"),
@@ -987,9 +1020,62 @@ export function RegistrationPaymentsTable({
     setActivePaymentId(null);
     router.refresh();
   }, [router]);
+  const handleSyncReceipt = React.useCallback(
+    async (payment: AdminRegistrationPaymentRecord) => {
+      setSyncingReceiptIds((current) =>
+        new Set(current).add(payment.paymentId),
+      );
+
+      try {
+        const response = await fetch(
+          `/api/registration-payments/${encodeURIComponent(payment.paymentId)}/fiscal-checks/sync`,
+          { method: "POST" },
+        );
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+          result?: {
+            empty?: number;
+            failed?: number;
+            scanned?: number;
+            synced?: number;
+          };
+        } | null;
+
+        if (!response.ok) {
+          throw new Error(payload?.error ?? labels.actions.syncReceiptFailed);
+        }
+
+        if ((payload?.result?.synced ?? 0) > 0) {
+          toast.success(labels.actions.syncReceiptSuccess);
+        } else {
+          toast.message(labels.actions.syncReceiptNotReady);
+        }
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : labels.actions.syncReceiptFailed,
+        );
+      } finally {
+        setSyncingReceiptIds((current) => {
+          const next = new Set(current);
+          next.delete(payment.paymentId);
+          return next;
+        });
+      }
+    },
+    [labels.actions, router],
+  );
   const columns = React.useMemo(
-    () => createColumns(labels, handleOpenPaymentDetails),
-    [handleOpenPaymentDetails, labels],
+    () =>
+      createColumns(
+        labels,
+        handleOpenPaymentDetails,
+        handleSyncReceipt,
+        syncingReceiptIds,
+      ),
+    [handleOpenPaymentDetails, handleSyncReceipt, labels, syncingReceiptIds],
   );
   const table = useReactTable({
     data: payments,
