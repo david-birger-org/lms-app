@@ -519,7 +519,11 @@
       },
       "actions": {
         "deleteRecord": "Видалити запис",
-        "openDetails": "Відкрити деталі платежу для {id}"
+        "openDetails": "Відкрити деталі платежу для {id}",
+        "syncReceipt": "Оновити чек для {id}",
+        "syncReceiptFailed": "Не вдалося оновити чек.",
+        "syncReceiptNotReady": "Чек ще не готовий.",
+        "syncReceiptSuccess": "Чек оновлено."
       },
       "toolbar": {
         "searchPlaceholder": "Пошук учасника, email, ref, invoice...",
