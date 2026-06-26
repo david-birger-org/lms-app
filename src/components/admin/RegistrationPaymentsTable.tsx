@@ -27,6 +27,7 @@ import {
   ReceiptText,
   X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 
@@ -878,6 +879,7 @@ export function RegistrationPaymentsTable({
   payments: AdminRegistrationPaymentRecord[];
 }) {
   const t = useTranslations("admin.registrationPayments");
+  const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "paymentCreatedAt", desc: true },
   ]);
@@ -889,6 +891,9 @@ export function RegistrationPaymentsTable({
     React.useState<VisibilityState>(defaultColumnVisibility);
   const [activePaymentDetails, setActivePaymentDetails] =
     React.useState<StatementItem | null>(null);
+  const [activePaymentId, setActivePaymentId] = React.useState<string | null>(
+    null,
+  );
   const [detailsOpen, setDetailsOpen] = React.useState(false);
 
   const labels = React.useMemo<RegistrationPaymentLabels>(
@@ -935,6 +940,7 @@ export function RegistrationPaymentsTable({
   const handleOpenPaymentDetails = React.useCallback(
     (payment: AdminRegistrationPaymentRecord) => {
       setActivePaymentDetails(toPaymentDetailsSummary(payment));
+      setActivePaymentId(payment.paymentId);
       setDetailsOpen(true);
     },
     [],
@@ -944,8 +950,36 @@ export function RegistrationPaymentsTable({
 
     if (!open) {
       setActivePaymentDetails(null);
+      setActivePaymentId(null);
     }
   }, []);
+  const handleDeleteRegistrationPayment = React.useCallback(async () => {
+    if (!activePaymentId) {
+      throw new Error("Payment ID is missing.");
+    }
+
+    const response = await fetch(
+      `/api/registration-payments/${encodeURIComponent(activePaymentId)}`,
+      { method: "DELETE" },
+    );
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+
+    if (!response.ok) {
+      throw new Error(
+        payload?.error ?? "Failed to delete registration payment",
+      );
+    }
+
+    return null;
+  }, [activePaymentId]);
+  const handleRegistrationPaymentDeleted = React.useCallback(() => {
+    setDetailsOpen(false);
+    setActivePaymentDetails(null);
+    setActivePaymentId(null);
+    router.refresh();
+  }, [router]);
   const columns = React.useMemo(
     () => createColumns(labels, handleOpenPaymentDetails),
     [handleOpenPaymentDetails, labels],
@@ -1231,6 +1265,8 @@ export function RegistrationPaymentsTable({
             detailsSource="database"
             open={detailsOpen}
             onOpenChange={handleDetailsOpenChange}
+            onInvoiceChanged={handleRegistrationPaymentDeleted}
+            cancelInvoiceRequest={handleDeleteRegistrationPayment}
             hideTrigger
           />
         ) : null}

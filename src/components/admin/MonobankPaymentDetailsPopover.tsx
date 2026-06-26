@@ -4,6 +4,7 @@ import { Eye, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PaymentDetailsBody } from "@/components/admin/payment-details/PaymentDetailsBody";
+import type { PaymentDetails } from "@/components/admin/payment-details/types";
 import { usePaymentDetails } from "@/components/admin/payment-details/usePaymentDetails";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ export function MonobankPaymentDetailsPopover({
   open: controlledOpen,
   onOpenChange,
   onInvoiceChanged,
+  cancelInvoiceRequest,
   hideTrigger = false,
 }: {
   invoiceId?: string;
@@ -32,6 +34,7 @@ export function MonobankPaymentDetailsPopover({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onInvoiceChanged?: () => void;
+  cancelInvoiceRequest?: (invoiceId: string) => Promise<PaymentDetails | null>;
   hideTrigger?: boolean;
 }) {
   const {
@@ -53,6 +56,7 @@ export function MonobankPaymentDetailsPopover({
     controlledOpen,
     onOpenChange,
     onInvoiceChanged,
+    cancelInvoiceRequest,
     hideTrigger,
   });
   const t = useTranslations("admin.paymentDetails");

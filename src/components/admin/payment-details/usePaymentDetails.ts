@@ -15,6 +15,26 @@ import {
 import type { StatementItem } from "@/lib/monobank";
 import type { PaymentDetailsSource } from "@/lib/payments";
 
+type CancelInvoiceRequest = (
+  invoiceId: string,
+) => Promise<PaymentDetails | null>;
+
+async function cancelMonobankInvoice(invoiceId: string) {
+  const response = await fetch("/api/monobank/invoice/remove", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ invoiceId }),
+  });
+  const payload = (await response.json()) as PaymentDetails;
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Failed to cancel invoice");
+  }
+  return payload;
+}
+
 export function usePaymentDetails({
   invoiceId,
   payment,
@@ -22,6 +42,7 @@ export function usePaymentDetails({
   controlledOpen,
   onOpenChange,
   onInvoiceChanged,
+  cancelInvoiceRequest,
   hideTrigger,
 }: {
   invoiceId?: string;
@@ -30,6 +51,7 @@ export function usePaymentDetails({
   controlledOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onInvoiceChanged?: () => void;
+  cancelInvoiceRequest?: CancelInvoiceRequest;
   hideTrigger: boolean;
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -207,17 +229,20 @@ export function usePaymentDetails({
     setCancellationError(null);
 
     try {
-      const response = await fetch("/api/monobank/invoice/remove", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ invoiceId: effectiveInvoiceId }),
-      });
-      const payload = (await response.json()) as PaymentDetails;
+      const payload = await (cancelInvoiceRequest ?? cancelMonobankInvoice)(
+        effectiveInvoiceId,
+      );
 
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Failed to cancel invoice");
+      if (!payload) {
+        if (
+          !isMountedRef.current ||
+          cancellationRequestIdRef.current !== requestId
+        ) {
+          return;
+        }
+
+        onInvoiceChanged?.();
+        return;
       }
       if (typeof payload.status !== "string" || !payload.status.trim()) {
         throw new Error("Cancel response did not include payment status");
@@ -263,6 +288,7 @@ export function usePaymentDetails({
     }
   }, [
     canCancelInvoice,
+    cancelInvoiceRequest,
     effectiveInvoiceId,
     isCancelling,
     onInvoiceChanged,
