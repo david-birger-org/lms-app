@@ -37,6 +37,9 @@ export const env = {
   get lmsSlsBaseUrl() {
     return getRequiredEnv("LMS_SLS_BASE_URL");
   },
+  get videoProvider() {
+    return readEnv("VIDEO_PROVIDER");
+  },
   get wnbfCheckoutSecret() {
     return getRequiredEnv("WNBF_CHECKOUT_SECRET");
   },

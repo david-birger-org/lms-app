@@ -5,11 +5,9 @@ import { LRUCache } from "lru-cache";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 import type { AuthenticatedUser } from "@/lib/auth/auth-server";
-import {
-  forwardLmsSlsRequest,
-  mergeHeaders,
-} from "@/lib/server/lms-sls";
+import { forwardLmsSlsRequest, mergeHeaders } from "@/lib/server/lms-sls";
 import { createTrustedUserHeaders } from "@/lib/server/lms-sls-user";
+import { fetchUserLectures } from "@/lib/server/user-lectures";
 
 const RENDER_SCALE = 3;
 const CACHE_MAX = 10;
@@ -79,17 +77,23 @@ async function prepare(
   };
 }
 
-function prepareCached(
+// The cache is shared across users, so check this user's access on every
+// call. Keying by updatedAt drops stale renders when notes are replaced.
+async function prepareCached(
   slug: string,
   user: AuthenticatedUser,
 ): Promise<PreparedLecture> {
-  const existing = cache.get(slug);
+  const lecture = (await fetchUserLectures(user)).find((l) => l.slug === slug);
+  if (!lecture?.hasNotes) throw new Error("not-found");
+
+  const key = `${slug}:${lecture.updatedAt}`;
+  const existing = cache.get(key);
   if (existing) return existing;
   const promise = prepare(slug, user).catch((err) => {
-    cache.delete(slug);
+    cache.delete(key);
     throw err;
   });
-  cache.set(slug, promise);
+  cache.set(key, promise);
   return promise;
 }
 

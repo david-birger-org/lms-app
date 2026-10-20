@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   Clock,
   CreditCard,
   History,
@@ -10,6 +11,7 @@ import {
   ScrollText,
   Settings,
   Users,
+  Video,
 } from "lucide-react";
 
 export interface DashboardRoute {
@@ -22,6 +24,8 @@ export interface DashboardRoute {
     | "registrationPayments"
     | "statementAudit"
     | "products"
+    | "lectures"
+    | "videos"
     | "users"
     | "requests"
     | "settings";
@@ -63,6 +67,16 @@ export const dashboardRoutes = [
     href: "/admin/products",
     key: "products",
     icon: Package,
+  },
+  {
+    href: "/admin/lectures",
+    key: "lectures",
+    icon: BookOpen,
+  },
+  {
+    href: "/admin/videos",
+    key: "videos",
+    icon: Video,
   },
   {
     href: "/admin/users",

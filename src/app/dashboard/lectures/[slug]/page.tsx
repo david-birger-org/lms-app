@@ -5,13 +5,17 @@ import { Suspense } from "react";
 
 import { CabinetSection } from "@/components/cabinet/cabinet-page-shell";
 import { LecturePreview } from "@/components/cabinet/lecture-preview";
+import { LessonVideoPlayer } from "@/components/cabinet/lesson-video-player";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/routing";
 import { requireAuthPageAccess } from "@/lib/auth/auth-server";
 import { getLectureMeta } from "@/lib/server/lecture-renderer";
 import { getActiveFeatures } from "@/lib/server/user-features";
-import { getUserLecture } from "@/lib/server/user-lectures";
+import {
+  getUserLecture,
+  getUserLectureVideo,
+} from "@/lib/server/user-lectures";
 
 async function LectureContent({ slug }: { slug: string }) {
   const [features, access, t] = await Promise.all([
@@ -25,7 +29,10 @@ async function LectureContent({ slug }: { slug: string }) {
   const lecture = await getUserLecture(slug);
   if (!lecture) notFound();
 
-  const meta = await getLectureMeta(slug, access.authenticatedUser);
+  const [video, meta] = await Promise.all([
+    lecture.hasVideo ? getUserLectureVideo(slug) : null,
+    lecture.hasNotes ? getLectureMeta(slug, access.authenticatedUser) : null,
+  ]);
 
   return (
     <CabinetSection>
@@ -42,14 +49,28 @@ async function LectureContent({ slug }: { slug: string }) {
         <CardHeader>
           <CardTitle className="text-lg sm:text-xl">{lecture.title}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <LecturePreview
-            slug={slug}
-            pageCount={meta.pageCount}
-            pageWidth={meta.pageWidth}
-            pageHeight={meta.pageHeight}
-            watermarkText="David Birger"
-          />
+        <CardContent className="space-y-6">
+          {video && (
+            <LessonVideoPlayer
+              playback={video}
+              title={lecture.title}
+              watermark={access.authenticatedUser.email}
+            />
+          )}
+          {meta && (
+            <LecturePreview
+              slug={slug}
+              pageCount={meta.pageCount}
+              pageWidth={meta.pageWidth}
+              pageHeight={meta.pageHeight}
+              watermarkText="David Birger"
+            />
+          )}
+          {!video && !meta && (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("comingSoon")}
+            </p>
+          )}
         </CardContent>
       </Card>
     </CabinetSection>
