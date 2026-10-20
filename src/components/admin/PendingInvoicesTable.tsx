@@ -1,16 +1,23 @@
 "use client";
 
-import { Loader2, RefreshCw, X } from "lucide-react";
+import { Loader2, ReceiptText, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  AdminAlert,
   AdminDataTableCard,
   AdminDataTablePagination,
-  AdminDataTableScroll,
+  AdminDataTableRowsSkeleton,
+  AdminDataTableToolbar,
   adminDataTableStyles,
 } from "@/components/admin/AdminDataTableShell";
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import {
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,20 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatMonobankDate, formatMonobankMoney } from "@/lib/monobank";
-import {
-  getPaymentStatusKind,
-  normalizePaymentStatus,
-  resolvePaymentStatus,
-} from "@/lib/payments";
+import { normalizePaymentStatus, resolvePaymentStatus } from "@/lib/payments";
+import { cn } from "@/lib/utils";
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
 
@@ -54,20 +50,6 @@ interface PendingInvoice {
 interface PendingInvoicesResponse {
   list?: PendingInvoice[];
   error?: string;
-}
-
-function statusVariant(status: string) {
-  switch (getPaymentStatusKind(status)) {
-    case "paid":
-      return "default";
-    case "failed":
-    case "unknown":
-      return "destructive";
-    case "draft":
-      return "outline";
-    case "pending":
-      return "secondary";
-  }
 }
 
 function usePendingInvoices() {
@@ -222,201 +204,199 @@ export function PendingInvoicesTable() {
     setPageIndex(0);
   }
 
+  const columns: DataListColumn<PendingInvoice>[] = [
+    {
+      id: "description",
+      header: t("columns.description"),
+      mobile: "title",
+      className: "max-w-xs",
+      cell: (item) => (
+        <span className="block truncate" title={item.description}>
+          {item.description || "-"}
+        </span>
+      ),
+    },
+    {
+      id: "invoiceId",
+      header: t("columns.invoiceId"),
+      cell: (item) => (
+        <span
+          className="font-numeric block max-w-40 truncate text-xs md:max-w-48"
+          title={item.invoiceId}
+        >
+          {item.invoiceId}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: t("columns.status"),
+      cell: (item) => (
+        <StatusBadge status={getPaymentBadgeStatus(item.status)}>
+          {labelStatus(item.status)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "date",
+      header: t("columns.date"),
+      cell: (item) => (
+        <span className="font-numeric text-xs text-muted-foreground">
+          {formatMonobankDate(item.createdDate)}
+        </span>
+      ),
+    },
+    {
+      id: "amount",
+      header: t("columns.amount"),
+      align: "end",
+      mobile: "trailing",
+      cell: (item) => (
+        <span className="font-numeric font-medium">
+          {formatMonobankMoney(item.amount, item.currency)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("cancel")}</span>,
+      align: "end",
+      className: "w-px py-1.5",
+      cell: (item) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void handleCancel(item.invoiceId)}
+          disabled={cancellingId === item.invoiceId}
+          className={cn(
+            adminDataTableStyles.control,
+            "text-destructive hover:bg-destructive/10 hover:text-destructive",
+          )}
+        >
+          {cancellingId === item.invoiceId ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <X />
+          )}
+          {t("cancel")}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <AdminDataTableCard
-      title={t("title")}
-      description={t("description")}
-      summaryItems={[
-        {
-          content: t("summary.total", { count: visibleInvoices.length }),
-          id: "total",
-        },
-        {
-          content: t("summary.visible", { count: filteredInvoices.length }),
-          id: "visible",
-        },
-      ]}
       toolbar={
-        <div className={adminDataTableStyles.toolbar}>
-          <Input
-            value={searchValue}
-            onChange={(event) => {
-              setSearchValue(event.target.value);
-              setPageIndex(0);
-            }}
-            placeholder={t("searchPlaceholder")}
-            className={adminDataTableStyles.search}
-          />
-          <div className={adminDataTableStyles.actionRow}>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(value) => {
-                setPageSize(Number(value) as (typeof pageSizeOptions)[number]);
+        <AdminDataTableToolbar
+          filtersLabel={t("filters")}
+          search={
+            <Input
+              type="search"
+              aria-label={t("searchPlaceholder")}
+              value={searchValue}
+              onChange={(event) => {
+                setSearchValue(event.target.value);
                 setPageIndex(0);
               }}
-            >
-              <SelectTrigger className={adminDataTableStyles.select}>
-                <SelectValue placeholder={t("rows")} />
-              </SelectTrigger>
-              <SelectContent>
-                {pageSizeOptions.map((option) => (
-                  <SelectItem key={option} value={String(option)}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder={t("searchPlaceholder")}
+              className={adminDataTableStyles.search}
+            />
+          }
+          filters={
+            <>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPageSize(
+                    Number(value) as (typeof pageSizeOptions)[number],
+                  );
+                  setPageIndex(0);
+                }}
+              >
+                <SelectTrigger
+                  aria-label={t("rows")}
+                  className={cn(adminDataTableStyles.select, "max-md:w-full")}
+                >
+                  <span className="text-muted-foreground md:hidden">
+                    {t("rows")}
+                  </span>
+                  <SelectValue placeholder={t("rows")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {pageSizeOptions.map((option) => (
+                    <SelectItem key={option} value={String(option)}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {hasActiveState ? (
+                <Button
+                  variant="ghost"
+                  className={adminDataTableStyles.control}
+                  onClick={resetTable}
+                >
+                  <X />
+                  {t("reset")}
+                </Button>
+              ) : null}
+            </>
+          }
+          actions={
             <Button
               variant="outline"
-              size="sm"
-              className={adminDataTableStyles.control}
+              className={cn(
+                adminDataTableStyles.control,
+                "max-md:w-10 max-md:px-0",
+              )}
               onClick={handleRefresh}
               disabled={isLoading}
+              aria-label={t("refresh")}
             >
-              <RefreshCw
-                className={`${adminDataTableStyles.icon} ${isLoading ? "animate-spin" : ""}`}
-              />
-              {t("refresh")}
+              <RefreshCw className={cn(isLoading && "animate-spin")} />
+              <span className="max-md:sr-only">{t("refresh")}</span>
             </Button>
-            {hasActiveState ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={adminDataTableStyles.control}
-                onClick={resetTable}
-              >
-                <X className={adminDataTableStyles.icon} />
-                {t("reset")}
-              </Button>
-            ) : null}
-          </div>
-        </div>
+          }
+        />
       }
     >
-      {displayError && (
-        <p className="m-3 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          {displayError}
-        </p>
+      {displayError ? (
+        <AdminAlert className="m-3">{displayError}</AdminAlert>
+      ) : null}
+
+      {isLoading && invoices.length === 0 ? (
+        <AdminDataTableRowsSkeleton />
+      ) : (
+        <DataList
+          className="rounded-none border-0 bg-transparent shadow-none"
+          items={pageInvoices}
+          getKey={(item) => item.invoiceId}
+          columns={columns}
+          empty={
+            <EmptyState
+              className="rounded-none border-0"
+              icon={ReceiptText}
+              title={
+                visibleInvoices.length === 0 ? t("empty") : t("emptyFiltered")
+              }
+              action={
+                visibleInvoices.length > 0 ? (
+                  <Button variant="outline" onClick={resetTable}>
+                    {t("reset")}
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+        />
       )}
 
-      <AdminDataTableScroll>
-        <Table className={adminDataTableStyles.table}>
-          <TableHeader>
-            <TableRow>
-              <TableHead className={adminDataTableStyles.headerCell}>
-                {t("columns.invoiceId")}
-              </TableHead>
-              <TableHead className={adminDataTableStyles.headerCell}>
-                {t("columns.description")}
-              </TableHead>
-              <TableHead
-                className={`${adminDataTableStyles.headerCell} text-right`}
-              >
-                {t("columns.amount")}
-              </TableHead>
-              <TableHead className={adminDataTableStyles.headerCell}>
-                {t("columns.status")}
-              </TableHead>
-              <TableHead
-                className={`hidden sm:table-cell ${adminDataTableStyles.headerCell}`}
-              >
-                {t("columns.date")}
-              </TableHead>
-              <TableHead
-                className={`w-[80px] ${adminDataTableStyles.headerCell}`}
-              />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && invoices.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className={adminDataTableStyles.emptyCell}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 className="size-4 animate-spin" />
-                    {t("loading")}
-                  </span>
-                </TableCell>
-              </TableRow>
-            ) : pageInvoices.length ? (
-              pageInvoices.map((item) => (
-                <TableRow key={item.invoiceId}>
-                  <TableCell
-                    className={`${adminDataTableStyles.cell} max-w-[8rem] truncate font-mono text-[11px]`}
-                  >
-                    {item.invoiceId}
-                  </TableCell>
-                  <TableCell
-                    className={`${adminDataTableStyles.cell} max-w-[12rem] truncate text-muted-foreground`}
-                  >
-                    {item.description || "-"}
-                  </TableCell>
-                  <TableCell
-                    className={`${adminDataTableStyles.cell} whitespace-nowrap text-right font-medium tabular-nums`}
-                  >
-                    {formatMonobankMoney(item.amount, item.currency)}
-                  </TableCell>
-                  <TableCell className={adminDataTableStyles.cell}>
-                    <Badge
-                      variant={statusVariant(item.status)}
-                      className="h-4 max-w-full truncate rounded-md px-1.5 text-[10px] sm:h-5 sm:text-xs"
-                    >
-                      {labelStatus(item.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell
-                    className={`hidden whitespace-nowrap text-muted-foreground sm:table-cell ${adminDataTableStyles.cell}`}
-                  >
-                    {formatMonobankDate(item.createdDate)}
-                  </TableCell>
-                  <TableCell className={adminDataTableStyles.cell}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => void handleCancel(item.invoiceId)}
-                      disabled={cancellingId === item.invoiceId}
-                      className={`${adminDataTableStyles.control} text-destructive hover:bg-destructive/10 hover:text-destructive`}
-                    >
-                      {cancellingId === item.invoiceId ? (
-                        <Loader2
-                          className={`${adminDataTableStyles.icon} animate-spin`}
-                        />
-                      ) : (
-                        <X className={adminDataTableStyles.icon} />
-                      )}
-                      {t("cancel")}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className={adminDataTableStyles.emptyCell}
-                >
-                  {visibleInvoices.length === 0
-                    ? t("empty")
-                    : t("emptyFiltered")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </AdminDataTableScroll>
-
       <AdminDataTablePagination
-        hidden={visibleInvoices.length === 0}
-        label={
-          <span>
-            {t("pagination.rows", {
-              filtered: filteredInvoices.length,
-              total: visibleInvoices.length,
-            })}
-          </span>
-        }
+        hidden={filteredInvoices.length === 0}
+        label={t("pagination.rows", {
+          filtered: filteredInvoices.length,
+          total: visibleInvoices.length,
+        })}
         previousLabel={t("pagination.previous")}
         nextLabel={t("pagination.next")}
         canPreviousPage={currentPageIndex > 0}

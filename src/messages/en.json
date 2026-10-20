@@ -4,7 +4,6 @@
     "description": "Protected David Birger application for customers and admin operations."
   },
   "auth": {
-    "badge": "David Birger app",
     "signIn": {
       "title": "Welcome back",
       "description": "Sign in with your email and password to continue to the David Birger app.",
@@ -27,17 +26,25 @@
       "confirmPassword": "Confirm password",
       "submit": "Create account",
       "submitting": "Creating account...",
+      "passwordHint": "At least {min} characters.",
       "passwordMismatch": "Passwords must match.",
       "error": "Failed to create account."
     },
     "accountMenu": {
       "settings": "Account settings",
       "signOut": "Sign out",
-      "signingOut": "Signing out..."
+      "signingOut": "Signing out...",
+      "open": "Open account menu"
     },
     "switchAccount": {
       "label": "Switch account",
       "signingOut": "Signing out..."
+    },
+    "validation": {
+      "emailRequired": "Enter your email.",
+      "emailInvalid": "Enter a valid email, like name@example.com.",
+      "passwordRequired": "Enter your password.",
+      "passwordTooShort": "Use at least {min} characters."
     }
   },
   "navigation": {
@@ -100,7 +107,15 @@
       "header": {
         "app": "David Birger App",
         "section": "Admin"
-      }
+      },
+      "groups": {
+        "general": "General",
+        "payments": "Payments",
+        "content": "Content",
+        "people": "People",
+        "account": "Account"
+      },
+      "openNavigation": "Open navigation"
     },
     "cabinet": {
       "label": "Menu",
@@ -127,33 +142,43 @@
           "description": "Manage your account profile and session security."
         }
       }
-    },
-    "protected": "Protected"
+    }
   },
   "theme": {
     "label": "Theme",
-    "options": {
+    "accentLabel": "Accent",
+    "modes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "accents": {
       "neutral": "Neutral",
       "blue": "Blue",
+      "violet": "Violet",
       "green": "Green",
-      "amber": "Amber",
-      "mono": "Mono"
-    },
-    "mode": {
-      "toggle": "Toggle color mode",
-      "light": "Switch to light mode",
-      "dark": "Switch to dark mode"
+      "amber": "Amber"
     }
   },
   "language": {
     "label": "Language"
   },
   "dashboardHome": {
-    "accountTitle": "Account",
     "signedInAs": "Signed in as {email}",
-    "purchasesTitle": "My Purchases",
-    "purchasesDescription": "View products you've purchased and their status.",
-    "viewPurchases": "View purchases"
+    "viewPurchases": "View purchases",
+    "greeting": "Welcome back, {name}",
+    "stats": {
+      "purchases": "Purchases",
+      "paid": "Paid",
+      "lessons": "Lessons",
+      "lessonsUnlocked": "Unlocked",
+      "lessonsLocked": "Not purchased",
+      "lastPurchase": "Last purchase",
+      "never": "None yet"
+    },
+    "recentTitle": "Recent purchases",
+    "recentDescription": "Your latest orders and their payment status.",
+    "viewAll": "View all"
   },
   "settings": {
     "title": "Account settings",
@@ -168,7 +193,8 @@
       "save": "Save profile",
       "saving": "Saving...",
       "updated": "Profile updated.",
-      "error": "Failed to update your profile."
+      "error": "Failed to update your profile.",
+      "hint": "Your email is used to sign in and can't be changed here."
     },
     "password": {
       "title": "Password",
@@ -180,13 +206,15 @@
       "submitting": "Updating...",
       "updated": "Password updated.",
       "mismatch": "The new passwords do not match.",
-      "error": "Failed to update your password."
+      "error": "Failed to update your password.",
+      "hint": "Use at least 8 characters. Other sessions are signed out."
     },
     "session": {
       "title": "Session",
-      "description": "This workspace is gated by Better Auth and the admin role.",
+      "description": "The account signed in on this device.",
       "role": "Role",
-      "email": "Email"
+      "email": "Email",
+      "signOutHint": "Sign out of this device."
     },
     "notifications": {
       "title": "Notifications",
@@ -236,25 +264,44 @@
   },
   "unauthorized": {
     "title": "Access restricted",
-    "description": "This workspace is limited to users with the Better Auth `admin` role.",
-    "body": "Your account is signed in, but it does not have admin permissions for this section. If you are a regular user, you can access your personal dashboard.",
-    "dashboard": "Go to dashboard",
-    "signIn": "Go to sign in"
+    "description": "This section is for admins only. You are signed in, but your account does not have admin access.",
+    "dashboard": "Go to dashboard"
+  },
+  "errorPages": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "This page does not exist or was moved. Check the address, or go back home.",
+      "action": "Go home"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "description": "The page failed to load. Try again. If it keeps failing, go back home.",
+      "retry": "Try again",
+      "home": "Go home",
+      "errorId": "Error ID {id}"
+    }
   },
   "checkout": {
     "missingProduct": "Missing product.",
     "notAvailable": "Product not available for direct purchase.",
     "missingPrice": "No price available for {currency}.",
     "title": "Confirm purchase",
-    "signedInAs": "Signed in as {email}",
+    "description": "Check your order. You pay on the monobank page next.",
+    "summary": "Order summary",
+    "account": "Account",
+    "unavailableTitle": "This product cannot be bought here",
+    "backToDashboard": "Back to dashboard",
     "product": "Product",
     "total": "Total",
     "creatingInvoice": "Creating invoice...",
     "proceedToPayment": "Proceed to payment",
-    "createCheckoutError": "Failed to create the checkout."
+    "createCheckoutError": "Failed to create the checkout.",
+    "secureNote": "Secure payment by monobank. Your card details never reach this site."
   },
   "externalCheckout": {
-    "invalidLink": "Payment link is invalid or expired.",
+    "invalidTitle": "This payment link does not work",
+    "invalidLink": "The link is invalid or has expired. Ask the organizer for a new one.",
+    "summary": "Order summary",
     "title": "Confirm participation payment",
     "description": "A fiscal receipt will be issued after payment.",
     "product": "Product",
@@ -263,7 +310,8 @@
     "total": "Total",
     "creatingInvoice": "Creating invoice...",
     "proceedToPayment": "Proceed to payment",
-    "createCheckoutError": "Failed to create the checkout."
+    "createCheckoutError": "Failed to create the checkout.",
+    "secureNote": "Secure payment by monobank. Your card details never reach this site."
   },
   "purchases": {
     "title": "Purchase history",
@@ -304,6 +352,16 @@
       "title": "Products",
       "description": "Manage products and pricing. Changes are reflected on the portfolio site in real time.",
       "addProduct": "Add product",
+      "count": "{count, plural, one {# product} other {# products}}",
+      "emptyTitle": "No products yet",
+      "emptyDescription": "Add a product to list it on the portfolio site.",
+      "actions": {
+        "menu": "Actions for {name}",
+        "edit": "Edit product",
+        "hide": "Hide from site",
+        "show": "Show on site",
+        "delete": "Delete product"
+      },
       "empty": "No products yet. Click \"Add product\" to create one.",
       "invalidPrice": "Invalid price",
       "editPrice": "Click to edit price",
@@ -379,6 +437,7 @@
         "optional": "(optional)",
         "active": "Active",
         "activeHint": "Hidden products won't appear on the portfolio site.",
+        "cancel": "Cancel",
         "saving": "Saving..."
       }
     },
@@ -386,6 +445,14 @@
       "title": "Lessons",
       "description": "Create, order, and hide course lessons. Upload the notes PDF here. Manage videos on the Videos page.",
       "addLecture": "Add lecture",
+      "count": "{count, plural, one {# lesson} other {# lessons}}",
+      "emptyTitle": "No lessons yet",
+      "emptyDescription": "Add the first lesson, then upload its notes and video.",
+      "actions": {
+        "menu": "Actions for {name}",
+        "hide": "Hide from students",
+        "show": "Show to students"
+      },
       "empty": "No lectures yet. Click \"Add lecture\" to create one.",
       "columns": {
         "order": "Order",
@@ -431,6 +498,7 @@
         "optional": "(optional)",
         "active": "Visible to students",
         "activeHint": "Hidden lectures stay in the admin list only.",
+        "cancel": "Cancel",
         "saving": "Saving..."
       },
       "dialogs": {
@@ -463,6 +531,10 @@
       "title": "Videos",
       "description": "One video per lesson. Files upload straight from your browser to the video host.",
       "notConnected": "Video hosting is not connected. Set VIDEO_PROVIDER.",
+      "uploading": "Uploading to {title}",
+      "emptyTitle": "No lessons yet",
+      "emptyDescription": "Create lessons on the Lessons page first, then upload their videos here.",
+      "goToLessons": "Go to lessons",
       "empty": "No lessons yet. Create lessons on the Lessons page first.",
       "columns": {
         "title": "Lesson",
@@ -475,11 +547,13 @@
         "ready": "Ready",
         "processing": "Processing",
         "processingProgress": "Processing {progress}%",
+        "uploading": "Uploading",
         "failed": "Failed",
         "missing": "Missing"
       },
       "actions": {
         "upload": "Upload",
+        "menu": "Actions for {name}",
         "replace": "Replace",
         "preview": "Preview",
         "delete": "Delete video",
@@ -509,6 +583,20 @@
       "description": "Review all users, update their profile details, and inspect purchases on demand.",
       "empty": "No users found.",
       "unnamed": "Unnamed user",
+      "count": "{count, plural, one {# user} other {# users}}",
+      "countFiltered": "{count} of {total}",
+      "noMatches": "No matching users",
+      "noMatchesDescription": "Nothing matches \"{query}\". Search by name, email or ID.",
+      "search": {
+        "label": "Search users",
+        "placeholder": "Search name, email or ID",
+        "clear": "Clear search"
+      },
+      "actions": {
+        "menu": "Actions for {email}",
+        "purchases": "View purchases",
+        "invoices": "View created invoices"
+      },
       "columns": {
         "user": "User",
         "email": "Email",
@@ -552,6 +640,7 @@
       "purchases": {
         "title": "User purchases",
         "titleAdmin": "Invoices created by admin",
+        "retry": "Try again",
         "open": "Open purchases for {email}",
         "openAdmin": "Open created invoices for {email}",
         "loading": "Loading purchases...",
@@ -588,6 +677,8 @@
       "empty": "No contact requests yet.",
       "unknownName": "Unknown",
       "toggleLabel": "Mark as processed",
+      "emptyDescription": "New submissions from the portfolio forms show up here.",
+      "emptyFiltered": "No requests match this filter.",
       "preferred": "Preferred: {method}",
       "filter": {
         "label": "Filter requests",
@@ -627,7 +718,8 @@
       "stats": {
         "total": "Total registrations",
         "paid": "Paid",
-        "paidAmount": "Paid amount"
+        "paidAmount": "Paid amount",
+        "pending": "Pending"
       },
       "summary": {
         "total": "{count} total",
@@ -657,6 +749,7 @@
       },
       "toolbar": {
         "searchPlaceholder": "Search participant, email, ref, invoice...",
+        "filters": "Filters",
         "status": "Status",
         "filterStatus": "Filter status",
         "source": "Source",
@@ -699,6 +792,7 @@
       "reset": "Reset",
       "rows": "Rows",
       "searchPlaceholder": "Search invoice, customer, ref...",
+      "filters": "Filters",
       "loading": "Loading statement...",
       "empty": "No pending invoices.",
       "emptyFiltered": "No visible pending invoices. Clear filters or search.",
@@ -802,6 +896,7 @@
       },
       "toolbar": {
         "searchPlaceholder": "Search any payment field...",
+        "filters": "Filters",
         "actions": "Actions",
         "selected": "{count} selected",
         "exportCsv": "Export selected CSV",
@@ -841,8 +936,8 @@
         "exportSuccess": "Selected rows exported as CSV."
       },
       "stats": {
-        "total": "Total:",
-        "settled": "Settled:"
+        "total": "Payments",
+        "settled": "Settled"
       },
       "pagination": {
         "rowsSelected": "{visible} of {filtered} row(s) selected.",
@@ -973,6 +1068,14 @@
     "empty": "No lectures available yet.",
     "noAccess": "You don't have access to lectures. Purchase a lecture package to get started.",
     "backToList": "Back to lectures",
-    "comingSoon": "Materials for this lesson are coming soon."
+    "comingSoon": "Materials for this lesson are coming soon.",
+    "emptyDescription": "New lessons appear here as soon as they are published.",
+    "lessonNumber": "Lesson {number}",
+    "position": "{current} of {total}",
+    "video": "Video",
+    "notes": "Notes",
+    "notesPages": "{count, plural, one {# page} other {# pages}}",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

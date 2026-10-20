@@ -2,11 +2,15 @@
 "use no memo";
 
 import type { Table } from "@tanstack/react-table";
-import { CheckCheck, ChevronDown, RefreshCw, X } from "lucide-react";
+import { CheckCheck, ChevronDown, Columns3, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import { adminDataTableStyles } from "@/components/admin/AdminDataTableShell";
+import {
+  AdminDataTableToolbar,
+  adminDataTableStyles,
+} from "@/components/admin/AdminDataTableShell";
 import {
   downloadTextFile,
   formatStatementItemsAsCsv,
@@ -32,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { copyToClipboard } from "@/lib/clipboard";
 import type { StatementItem } from "@/lib/monobank";
+import { cn } from "@/lib/utils";
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
 
@@ -51,6 +56,7 @@ export function MonobankPaymentsTableToolbar({
   onStatusToggle,
   onReset,
   onClearSelection,
+  leading,
 }: {
   table: Table<StatementItem>;
   exportFilePrefix: string;
@@ -67,6 +73,7 @@ export function MonobankPaymentsTableToolbar({
   onStatusToggle: (status: string, checked: boolean) => void;
   onReset: () => void;
   onClearSelection: () => void;
+  leading?: ReactNode;
 }) {
   const t = useTranslations("admin.paymentsTable.toolbar");
   const tt = useTranslations("admin.paymentsTable.toasts");
@@ -77,15 +84,6 @@ export function MonobankPaymentsTableToolbar({
       .toLowerCase()
       .replaceAll(/[^a-z0-9]+/g, "-")
       .replaceAll(/(^-|-$)/g, "") || "payments";
-
-  function getColumnLabel(columnId: string) {
-    const labels = {
-      profitAmount: "profit",
-      maskedPan: "card",
-      invoiceId: "invoice id",
-    } as Record<string, string>;
-    return labels[columnId] ?? columnId;
-  }
 
   async function handleCopySelectedIds() {
     const copied = await copyToClipboard(selectedPaymentIdentifiers.join("\n"));
@@ -122,163 +120,176 @@ export function MonobankPaymentsTableToolbar({
     toast.success(tt("exportSuccess"));
   }
 
-  return (
-    <div className={adminDataTableStyles.toolbar}>
-      <Input
-        placeholder={t("searchPlaceholder")}
-        value={searchValue}
-        onChange={(event) => onSearchChange(event.target.value)}
-        className={adminDataTableStyles.search}
-      />
-
-      <div className={adminDataTableStyles.actionRow}>
-        {selectedRowCount > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={adminDataTableStyles.control}
+  const filters = (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className={adminDataTableStyles.control}>
+            {t("status")}
+            {selectedStatuses.length > 0 ? (
+              <span className="font-numeric text-muted-foreground">
+                {selectedStatuses.length}
+              </span>
+            ) : null}
+            <ChevronDown data-icon="inline-end" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("filterStatus")}</DropdownMenuLabel>
+            {statusOptions.map((status) => (
+              <DropdownMenuCheckboxItem
+                key={status}
+                checked={selectedStatuses.includes(status)}
+                onCheckedChange={(value) =>
+                  onStatusToggle(status, Boolean(value))
+                }
               >
-                <CheckCheck className={adminDataTableStyles.icon} />
-                {t("actions")}
-                <ChevronDown className={adminDataTableStyles.icon} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>
-                  {t("selected", { count: selectedRowCount })}
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  disabled={selectedRows.length === 0}
-                  onClick={() => handleExportSelectedCsv()}
-                >
-                  {t("exportCsv")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={selectedRows.length === 0}
-                  onClick={() => void handleCopySelectedRawData()}
-                >
-                  {t("copyRawData")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={selectedPaymentIdentifiers.length === 0}
-                  onClick={() => void handleCopySelectedIds()}
-                >
-                  {t("copyIds")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onClearSelection}>
-                  {t("clearSelection")}
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+                {getStatusLabel(status)}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={adminDataTableStyles.control}
-            >
-              {t("status")}
-              <ChevronDown className={adminDataTableStyles.icon} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>{t("filterStatus")}</DropdownMenuLabel>
-              {statusOptions.map((status) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className={adminDataTableStyles.control}>
+            <Columns3 />
+            {t("columns")}
+            <ChevronDown data-icon="inline-end" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
                 <DropdownMenuCheckboxItem
-                  key={status}
-                  className="capitalize"
-                  checked={selectedStatuses.includes(status)}
+                  key={column.id}
+                  checked={column.getIsVisible()}
                   onCheckedChange={(value) =>
-                    onStatusToggle(status, Boolean(value))
+                    column.toggleVisibility(Boolean(value))
                   }
                 >
-                  {getStatusLabel(status)}
+                  {column.columnDef.meta?.label ?? column.id}
                 </DropdownMenuCheckboxItem>
               ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={adminDataTableStyles.control}
-            >
-              {t("columns")}
-              <ChevronDown className={adminDataTableStyles.icon} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(Boolean(value))
-                    }
-                  >
-                    {getColumnLabel(column.id)}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Select
-          value={String(table.getState().pagination.pageSize)}
-          onValueChange={(value) => table.setPageSize(Number(value))}
+      <Select
+        value={String(table.getState().pagination.pageSize)}
+        onValueChange={(value) => table.setPageSize(Number(value))}
+      >
+        <SelectTrigger
+          aria-label={t("rows")}
+          className={cn(adminDataTableStyles.select, "max-md:w-full")}
         >
-          <SelectTrigger className={adminDataTableStyles.select}>
-            <SelectValue placeholder={t("rows")} />
-          </SelectTrigger>
-          <SelectContent>
-            {pageSizeOptions.map((pageSize) => (
-              <SelectItem key={pageSize} value={String(pageSize)}>
-                {pageSize}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <span className="text-muted-foreground md:hidden">{t("rows")}</span>
+          <SelectValue placeholder={t("rows")} />
+        </SelectTrigger>
+        <SelectContent>
+          {pageSizeOptions.map((pageSize) => (
+            <SelectItem key={pageSize} value={String(pageSize)}>
+              {pageSize}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
+      {hasActiveState ? (
         <Button
-          variant="outline"
-          size="sm"
+          variant="ghost"
           className={adminDataTableStyles.control}
-          onClick={onRefresh}
-          disabled={isLoading}
+          onClick={onReset}
         >
-          <RefreshCw
-            className={`${adminDataTableStyles.icon} ${isLoading ? "animate-spin" : ""}`}
-          />
-          {t("refresh")}
+          <X />
+          {t("reset")}
         </Button>
+      ) : null}
+    </>
+  );
 
-        {hasActiveState ? (
+  return (
+    <AdminDataTableToolbar
+      filtersLabel={t("filters")}
+      activeFilterCount={selectedStatuses.length}
+      leading={leading}
+      search={
+        <Input
+          type="search"
+          aria-label={t("searchPlaceholder")}
+          placeholder={t("searchPlaceholder")}
+          value={searchValue}
+          onChange={(event) => onSearchChange(event.target.value)}
+          className={adminDataTableStyles.search}
+        />
+      }
+      filters={filters}
+      actions={
+        <>
+          {selectedRowCount > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={adminDataTableStyles.control}
+                >
+                  <CheckCheck />
+                  <span className="font-numeric">{selectedRowCount}</span>
+                  <span className="max-md:sr-only">{t("actions")}</span>
+                  <ChevronDown data-icon="inline-end" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    {t("selected", { count: selectedRowCount })}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    disabled={selectedRows.length === 0}
+                    onClick={() => handleExportSelectedCsv()}
+                  >
+                    {t("exportCsv")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={selectedRows.length === 0}
+                    onClick={() => void handleCopySelectedRawData()}
+                  >
+                    {t("copyRawData")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={selectedPaymentIdentifiers.length === 0}
+                    onClick={() => void handleCopySelectedIds()}
+                  >
+                    {t("copyIds")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onClearSelection}>
+                    {t("clearSelection")}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+
           <Button
-            variant="ghost"
-            size="sm"
-            className={adminDataTableStyles.control}
-            onClick={onReset}
+            variant="outline"
+            className={cn(
+              adminDataTableStyles.control,
+              "max-md:w-10 max-md:px-0",
+            )}
+            onClick={onRefresh}
+            disabled={isLoading}
+            aria-label={t("refresh")}
           >
-            <X className={adminDataTableStyles.icon} />
-            {t("reset")}
+            <RefreshCw className={cn(isLoading && "animate-spin")} />
+            <span className="max-md:sr-only">{t("refresh")}</span>
           </Button>
-        ) : null}
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }

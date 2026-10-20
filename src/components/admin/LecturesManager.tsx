@@ -1,19 +1,24 @@
 "use client";
 
-import { Pencil, Plus, Trash2, Upload as UploadIcon } from "lucide-react";
+import {
+  BookOpen,
+  Eye,
+  EyeOff,
+  FileX,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload as UploadIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ChangeEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import { StatusBadge } from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,13 +28,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/routing";
 import type { AdminLectureRecord } from "@/lib/server/lectures";
 import type { VideoStatus } from "@/lib/server/video/types";
@@ -226,42 +230,148 @@ export function LecturesManager({
     }
   }
 
-  function renderNotesCell(lecture: Lecture) {
-    const busy = notesBusyId === lecture.id;
+  function renderNotes(lecture: Lecture) {
+    if (notesBusyId === lecture.id)
+      return <StatusBadge status="warning">{t("notes.uploading")}</StatusBadge>;
+    if (!lecture.hasNotes)
+      return <StatusBadge status="neutral">{t("notes.none")}</StatusBadge>;
     return (
-      <div className="flex items-center gap-1">
-        <span className="text-sm text-muted-foreground">
-          {busy
-            ? t("notes.uploading")
-            : lecture.hasNotes
-              ? formatSize(lecture.notesSize)
-              : t("notes.none")}
+      <StatusBadge status="success">
+        <span className="font-numeric">
+          PDF · {formatSize(lecture.notesSize)}
         </span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => pickFile(lecture, notesInputRef.current)}
-          disabled={notesBusyId !== null}
-          aria-label={lecture.hasNotes ? t("notes.replace") : t("notes.upload")}
-          title={lecture.hasNotes ? t("notes.replace") : t("notes.upload")}
-        >
-          <UploadIcon className="size-3.5" />
-        </Button>
-        {lecture.hasNotes && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => askRemoveNotes(lecture)}
-            disabled={busy}
-            aria-label={t("notes.remove")}
-            title={t("notes.remove")}
-          >
-            <Trash2 className="size-3.5 text-destructive" />
-          </Button>
-        )}
-      </div>
+      </StatusBadge>
     );
   }
+
+  const columns: DataListColumn<Lecture>[] = [
+    {
+      id: "order",
+      header: t("columns.order"),
+      mobile: "hidden",
+      className: "w-16",
+      cell: (lecture) => (
+        <span className="font-numeric text-muted-foreground">
+          {lecture.sortOrder}
+        </span>
+      ),
+    },
+    {
+      id: "title",
+      header: t("columns.title"),
+      mobile: "title",
+      cell: (lecture) => (
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="font-numeric text-muted-foreground md:hidden">
+            {lecture.sortOrder}
+          </span>
+          <span className="truncate font-medium">{lecture.title}</span>
+        </div>
+      ),
+    },
+    {
+      id: "slug",
+      header: t("columns.slug"),
+      cell: (lecture) => (
+        <span className="font-numeric text-xs text-muted-foreground">
+          {lecture.slug}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: t("columns.status"),
+      mobile: "trailing",
+      cell: (lecture) => (
+        <StatusBadge status={lecture.active ? "success" : "neutral"}>
+          {lecture.active ? t("status.active") : t("status.hidden")}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "notes",
+      header: t("columns.notes"),
+      cell: renderNotes,
+    },
+    {
+      id: "video",
+      header: t("columns.video"),
+      cell: (lecture) => (
+        <Link
+          href="/admin/videos"
+          className="inline-flex rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <VideoStateBadge
+            hasVideo={lecture.videoId !== null}
+            status={videoStatuses[lecture.id] ?? null}
+          />
+        </Link>
+      ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("columns.actions")}</span>,
+      align: "end",
+      mobile: "trailing",
+      className: "w-12",
+      cell: (lecture) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 md:size-8"
+              aria-label={t("actions.menu", { name: lecture.title })}
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onSelect={() => setEditing(lecture)}>
+              <Pencil />
+              {t("dialogs.edit.title")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => void handleToggleActive(lecture)}>
+              {lecture.active ? <EyeOff /> : <Eye />}
+              {lecture.active ? t("actions.hide") : t("actions.show")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={notesBusyId !== null}
+              onSelect={() => pickFile(lecture, notesInputRef.current)}
+            >
+              <UploadIcon />
+              {lecture.hasNotes ? t("notes.replace") : t("notes.upload")}
+            </DropdownMenuItem>
+            {lecture.hasNotes ? (
+              <DropdownMenuItem
+                disabled={notesBusyId === lecture.id}
+                onSelect={() => askRemoveNotes(lecture)}
+              >
+                <FileX />
+                {t("notes.remove")}
+              </DropdownMenuItem>
+            ) : null}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => askDeleteLecture(lecture)}
+            >
+              <Trash2 />
+              {t("dialogs.deleteLecture.title")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const addButton = (
+    <Button onClick={() => setIsCreateOpen(true)}>
+      <Plus data-icon="inline-start" />
+      {t("addLecture")}
+    </Button>
+  );
 
   return (
     <>
@@ -273,103 +383,26 @@ export function LecturesManager({
         onChange={handleNotesFile}
       />
 
-      <Card className="shadow-xs">
-        <CardHeader className="border-b px-3 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t("title")}</CardTitle>
-              <CardDescription>{t("description")}</CardDescription>
-            </div>
-            <Button className="h-9 gap-2" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="size-4" />
-              {t("addLecture")}
-            </Button>
-          </div>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("count", { count: lectures.length })}
+        </p>
+        {addButton}
+      </div>
 
-        <CardContent className="p-0">
-          {sorted.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-3 text-center sm:pl-6">
-                    {t("columns.order")}
-                  </TableHead>
-                  <TableHead>{t("columns.title")}</TableHead>
-                  <TableHead>{t("columns.slug")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("columns.status")}
-                  </TableHead>
-                  <TableHead>{t("columns.notes")}</TableHead>
-                  <TableHead>{t("columns.video")}</TableHead>
-                  <TableHead className="pr-3 text-right sm:pr-6">
-                    {t("columns.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sorted.map((lecture) => (
-                  <TableRow key={lecture.id}>
-                    <TableCell className="pl-3 text-center text-sm text-muted-foreground sm:pl-6">
-                      {lecture.sortOrder}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {lecture.title}
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs">{lecture.slug}</code>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={lecture.active ? "default" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() => handleToggleActive(lecture)}
-                      >
-                        {lecture.active
-                          ? t("status.active")
-                          : t("status.hidden")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{renderNotesCell(lecture)}</TableCell>
-                    <TableCell>
-                      <Link href="/admin/videos">
-                        <VideoStateBadge
-                          hasVideo={lecture.videoId !== null}
-                          status={videoStatuses[lecture.id] ?? null}
-                        />
-                      </Link>
-                    </TableCell>
-                    <TableCell className="pr-3 text-right sm:pr-6">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setEditing(lecture)}
-                          aria-label={t("dialogs.edit.title")}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => askDeleteLecture(lecture)}
-                          aria-label={t("dialogs.deleteLecture.title")}
-                        >
-                          <Trash2 className="size-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <DataList
+        items={sorted}
+        getKey={(lecture) => lecture.id}
+        columns={columns}
+        empty={
+          <EmptyState
+            icon={BookOpen}
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
+            action={addButton}
+          />
+        }
+      />
 
       <Dialog
         open={isCreateOpen || editing !== null}
@@ -408,7 +441,7 @@ export function LecturesManager({
           if (!open && !isConfirming) setConfirm(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{confirm?.title}</DialogTitle>
             <DialogDescription>{confirm?.description}</DialogDescription>

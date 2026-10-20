@@ -26,7 +26,6 @@ function createAuth() {
     databaseHooks: {
       user: {
         create: {
-          before: async (user) => ({ data: user }),
           after: async (user) => {
             try {
               await upsertLmsSlsAppUser({
@@ -43,7 +42,6 @@ function createAuth() {
           },
         },
         update: {
-          before: async (user) => ({ data: user }),
           after: async (user) => {
             try {
               await upsertLmsSlsAppUser({

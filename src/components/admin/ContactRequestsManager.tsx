@@ -1,29 +1,17 @@
 "use client";
 
-import { Mail, MessageSquare, Phone, User } from "lucide-react";
+import { Inbox, Mail, MessageSquare, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AdminContactRequestRecord } from "@/lib/server/admin-contact-requests";
+import { cn } from "@/lib/utils";
 
 type RequestsFilter = "all" | "new" | "processed";
 
@@ -98,165 +86,175 @@ export function ContactRequestsManager({
     }
   }
 
-  return (
-    <Card className="shadow-xs">
-      <CardHeader className="flex flex-col gap-3 border-b px-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="space-y-1.5">
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </div>
-        <ToggleGroup
-          type="single"
-          aria-label={t("filter.label")}
-          value={filter}
-          onValueChange={(value) => {
-            if (value) setFilter(value as RequestsFilter);
-          }}
-          variant="outline"
-          className="self-start sm:self-auto"
-        >
-          <ToggleGroupItem value="all" className="h-8 px-3 text-xs">
-            {t("filter.all")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="new" className="h-8 px-3 text-xs">
-            {t("filter.new")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="processed" className="h-8 px-3 text-xs">
-            {t("filter.processed")}
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </CardHeader>
-      <CardContent className="p-0">
-        {visibleRequests.length === 0 ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            {t("empty")}
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-3 sm:pl-6">
-                  {t("columns.processed")}
-                </TableHead>
-                <TableHead>{t("columns.type")}</TableHead>
-                <TableHead>{t("columns.contact")}</TableHead>
-                <TableHead>{t("columns.reach")}</TableHead>
-                <TableHead>{t("columns.message")}</TableHead>
-                <TableHead className="pr-3 whitespace-nowrap sm:pr-6">
-                  {t("columns.received")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visibleRequests.map((request) => {
-                const fullName =
-                  `${request.firstName ?? ""} ${request.lastName ?? ""}`.trim();
-                const isPending = pendingIds.has(request.id);
+  const counts = {
+    all: requests.length,
+    new: requests.filter((request) => !request.processed).length,
+    processed: requests.filter((request) => request.processed).length,
+  };
 
-                return (
-                  <TableRow
-                    key={request.id}
-                    className={request.processed ? "opacity-60" : undefined}
-                  >
-                    <TableCell className="pl-3 align-top sm:pl-6">
-                      <Checkbox
-                        checked={request.processed}
-                        disabled={isPending}
-                        onCheckedChange={(value) =>
-                          void handleToggle(request.id, !!value)
-                        }
-                        aria-label={t("toggleLabel")}
-                      />
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <Badge
-                        variant={
-                          request.requestType === "service"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {t(`types.${request.requestType}`)}
-                      </Badge>
-                      {request.service ? (
-                        <p className="mt-1 max-w-[220px] text-xs text-muted-foreground">
-                          {request.service}
-                        </p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex items-start gap-2">
-                        <User className="mt-0.5 size-3.5 text-muted-foreground" />
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium">
-                            {fullName || t("unknownName")}
-                          </span>
-                          {request.country ? (
-                            <span className="text-xs text-muted-foreground">
-                              {request.country}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top text-sm">
-                      <div className="flex flex-col gap-1">
-                        {request.email ? (
-                          <span className="flex items-center gap-1.5">
-                            <Mail className="size-3.5 text-muted-foreground" />
-                            <a
-                              href={`mailto:${request.email}`}
-                              className="hover:underline"
-                            >
-                              {request.email}
-                            </a>
-                          </span>
-                        ) : null}
-                        {request.phone ? (
-                          <span className="flex items-center gap-1.5">
-                            <Phone className="size-3.5 text-muted-foreground" />
-                            <a
-                              href={`tel:${request.phone}`}
-                              className="hover:underline"
-                            >
-                              {request.phone}
-                            </a>
-                          </span>
-                        ) : null}
-                        {request.preferredContactMethod ? (
-                          <span className="text-xs text-muted-foreground">
-                            {t("preferred", {
-                              method: request.preferredContactMethod,
-                            })}
-                          </span>
-                        ) : null}
-                        {request.social ? (
-                          <span className="flex items-center gap-1.5 text-xs">
-                            <MessageSquare className="size-3.5 text-muted-foreground" />
-                            {request.social}
-                          </span>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      {request.message ? (
-                        <p className="max-w-[420px] text-sm whitespace-pre-wrap break-words">
-                          {request.message}
-                        </p>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="pr-3 align-top text-xs whitespace-nowrap text-muted-foreground sm:pr-6">
-                      {formatDateTime(request.createdAt)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+  const columns: DataListColumn<AdminContactRequestRecord>[] = [
+    {
+      id: "processed",
+      header: t("columns.processed"),
+      mobile: "trailing",
+      className: "w-24",
+      cell: (request) => (
+        // biome-ignore lint/a11y/noLabelWithoutControl: the Radix checkbox is a button inside the label, and DataList renders each cell twice, so an id would repeat.
+        <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm font-normal md:min-h-0">
+          <Checkbox
+            checked={request.processed}
+            disabled={pendingIds.has(request.id)}
+            onCheckedChange={(value) => void handleToggle(request.id, !!value)}
+            aria-label={t("toggleLabel")}
+          />
+          <span className="text-muted-foreground md:sr-only">
+            {t("filter.processed")}
+          </span>
+        </label>
+      ),
+    },
+    {
+      id: "contact",
+      header: t("columns.contact"),
+      mobile: "title",
+      cell: (request) => {
+        const fullName =
+          `${request.firstName ?? ""} ${request.lastName ?? ""}`.trim();
+        return (
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span
+              className={cn(
+                "truncate font-medium",
+                request.processed && "text-muted-foreground",
+              )}
+            >
+              {fullName || t("unknownName")}
+            </span>
+            {request.country ? (
+              <span className="truncate text-xs font-normal text-muted-foreground">
+                {request.country}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      id: "type",
+      header: t("columns.type"),
+      cell: (request) => (
+        <div className="flex flex-col items-end gap-1 md:items-start">
+          <Badge variant="outline">{t(`types.${request.requestType}`)}</Badge>
+          {request.service ? (
+            <span className="max-w-56 text-xs whitespace-normal text-muted-foreground">
+              {request.service}
+            </span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: "reach",
+      header: t("columns.reach"),
+      cell: (request) => (
+        <div className="flex flex-col items-end gap-1 text-sm md:items-start">
+          {request.email ? (
+            <a
+              href={`mailto:${request.email}`}
+              className="inline-flex min-w-0 items-center gap-1.5 break-all hover:underline"
+            >
+              <Mail className="size-3.5 shrink-0 text-muted-foreground" />
+              {request.email}
+            </a>
+          ) : null}
+          {request.phone ? (
+            <a
+              href={`tel:${request.phone}`}
+              className="font-numeric inline-flex items-center gap-1.5 hover:underline"
+            >
+              <Phone className="size-3.5 shrink-0 text-muted-foreground" />
+              {request.phone}
+            </a>
+          ) : null}
+          {request.social ? (
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
+              {request.social}
+            </span>
+          ) : null}
+          {request.preferredContactMethod ? (
+            <span className="text-xs text-muted-foreground">
+              {t("preferred", { method: request.preferredContactMethod })}
+            </span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      id: "message",
+      header: t("columns.message"),
+      className: "min-w-72 whitespace-normal",
+      cell: (request) =>
+        request.message ? (
+          <p className="max-w-[420px] text-left text-sm break-words whitespace-pre-wrap">
+            {request.message}
+          </p>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
+    },
+    {
+      id: "received",
+      header: t("columns.received"),
+      align: "end",
+      cell: (request) => (
+        <span className="font-numeric text-xs text-muted-foreground">
+          {formatDateTime(request.createdAt)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        spacing={0}
+        aria-label={t("filter.label")}
+        value={filter}
+        onValueChange={(value) => {
+          if (value) setFilter(value as RequestsFilter);
+        }}
+      >
+        {(["all", "new", "processed"] as const).map((key) => (
+          <ToggleGroupItem
+            key={key}
+            value={key}
+            className="h-10 gap-2 px-3 text-sm data-[state=on]:bg-muted data-[state=on]:text-foreground md:h-8"
+          >
+            {t(`filter.${key}`)}
+            <span className="font-numeric text-xs text-muted-foreground">
+              {counts[key]}
+            </span>
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+
+      <DataList
+        items={visibleRequests}
+        getKey={(request) => request.id}
+        columns={columns}
+        empty={
+          <EmptyState
+            icon={Inbox}
+            title={requests.length === 0 ? t("empty") : t("emptyFiltered")}
+            description={
+              requests.length === 0 ? t("emptyDescription") : undefined
+            }
+          />
+        }
+      />
+    </>
   );
 }

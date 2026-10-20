@@ -1,1 +1,5 @@
-export { default } from "@/app/sign-up/[[...sign-up]]/page";
+import { SignUpForm } from "@/components/auth/sign-up-form";
+
+export default function SignUpPage() {
+  return <SignUpForm />;
+}

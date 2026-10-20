@@ -63,13 +63,6 @@ export async function listUserLectures(): Promise<LectureSummary[]> {
   );
 }
 
-export async function getUserLecture(
-  slug: string,
-): Promise<LectureSummary | null> {
-  const lectures = await listUserLectures();
-  return lectures.find((l) => l.slug === slug) ?? null;
-}
-
 // Signed playback for the lecture video, or null when video hosting is not
 // connected or the user has no video for this slug.
 export async function getUserLectureVideo(
@@ -102,20 +95,4 @@ export async function getUserLectureVideo(
     throw new Error(payload?.error ?? "Failed to fetch lecture video.");
 
   return provider.playback(payload.videoId);
-}
-
-export async function hasLecturesAccess(): Promise<boolean> {
-  const access = await requireAuthPageAccess();
-  const requestHeaders = await getRequestHeaders();
-
-  const response = await forwardLmsSlsRequest({
-    headers: mergeHeaders(
-      createTrustedUserHeaders(access.authenticatedUser),
-      getForwardedSessionHeaders(requestHeaders),
-    ),
-    method: "GET",
-    path: "/api/user/lectures",
-  });
-
-  return response.status !== 403;
 }

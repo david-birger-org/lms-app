@@ -29,9 +29,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "calc(var(--radius) * 2)",
         } as React.CSSProperties
       }
+      mobileOffset={{
+        bottom:
+          "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 12px)",
+      }}
       toastOptions={{
         classNames: {
           toast: "cn-toast",

@@ -2,73 +2,45 @@
 
 import { useTranslations } from "next-intl";
 
+import { AdminAlert } from "@/components/admin/AdminDataTableShell";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
 import { MonobankPaymentsDataTable } from "@/components/admin/MonobankPaymentsDataTable";
 import { usePaymentsFeed } from "@/components/admin/PaymentsDataProvider";
 import type { PaymentDetailsSource } from "@/lib/payments";
 
-function buildDescription({
-  description,
-  lastFetchedAt,
-  source,
-  defaultDescription,
-  lastSyncedLabel,
-}: {
-  description?: string;
-  lastFetchedAt: number | null;
-  source: PaymentDetailsSource;
-  defaultDescription: string;
-  lastSyncedLabel: (params: { time: string }) => string;
-}) {
-  const baseDescription = description ?? defaultDescription;
-
-  if (source !== "database" || !lastFetchedAt) return baseDescription;
-
-  return `${baseDescription} ${lastSyncedLabel({ time: new Date(lastFetchedAt).toLocaleTimeString() })}`;
-}
-
 export function PaymentsHistoryTable({
   source,
-  title,
-  description,
 }: {
   source: PaymentDetailsSource;
-  title?: string;
-  description?: string;
 }) {
   const t = useTranslations("admin.paymentsHistory");
   const { state, actions, meta } = usePaymentsFeed(source);
   const maxDays = source === "provider" ? 31 : undefined;
+  const lastSynced =
+    source === "database" && meta.lastFetchedAt
+      ? t("lastSynced", {
+          time: new Date(meta.lastFetchedAt).toLocaleTimeString(),
+        })
+      : undefined;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <DateRangePicker
-          range={meta.range}
-          onChange={actions.setRange}
-          disabled={state.isLoading}
-          maxDays={maxDays}
-        />
-      </div>
-      {state.error ? (
-        <p className="text-destructive border-destructive/40 bg-destructive/5 rounded-2xl border px-4 py-3 text-sm">
-          {state.error}
-        </p>
-      ) : null}
+    <div className="flex min-w-0 flex-col gap-4">
+      {state.error ? <AdminAlert>{state.error}</AdminAlert> : null}
       <MonobankPaymentsDataTable
         data={state.rows}
         isLoading={state.isLoading}
         onRefresh={() => void actions.refresh()}
         onInvoiceChanged={() => void actions.refresh()}
         detailsSource={source}
-        title={title ?? t(`titles.${source}`)}
-        description={buildDescription({
-          description,
-          lastFetchedAt: meta.lastFetchedAt,
-          source,
-          defaultDescription: t(`descriptions.${source}`),
-          lastSyncedLabel: (params) => t("lastSynced", params),
-        })}
+        description={lastSynced}
+        toolbarLeading={
+          <DateRangePicker
+            range={meta.range}
+            onChange={actions.setRange}
+            disabled={state.isLoading}
+            maxDays={maxDays}
+          />
+        }
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { Loader2, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -22,11 +22,18 @@ export function SwitchAccountButton() {
 
   return (
     <Button
-      type="button"
+      aria-busy={isSigningOut || undefined}
       disabled={isSigningOut}
       onClick={() => void handleSignOut()}
+      size="lg"
+      type="button"
+      variant="outline"
     >
-      <LogOut />
+      {isSigningOut ? (
+        <Loader2 aria-hidden className="animate-spin" />
+      ) : (
+        <LogOut aria-hidden />
+      )}
       {isSigningOut ? t("signingOut") : t("label")}
     </Button>
   );

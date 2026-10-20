@@ -1,10 +1,15 @@
 "use client";
 
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import {
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,21 +17,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  getPaymentStatusKind,
-  normalizePaymentStatus,
-  resolvePaymentStatus,
-} from "@/lib/payments";
+import { Skeleton } from "@/components/ui/skeleton";
+import { normalizePaymentStatus, resolvePaymentStatus } from "@/lib/payments";
 
 interface PurchaseRecord {
   amountMinor: number;
@@ -38,20 +31,6 @@ interface PurchaseRecord {
   productNameEn: string | null;
   productNameUk: string | null;
   status: string;
-}
-
-function statusVariant(status: string) {
-  switch (getPaymentStatusKind(status)) {
-    case "paid":
-      return "default";
-    case "failed":
-    case "unknown":
-      return "destructive";
-    case "draft":
-      return "outline";
-    case "pending":
-      return "secondary";
-  }
 }
 
 function formatPrice(priceMinor: number, currency: string, locale: string) {
@@ -77,17 +56,22 @@ export function UserPurchasesDialog({
   email,
   isAdmin = false,
   name,
+  onOpenChange,
+  open,
   userId,
 }: {
   email: string;
   isAdmin?: boolean;
   name: string | null;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
   userId: string;
 }) {
-  const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [purchases, setPurchases] = useState<PurchaseRecord[]>([]);
+  // Which user the list belongs to, so a new user never flashes old rows.
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const locale = useLocale();
   const t = useTranslations("admin.users.purchases");
   const requestIdRef = useRef(0);
@@ -135,6 +119,7 @@ export function UserPurchasesDialog({
     } finally {
       if (requestIdRef.current === requestId) {
         setIsLoading(false);
+        setLoadedUserId(userId);
       }
     }
   }, [t, userId]);
@@ -144,92 +129,115 @@ export function UserPurchasesDialog({
     void loadPurchases();
   }, [loadPurchases, open]);
 
+  const columns: DataListColumn<PurchaseRecord>[] = [
+    {
+      id: "product",
+      header: t("columns.product"),
+      mobile: "title",
+      className: "whitespace-normal",
+      cell: (purchase) => {
+        const productName =
+          (locale === "ua" ? purchase.productNameUk : purchase.productNameEn) ??
+          purchase.description;
+        return (
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate font-medium">{productName}</span>
+            {purchase.description && purchase.description !== productName ? (
+              <span className="truncate text-xs font-normal text-muted-foreground">
+                {purchase.description}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      id: "status",
+      header: t("columns.status"),
+      mobile: "trailing",
+      cell: (purchase) => (
+        <StatusBadge status={getPaymentBadgeStatus(purchase.status)}>
+          {labelStatus(purchase.status)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "amount",
+      header: t("columns.amount"),
+      align: "end",
+      cell: (purchase) => (
+        <span className="font-numeric">
+          {formatPrice(purchase.amountMinor, purchase.currency, locale)}
+        </span>
+      ),
+    },
+    {
+      id: "date",
+      header: t("columns.date"),
+      align: "end",
+      cell: (purchase) => (
+        <span className="font-numeric text-muted-foreground">
+          {formatDate(purchase.createdAt, locale)}
+        </span>
+      ),
+    },
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t(isAdmin ? "openAdmin" : "open", { email })}
-        >
-          <CreditCard className="size-3.5" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-4xl">
-        <DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl">
+        <DialogHeader className="pr-8">
           <DialogTitle>{t(isAdmin ? "titleAdmin" : "title")}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="truncate">
             {name?.trim() ? `${name} · ${email}` : email}
           </DialogDescription>
         </DialogHeader>
 
         {error ? (
-          <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-
-        {isLoading ? (
-          <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            {t(isAdmin ? "loadingAdmin" : "loading")}
+          <div
+            role="alert"
+            className="flex flex-col items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-destructive">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadPurchases()}
+            >
+              {t("retry")}
+            </Button>
           </div>
-        ) : purchases.length === 0 ? (
-          <div className="flex min-h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-            {t(isAdmin ? "emptyAdmin" : "empty")}
+        ) : isLoading || loadedUserId !== userId ? (
+          <div
+            role="status"
+            aria-label={t(isAdmin ? "loadingAdmin" : "loading")}
+            className="overflow-hidden rounded-xl border"
+          >
+            <div className="divide-y">
+              {["a", "b", "c"].map((key) => (
+                <div
+                  key={key}
+                  className="flex flex-col gap-2 p-4 md:h-14 md:flex-row md:items-center md:gap-6 md:py-0"
+                >
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-4 w-1/4 md:ml-auto" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("columns.product")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("columns.amount")}
-                  </TableHead>
-                  <TableHead>{t("columns.status")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("columns.date")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {purchases.map((purchase) => (
-                  <TableRow key={purchase.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">
-                          {locale === "ua"
-                            ? (purchase.productNameUk ?? purchase.description)
-                            : (purchase.productNameEn ?? purchase.description)}
-                        </p>
-                        {purchase.description && (
-                          <p className="text-xs text-muted-foreground">
-                            {purchase.description}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatPrice(
-                        purchase.amountMinor,
-                        purchase.currency,
-                        locale,
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant(purchase.status)}>
-                        {labelStatus(purchase.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {formatDate(purchase.createdAt, locale)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataList
+            items={purchases}
+            getKey={(purchase) => purchase.id}
+            columns={columns}
+            className="shadow-none"
+            empty={
+              <EmptyState
+                icon={CreditCard}
+                title={t(isAdmin ? "emptyAdmin" : "empty")}
+              />
+            }
+          />
         )}
       </DialogContent>
     </Dialog>

@@ -1,62 +1,38 @@
-import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ComponentProps } from "react";
 
-import { AccountMenu } from "@/components/auth/account-menu";
 import { DashboardNavigation } from "@/components/dashboard/dashboard-navigation";
+import { Logo } from "@/components/shell/logo";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import type { DashboardAccount } from "@/lib/dashboard-account";
+import { Link } from "@/i18n/routing";
 
-function SidebarAccount({ account }: { account: DashboardAccount }) {
+export function AppSidebar() {
   const t = useTranslations("navigation.dashboard");
 
   return (
-    <AccountMenu
-      email={account.email}
-      fullName={account.fullName}
-      settingsHref="/admin/settings"
-      secondaryHref="/dashboard"
-      secondaryLabel={t("userDashboard")}
-    />
-  );
-}
-
-export function AppSidebar({
-  account,
-  ...props
-}: ComponentProps<typeof Sidebar> & {
-  account: DashboardAccount;
-}) {
-  const t = useTranslations("navigation.dashboard");
-
-  return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="border-b border-sidebar-border/60">
-        <div className="flex items-center gap-3 rounded-lg border border-sidebar-border/70 bg-sidebar-accent/40 p-2">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <ShieldCheck className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-sidebar-foreground">
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader className="h-14 justify-center border-b px-3">
+        <Link
+          href="/admin"
+          className="flex min-w-0 items-center gap-2.5 rounded-md px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <Logo />
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate text-sm font-semibold">
               {t("workspaceTitle")}
-            </p>
-            <p className="truncate text-xs text-sidebar-foreground/70">
+            </span>
+            <span className="truncate text-xs text-muted-foreground">
               {t("workspaceSubtitle")}
-            </p>
-          </div>
-        </div>
+            </span>
+          </span>
+        </Link>
       </SidebarHeader>
-      <SidebarContent>
-        <DashboardNavigation label={t("label")} />
+      <SidebarContent className="py-2">
+        <DashboardNavigation />
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border/60">
-        <SidebarAccount account={account} />
-      </SidebarFooter>
     </Sidebar>
   );
 }

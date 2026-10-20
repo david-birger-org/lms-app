@@ -1,19 +1,22 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Package,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import { StatusBadge } from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,13 +26,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { AdminProductRecord } from "@/lib/server/products";
 
 import { ProductForm, type ProductFormData } from "./ProductForm";
@@ -52,26 +54,23 @@ function ProductPricingCell({ product }: { product: Product }) {
 
   if (product.pricingType === "on_request")
     return (
-      <div className="text-right">
-        <Badge variant="outline">{t("pricingType.onRequest")}</Badge>
-      </div>
+      <span className="text-muted-foreground">
+        {t("pricingType.onRequest")}
+      </span>
     );
 
   return (
-    <div className="space-y-1 text-right">
-      <div>
-        <Badge variant="secondary">{t("pricingType.fixed")}</Badge>
-      </div>
-      <p className="font-mono text-sm">
+    <div className="flex flex-col items-end gap-0.5">
+      <span className="font-numeric">
         {product.priceUahMinor === null
           ? "-"
           : formatPrice(product.priceUahMinor, "UAH")}
-      </p>
-      <p className="font-mono text-sm text-muted-foreground">
+      </span>
+      <span className="font-numeric text-xs text-muted-foreground">
         {product.priceUsdMinor === null
           ? "-"
           : formatPrice(product.priceUsdMinor, "USD")}
-      </p>
+      </span>
     </div>
   );
 }
@@ -211,105 +210,125 @@ export function ProductsManager({
     }
   }
 
+  const columns: DataListColumn<Product>[] = [
+    {
+      id: "name",
+      header: t("columns.name"),
+      mobile: "title",
+      cell: (product) => (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate font-medium">{product.nameEn}</span>
+          <span className="truncate text-xs font-normal text-muted-foreground">
+            {product.nameUk}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: t("columns.status"),
+      mobile: "trailing",
+      cell: (product) => (
+        <StatusBadge status={product.active ? "success" : "neutral"}>
+          {product.active ? t("status.active") : t("status.hidden")}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "slug",
+      header: t("columns.slug"),
+      cell: (product) => (
+        <span className="font-numeric text-xs text-muted-foreground">
+          {product.slug}
+        </span>
+      ),
+    },
+    {
+      id: "price",
+      header: t("columns.price"),
+      align: "end",
+      cell: (product) => <ProductPricingCell product={product} />,
+    },
+    {
+      id: "order",
+      header: t("columns.order"),
+      align: "end",
+      cell: (product) => (
+        <span className="font-numeric text-muted-foreground">
+          {product.sortOrder}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("columns.actions")}</span>,
+      align: "end",
+      mobile: "trailing",
+      className: "w-12",
+      cell: (product) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 md:size-8"
+              aria-label={t("actions.menu", { name: product.nameEn })}
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onSelect={() => setEditingProduct(product)}>
+              <Pencil />
+              {t("actions.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => void handleToggleActive(product)}>
+              {product.active ? <EyeOff /> : <Eye />}
+              {product.active ? t("actions.hide") : t("actions.show")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setDeleteTarget(product)}
+            >
+              <Trash2 />
+              {t("actions.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
+  const addButton = (
+    <Button onClick={() => setIsCreateOpen(true)}>
+      <Plus data-icon="inline-start" />
+      {t("addProduct")}
+    </Button>
+  );
+
   return (
     <>
-      <Card className="shadow-xs">
-        <CardHeader className="border-b px-3 sm:px-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t("title")}</CardTitle>
-              <CardDescription>{t("description")}</CardDescription>
-            </div>
-            <Button className="h-9 gap-2" onClick={() => setIsCreateOpen(true)}>
-              <Plus className="size-4" />
-              {t("addProduct")}
-            </Button>
-          </div>
-        </CardHeader>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("count", { count: products.length })}
+        </p>
+        {addButton}
+      </div>
 
-        <CardContent className="p-0">
-          {products.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-3 sm:pl-6">
-                    {t("columns.name")}
-                  </TableHead>
-                  <TableHead>{t("columns.slug")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("columns.price")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("columns.status")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("columns.order")}
-                  </TableHead>
-                  <TableHead className="pr-3 text-right sm:pr-6">
-                    {t("columns.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="pl-3 sm:pl-6">
-                      <div>
-                        <p className="font-medium">{product.nameEn}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {product.nameUk}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs">{product.slug}</code>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <ProductPricingCell product={product} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={product.active ? "default" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() => handleToggleActive(product)}
-                      >
-                        {product.active
-                          ? t("status.active")
-                          : t("status.hidden")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center text-sm text-muted-foreground">
-                      {product.sortOrder}
-                    </TableCell>
-                    <TableCell className="pr-3 text-right sm:pr-6">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setEditingProduct(product)}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => setDeleteTarget(product)}
-                        >
-                          <Trash2 className="size-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <DataList
+        items={products}
+        getKey={(product) => product.id}
+        columns={columns}
+        empty={
+          <EmptyState
+            icon={Package}
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
+            action={addButton}
+          />
+        }
+      />
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
@@ -357,7 +376,7 @@ export function ProductsManager({
           if (!open) setDeleteTarget(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("dialogs.delete.title")}</DialogTitle>
             <DialogDescription>

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shell/status-badge";
 import type { VideoStatus } from "@/lib/server/video/types";
 
 export function VideoStateBadge({
@@ -14,26 +14,26 @@ export function VideoStateBadge({
 }) {
   const t = useTranslations("admin.videos.state");
 
-  if (!hasVideo)
-    return <span className="text-sm text-muted-foreground">{t("none")}</span>;
-  if (!status) return <Badge variant="outline">{t("unknown")}</Badge>;
+  if (!hasVideo) return <StatusBadge status="neutral">{t("none")}</StatusBadge>;
+  if (!status)
+    return <StatusBadge status="neutral">{t("unknown")}</StatusBadge>;
 
   switch (status.state) {
     case "ready":
-      return <Badge>{t("ready")}</Badge>;
+      return <StatusBadge status="success">{t("ready")}</StatusBadge>;
     case "processing":
       return (
-        <Badge variant="secondary">
+        <StatusBadge status="warning">
           {status.progress === undefined
             ? t("processing")
             : t("processingProgress", {
                 progress: Math.round(status.progress * 100),
               })}
-        </Badge>
+        </StatusBadge>
       );
     case "failed":
-      return <Badge variant="destructive">{t("failed")}</Badge>;
+      return <StatusBadge status="error">{t("failed")}</StatusBadge>;
     case "missing":
-      return <Badge variant="destructive">{t("missing")}</Badge>;
+      return <StatusBadge status="error">{t("missing")}</StatusBadge>;
   }
 }

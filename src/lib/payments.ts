@@ -138,11 +138,6 @@ export function isSuccessfulPaymentStatus(status?: string | null) {
   return resolvePaymentStatus(status) === "paid";
 }
 
-export function isFailedPaymentStatus(status?: string | null) {
-  const canonicalStatus = resolvePaymentStatus(status);
-  return canonicalStatus ? failedPaymentStatusSet.has(canonicalStatus) : false;
-}
-
 export function isPendingPaymentStatus(status?: string | null) {
   const canonicalStatus = resolvePaymentStatus(status);
   return canonicalStatus ? pendingPaymentStatusSet.has(canonicalStatus) : false;

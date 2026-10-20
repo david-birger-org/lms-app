@@ -158,7 +158,7 @@ export function PaymentsChart() {
       : t("notSyncedYet");
 
   return (
-    <Card className="shadow-xs">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
@@ -230,27 +230,23 @@ export function PaymentsChart() {
       </CardHeader>
       <CardContent className="space-y-4 pt-4 sm:space-y-6">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
-              {t("stats.volume")}
-            </p>
-            <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
+          <div className="rounded-lg border bg-background-200 p-2.5 sm:p-3">
+            <p className="text-xs text-muted-foreground">{t("stats.volume")}</p>
+            <p className="font-numeric mt-1.5 text-lg font-semibold tracking-tight sm:mt-2 sm:text-2xl">
               {formatMetricValue(totals.volume, locale)}
             </p>
           </div>
-          <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
-              {t("stats.paid")}
-            </p>
-            <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
+          <div className="rounded-lg border bg-background-200 p-2.5 sm:p-3">
+            <p className="text-xs text-muted-foreground">{t("stats.paid")}</p>
+            <p className="font-numeric mt-1.5 text-lg font-semibold tracking-tight sm:mt-2 sm:text-2xl">
               {totals.paidPayments}
             </p>
           </div>
-          <div className="rounded-lg border bg-muted/20 p-2.5 sm:p-3">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground sm:text-xs">
+          <div className="rounded-lg border bg-background-200 p-2.5 sm:p-3">
+            <p className="text-xs text-muted-foreground">
               {t("stats.payments")}
             </p>
-            <p className="mt-1.5 text-lg font-semibold tabular-nums sm:mt-2 sm:text-2xl">
+            <p className="font-numeric mt-1.5 text-lg font-semibold tracking-tight sm:mt-2 sm:text-2xl">
               {totals.payments}
             </p>
           </div>
@@ -309,7 +305,7 @@ export function PaymentsChart() {
                   tickMargin={8}
                   minTickGap={18}
                 />
-                <ReferenceLine y={0} stroke="hsl(var(--border))" />
+                <ReferenceLine y={0} stroke="var(--border)" />
                 <ChartTooltip
                   cursor={false}
                   content={<ChartTooltipContent indicator="line" />}

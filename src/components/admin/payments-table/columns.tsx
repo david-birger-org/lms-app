@@ -1,16 +1,13 @@
 "use client";
 
 import type { Column, ColumnDef, FilterFn } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  CircleAlert,
-  CircleCheckBig,
-  CircleX,
-  Eye,
-  Info,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Info } from "lucide-react";
 
 import { adminDataTableStyles } from "@/components/admin/AdminDataTableShell";
+import {
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,7 +20,7 @@ import {
   formatMonobankShortDate,
   type StatementItem,
 } from "@/lib/monobank";
-import { getPaymentStatusKind, normalizePaymentStatus } from "@/lib/payments";
+import { cn } from "@/lib/utils";
 
 function ColumnHint({ text }: { text: string }) {
   return (
@@ -32,7 +29,7 @@ function ColumnHint({ text }: { text: string }) {
         <button
           type="button"
           aria-label={text}
-          className="text-muted-foreground/70 hover:text-muted-foreground inline-flex items-center"
+          className="inline-flex items-center text-muted-foreground transition-[color] duration-150 hover:text-foreground"
         >
           <Info className="size-3" />
         </button>
@@ -44,64 +41,33 @@ function ColumnHint({ text }: { text: string }) {
   );
 }
 
-function StatusIcon({ status }: { status?: string | null }) {
-  const statusKind = getPaymentStatusKind(status);
-  const statusLabel = normalizePaymentStatus(status) ?? "unknown";
-
-  if (statusKind === "paid") {
-    return (
-      <CircleCheckBig
-        className="size-4 text-emerald-600"
-        aria-label={statusLabel}
-      />
-    );
-  }
-
-  if (statusKind === "pending") {
-    return (
-      <CircleAlert className="size-4 text-amber-500" aria-label={statusLabel} />
-    );
-  }
-
-  if (statusKind === "failed") {
-    return (
-      <CircleX className="size-4 text-rose-600" aria-label={statusLabel} />
-    );
-  }
-
-  if (statusKind === "draft") {
-    return (
-      <CircleAlert
-        className="size-4 text-muted-foreground"
-        aria-label={statusLabel}
-      />
-    );
-  }
-
-  return (
-    <CircleAlert
-      className="size-4 text-muted-foreground"
-      aria-label={statusLabel}
-    />
-  );
-}
-
-function SortableColumnHeader({
+export function SortableColumnHeader<T>({
+  className,
   column,
   title,
 }: {
-  column: Column<StatementItem>;
+  className?: string;
+  column: Column<T>;
   title: string;
 }) {
+  const sorted = column.getIsSorted();
+  const SortIcon =
+    sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown;
+
   return (
     <Button
       variant="ghost"
       size="sm"
-      className={adminDataTableStyles.sortButton}
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      static
+      className={cn(
+        "-mx-2.5 h-8 text-xs font-medium text-muted-foreground hover:text-foreground",
+        sorted && "text-foreground",
+        className,
+      )}
+      onClick={() => column.toggleSorting(sorted === "asc")}
     >
       {title}
-      <ArrowUpDown className={adminDataTableStyles.icon} />
+      <SortIcon className={cn("size-3", !sorted && "opacity-50")} />
     </Button>
   );
 }
@@ -121,6 +87,7 @@ const statusFilterFn: FilterFn<StatementItem> = (
 
 export function createMonobankPaymentsColumns(
   t: (key: string, params?: Record<string, string>) => string,
+  getStatusLabel: (status: string) => string,
 ): ColumnDef<StatementItem>[] {
   return [
     {
@@ -152,45 +119,44 @@ export function createMonobankPaymentsColumns(
           onClick={(event) => event.stopPropagation()}
           data-row-interactive="true"
           aria-label={t("selectRow")}
+          className="mt-0.5 md:mt-0"
         />
       ),
       enableSorting: false,
       enableHiding: false,
+      meta: { headerClassName: "w-10", mobile: "title" },
     },
     {
       accessorKey: "status",
       header: t("status"),
       filterFn: statusFilterFn,
       cell: ({ row }) => {
+        const status = row.original.status;
         const statusTitle = row.original.providerStatus
-          ? `App status: ${row.original.status ?? "-"} / Monobank status: ${row.original.providerStatus}`
-          : `App status: ${row.original.status ?? "-"}`;
+          ? `App status: ${status ?? "-"} / Monobank status: ${row.original.providerStatus}`
+          : `App status: ${status ?? "-"}`;
 
         return (
-          <div className="flex justify-center" title={statusTitle}>
-            <StatusIcon status={row.original.status} />
-          </div>
+          <span title={statusTitle}>
+            <StatusBadge status={getPaymentBadgeStatus(status)}>
+              {status ? getStatusLabel(status) : "-"}
+            </StatusBadge>
+          </span>
         );
       },
+      meta: { label: t("status") },
     },
     {
       accessorKey: "date",
       header: ({ column }) => (
         <SortableColumnHeader column={column} title={t("date")} />
       ),
-      cell: ({ row }) => {
-        const value = row.original.date;
-
-        if (!value) {
-          return <div>-</div>;
-        }
-
-        return (
-          <div className="whitespace-nowrap text-[11px] text-muted-foreground">
-            {formatMonobankShortDate(value)}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <span className="font-numeric text-xs text-muted-foreground">
+          {row.original.date ? formatMonobankShortDate(row.original.date) : "-"}
+        </span>
+      ),
+      meta: { label: t("date") },
     },
     {
       accessorKey: "destination",
@@ -198,19 +164,24 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("description")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[8.5rem] truncate text-xs sm:max-w-72">
+        <div
+          className="line-clamp-2 whitespace-normal md:block md:max-w-72 md:truncate"
+          title={row.original.destination}
+        >
           {row.original.destination ?? "-"}
         </div>
       ),
+      meta: { label: t("description"), mobile: "title" },
     },
     {
       accessorKey: "maskedPan",
       header: t("card"),
       cell: ({ row }) => (
-        <div className="whitespace-nowrap text-[11px] text-muted-foreground">
+        <span className="font-numeric text-xs text-muted-foreground">
           {row.original.maskedPan ?? "-"}
-        </div>
+        </span>
       ),
+      meta: { label: t("card") },
     },
     {
       accessorKey: "reference",
@@ -218,38 +189,44 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("reference")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none">
+        <span
+          className="font-numeric block max-w-40 truncate text-xs"
+          title={row.original.reference}
+        >
           {row.original.reference?.split("-").at(-1) ?? "-"}
-        </div>
+        </span>
       ),
+      meta: { label: t("reference") },
     },
     {
       accessorKey: "amount",
       header: () => (
-        <div className="flex items-center justify-end gap-1.5 text-right">
+        <div className="inline-flex items-center gap-1.5">
           {t("amount")}
           <ColumnHint text={t("amountHint")} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="whitespace-nowrap text-right text-xs font-medium">
+        <span className="font-numeric text-sm font-medium">
           {formatMonobankMoney(row.original.amount, row.original.ccy)}
-        </div>
+        </span>
       ),
+      meta: { align: "end", label: t("amount"), mobile: "trailing" },
     },
     {
       accessorKey: "profitAmount",
       header: () => (
-        <div className="flex items-center justify-end gap-1.5 text-right">
+        <div className="inline-flex items-center gap-1.5">
           {t("profit")}
           <ColumnHint text={t("profitHint")} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="whitespace-nowrap text-right text-xs font-medium">
+        <span className="font-numeric text-sm">
           {formatMonobankMoney(row.original.profitAmount, row.original.ccy)}
-        </div>
+        </span>
       ),
+      meta: { align: "end", label: t("profit") },
     },
     {
       accessorKey: "invoiceId",
@@ -257,59 +234,44 @@ export function createMonobankPaymentsColumns(
         <SortableColumnHeader column={column} title={t("invoiceId")} />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[7rem] truncate font-mono text-[11px] sm:max-w-none">
+        <span
+          className="font-numeric block max-w-40 truncate text-xs"
+          title={row.original.invoiceId}
+        >
           {row.original.invoiceId ?? "-"}
-        </div>
+        </span>
       ),
+      meta: { label: t("invoiceId") },
     },
     {
       id: "details",
       header: () => <span className="sr-only">{t("details")}</span>,
       cell: ({ row, table }) => (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            data-row-interactive="true"
-            aria-label={t("openDetails", {
-              id: row.original.invoiceId ?? row.original.reference ?? "payment",
-            })}
-            onClick={(event) => {
-              event.stopPropagation();
-              table.options.meta?.onOpenPaymentDetails?.(row.original);
-            }}
-          >
-            <Eye />
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className={adminDataTableStyles.iconControl}
+          data-row-interactive="true"
+          aria-label={t("openDetails", {
+            id: row.original.invoiceId ?? row.original.reference ?? "payment",
+          })}
+          onClick={(event) => {
+            event.stopPropagation();
+            table.options.meta?.onOpenPaymentDetails?.(row.original);
+          }}
+        >
+          <Eye />
+        </Button>
       ),
       enableSorting: false,
       enableHiding: false,
+      meta: {
+        align: "end",
+        cellClassName: "w-12 py-1.5",
+        label: t("details"),
+        mobile: "trailing",
+      },
     },
   ];
 }
-
-/** @deprecated Use createMonobankPaymentsColumns(t) instead */
-export const monobankPaymentsColumns: ColumnDef<StatementItem>[] =
-  createMonobankPaymentsColumns((key, params) => {
-    const fallbacks: Record<string, string> = {
-      selectAll: "Select all",
-      selectRow: "Select row",
-      status: "Status",
-      date: "Date",
-      description: "Description",
-      card: "Card",
-      reference: "Reference",
-      amount: "Amount",
-      amountHint:
-        "Amount the customer was originally charged on the invoice, before any conversion or fees.",
-      profit: "Profit",
-      profitHint:
-        "Net amount you actually receive after Monobank's processing fee is deducted.",
-      invoiceId: "Invoice ID",
-      details: "Details",
-      openDetails: `Open details for ${params?.id ?? "payment"}`,
-    };
-    return fallbacks[key] ?? key;
-  });

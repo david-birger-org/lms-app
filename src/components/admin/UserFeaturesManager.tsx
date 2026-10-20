@@ -4,7 +4,7 @@ import { BookOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
 interface ActiveFeature {
@@ -79,43 +79,51 @@ export function UserFeaturesManager({ authUserId }: { authUserId: string }) {
     [authUserId],
   );
 
-  if (isLoading)
-    return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        {t("loading")}
-      </div>
-    );
-
   return (
-    <div className="grid gap-3">
-      <Label>{t("title")}</Label>
-      {KNOWN_FEATURES.map(({ key, icon: Icon }) => {
-        const isActive = features.has(key);
-        const isToggling = togglingFeature === key;
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium">{t("title")}</p>
+      <div className="divide-y rounded-lg border">
+        {KNOWN_FEATURES.map(({ key, icon: Icon }) => {
+          const isActive = features.has(key);
+          const isToggling = togglingFeature === key;
+          const switchId = `feature-${key}`;
 
-        return (
-          <div key={key} className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Icon className="size-4 text-muted-foreground" />
-              {t(key)}
-            </div>
-            <div className="flex items-center gap-2">
-              {isToggling && (
-                <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+          return (
+            <div
+              key={key}
+              className="flex min-h-14 items-center justify-between gap-3 px-3 py-2"
+            >
+              <label
+                htmlFor={switchId}
+                className="flex min-w-0 items-center gap-2.5 text-sm"
+              >
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                {t(key)}
+              </label>
+              {isLoading ? (
+                <>
+                  <span className="sr-only">{t("loading")}</span>
+                  <Skeleton className="h-[18.4px] w-8 rounded-full" />
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {isToggling ? (
+                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                  ) : null}
+                  <Switch
+                    id={switchId}
+                    checked={isActive}
+                    onCheckedChange={(checked) =>
+                      void toggleFeature(key, checked as boolean)
+                    }
+                    disabled={isToggling}
+                  />
+                </div>
               )}
-              <Switch
-                checked={isActive}
-                onCheckedChange={(checked) =>
-                  void toggleFeature(key, checked as boolean)
-                }
-                disabled={isToggling}
-                size="sm"
-              />
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

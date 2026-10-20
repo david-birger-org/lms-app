@@ -4,80 +4,168 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Gray scale close to Vercel's Geist palette. Steps 100-300 are surfaces,
+ * 400-600 are borders, 700-800 are muted icons, 900 is secondary text and
+ * 1000 is primary text. Everything below maps onto the shadcn tokens.
+ */
 :root {
-  --header-height: calc(var(--spacing) * 12 + 1px);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --gray-100: #f2f2f2;
+  --gray-200: #ebebeb;
+  --gray-300: #e4e4e4;
+  --gray-400: #d9d9d9;
+  --gray-500: #c9c9c9;
+  --gray-600: #a8a8a8;
+  --gray-700: #8f8f8f;
+  --gray-800: #7d7d7d;
+  --gray-900: #666666;
+  --gray-1000: #171717;
+  --background-200: #fafafa;
+
+  --success: oklch(0.55 0.15 152);
+  --warning: oklch(0.6 0.15 62);
+  --info: oklch(0.57 0.2 258);
+
+  /* Accent swatches. data-accent on <html> picks one for --primary. */
+  --tint-blue: oklch(0.57 0.21 258);
+  --tint-blue-foreground: #fff;
+  --tint-violet: oklch(0.55 0.24 293);
+  --tint-violet-foreground: #fff;
+  --tint-green: oklch(0.55 0.15 152);
+  --tint-green-foreground: #fff;
+  --tint-amber: oklch(0.77 0.16 70);
+  --tint-amber-foreground: oklch(0.22 0.05 60);
+
+  --background: #ffffff;
+  --foreground: var(--gray-1000);
+  --card: #ffffff;
+  --card-foreground: var(--gray-1000);
+  --popover: #ffffff;
+  --popover-foreground: var(--gray-1000);
+  --primary: var(--gray-1000);
+  --primary-foreground: #ffffff;
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-1000);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--gray-900);
+  --accent: var(--gray-100);
+  --accent-foreground: var(--gray-1000);
+  --destructive: oklch(0.577 0.215 27.3);
+  --destructive-foreground: #ffffff;
+  --border: var(--gray-200);
+  --input: var(--gray-400);
+  --ring: var(--gray-700);
+  --radius: 0.375rem;
+  --chart-1: var(--primary);
+  --chart-2: var(--tint-blue);
+  --chart-3: var(--tint-green);
+  --chart-4: var(--tint-amber);
+  --chart-5: var(--tint-violet);
+  --sidebar: var(--background-200);
+  --sidebar-foreground: var(--gray-1000);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--gray-200);
+  --sidebar-accent-foreground: var(--gray-1000);
+  --sidebar-border: var(--gray-200);
+  --sidebar-ring: var(--ring);
+
+  /* Elevation. Popovers, menus and dialogs float; cards sit on the page. */
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.04);
+  --elevation-menu:
+    0 0 0 1px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.04),
+    0 16px 24px -8px rgb(0 0 0 / 0.06);
+  --elevation-modal:
+    0 0 0 1px rgb(0 0 0 / 0.08), 0 1px 1px rgb(0 0 0 / 0.02),
+    0 8px 16px -4px rgb(0 0 0 / 0.04), 0 24px 32px -8px rgb(0 0 0 / 0.06);
+
+  --header-height: 3.5rem;
+  --bottom-nav-height: 3.5rem;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --gray-100: #1a1a1a;
+  --gray-200: #1f1f1f;
+  --gray-300: #292929;
+  --gray-400: #2e2e2e;
+  --gray-500: #454545;
+  --gray-600: #5e5e5e;
+  --gray-700: #6e6e6e;
+  --gray-800: #7c7c7c;
+  --gray-900: #a1a1a1;
+  --gray-1000: #ededed;
+  --background-200: #0a0a0a;
+
+  --success: oklch(0.74 0.17 152);
+  --warning: oklch(0.8 0.15 75);
+  --info: oklch(0.68 0.17 255);
+
+  --tint-blue: oklch(0.62 0.2 258);
+  --tint-blue-foreground: #fff;
+  --tint-violet: oklch(0.63 0.22 293);
+  --tint-violet-foreground: #fff;
+  --tint-green: oklch(0.72 0.17 152);
+  --tint-green-foreground: oklch(0.18 0.04 152);
+  --tint-amber: oklch(0.8 0.15 75);
+  --tint-amber-foreground: oklch(0.2 0.05 60);
+
+  --background: #000000;
+  --foreground: var(--gray-1000);
+  --card: var(--background-200);
+  --card-foreground: var(--gray-1000);
+  --popover: var(--background-200);
+  --popover-foreground: var(--gray-1000);
+  --primary: var(--gray-1000);
+  --primary-foreground: #0a0a0a;
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-1000);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--gray-900);
+  --accent: var(--gray-200);
+  --accent-foreground: var(--gray-1000);
+  --destructive: oklch(0.68 0.2 22);
+  --destructive-foreground: #ffffff;
+  --border: #242424;
+  --input: var(--gray-400);
+  --ring: var(--gray-700);
+  --sidebar: var(--background);
+  --sidebar-accent: var(--gray-100);
+  --sidebar-border: #242424;
+
+  --elevation-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --elevation-menu:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.5),
+    0 16px 24px -8px rgb(0 0 0 / 0.6);
+  --elevation-modal:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 1px 1px rgb(0 0 0 / 0.4),
+    0 8px 16px -4px rgb(0 0 0 / 0.5), 0 24px 32px -8px rgb(0 0 0 / 0.6);
+}
+
+/* Accent choice. Neutral (no attribute) keeps the monochrome primary. */
+[data-accent="blue"] {
+  --primary: var(--tint-blue);
+  --primary-foreground: var(--tint-blue-foreground);
+  --ring: var(--tint-blue);
+}
+[data-accent="violet"] {
+  --primary: var(--tint-violet);
+  --primary-foreground: var(--tint-violet-foreground);
+  --ring: var(--tint-violet);
+}
+[data-accent="green"] {
+  --primary: var(--tint-green);
+  --primary-foreground: var(--tint-green-foreground);
+  --ring: var(--tint-green);
+}
+[data-accent="amber"] {
+  --primary: var(--tint-amber);
+  --primary-foreground: var(--tint-amber-foreground);
+  --ring: var(--tint-amber);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-200: var(--background-200);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -93,15 +181,35 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+  --color-gray-1000: var(--gray-1000);
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-sans);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
+  --shadow-card: var(--elevation-card);
+  --shadow-menu: var(--elevation-menu);
+  --shadow-modal: var(--elevation-modal);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -115,10 +223,6 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  --font-heading: var(--font-sans);
 }
 
 @layer base {
@@ -128,20 +232,289 @@
   }
 
   html {
-    scroll-behavior: smooth;
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family:
-      var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
-      sans-serif;
-    min-height: 100vh;
-    background-color: var(--background);
+    min-height: 100svh;
+    margin: 0;
+    font-feature-settings:
+      "liga" 1,
+      "calt" 1;
   }
 }
 
-body {
-  margin: 0;
+/* Numbers and IDs: mono with tabular figures. */
+@utility font-numeric {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bottom padding that clears the mobile tab bar and the home indicator. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/*
+ * Motion. Every recipe fades opacity for everyone and adds blur and movement
+ * only under prefers-reduced-motion: no-preference. Hidden states live in the
+ * `from` keyframe, so content stays visible if an animation never runs.
+ */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
+  }
+}
+
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(var(--motion-x, 0), var(--motion-y, 12px));
+  }
+}
+
+@keyframes popup-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate(var(--motion-exit-x, 0), var(--motion-exit-y, -12px));
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translate(var(--sheet-x, 0), var(--sheet-y, 0));
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translate(var(--sheet-x, 0), var(--sheet-y, 0));
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Staged entrance item. Index it with --enter-index or put it in .stagger. */
+@utility animate-enter {
+  animation: fade-in 300ms ease-out backwards;
+  animation-delay: calc(var(--enter-index, 0) * 100ms);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation-name: enter-up;
+  }
+}
+
+/*
+ * Staggers direct children 100ms apart. PageHeader staggers its own title,
+ * description and actions, so the container skips it.
+ */
+@utility stagger {
+  & > :not([data-slot="page-header"]) {
+    animation: fade-in 300ms ease-out backwards;
+    animation-delay: calc(var(--enter-index, 0) * 100ms);
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation-name: enter-up;
+    }
+  }
+  & > :nth-child(2) {
+    --enter-index: 1;
+  }
+  & > :nth-child(3) {
+    --enter-index: 2;
+  }
+  & > :nth-child(4) {
+    --enter-index: 3;
+  }
+  & > :nth-child(5) {
+    --enter-index: 4;
+  }
+  & > :nth-child(n + 6) {
+    --enter-index: 5;
+  }
+}
+
+/* Route change: a short fade on the main content area. */
+@utility animate-route {
+  animation: fade-in 200ms ease-out backwards;
+}
+
+/* Menus, popovers, selects and centered dialogs. */
+@utility animate-popup {
+  &[data-state="open"] {
+    animation: fade-in 300ms ease-out backwards;
+  }
+  &[data-state="closed"] {
+    animation: fade-out 150ms ease-out forwards;
+  }
+  &[data-side="bottom"] {
+    --motion-y: -12px;
+    --motion-exit-y: -12px;
+  }
+  &[data-side="top"] {
+    --motion-y: 12px;
+    --motion-exit-y: 12px;
+  }
+  &[data-side="left"] {
+    --motion-x: 12px;
+    --motion-y: 0;
+    --motion-exit-x: 12px;
+    --motion-exit-y: 0;
+  }
+  &[data-side="right"] {
+    --motion-x: -12px;
+    --motion-y: 0;
+    --motion-exit-x: -12px;
+    --motion-exit-y: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"] {
+      animation-name: popup-in;
+    }
+    &[data-state="closed"] {
+      animation-name: popup-out;
+    }
+  }
+}
+
+/* Tooltips show on hover, so they only fade. */
+@utility animate-tooltip {
+  &[data-state="delayed-open"],
+  &[data-state="instant-open"] {
+    animation: fade-in 150ms ease-out backwards;
+  }
+  &[data-state="closed"] {
+    animation: fade-out 150ms ease-out forwards;
+  }
+}
+
+/* Backdrops behind dialogs and sheets. */
+@utility animate-backdrop {
+  &[data-state="open"] {
+    animation: fade-in 300ms ease-out backwards;
+  }
+  &[data-state="closed"] {
+    animation: fade-out 150ms ease-out forwards;
+  }
+}
+
+/* Side and bottom sheets slide fully in and out, because the edge matters. */
+@utility animate-sheet {
+  &[data-side="right"] {
+    --sheet-x: 100%;
+  }
+  &[data-side="left"] {
+    --sheet-x: -100%;
+  }
+  &[data-side="bottom"] {
+    --sheet-y: 100%;
+  }
+  &[data-side="top"] {
+    --sheet-y: -100%;
+  }
+  &[data-state="open"] {
+    animation: fade-in 300ms ease-out backwards;
+  }
+  &[data-state="closed"] {
+    animation: fade-out 200ms ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"] {
+      animation: sheet-in 300ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    }
+    &[data-state="closed"] {
+      animation: sheet-out 200ms ease-out forwards;
+    }
+  }
+}
+
+/* Dialog: bottom sheet under 640px, centered popup above. */
+@utility animate-dialog {
+  &[data-state="open"] {
+    animation: fade-in 300ms ease-out backwards;
+  }
+  &[data-state="closed"] {
+    animation: fade-out 150ms ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-state="open"] {
+      animation: sheet-in 300ms cubic-bezier(0.2, 0, 0, 1) backwards;
+      --sheet-y: 100%;
+    }
+    &[data-state="closed"] {
+      animation: sheet-out 200ms ease-out forwards;
+      --sheet-y: 100%;
+    }
+
+    @media (width >= 40rem) {
+      &[data-state="open"] {
+        animation: popup-in 300ms ease-out backwards;
+      }
+      &[data-state="closed"] {
+        animation: popup-out 150ms ease-out forwards;
+      }
+    }
+  }
+}
+
+/* Skeleton shimmer. Reduced motion gets the static muted block. */
+@utility animate-shimmer {
+  @media (prefers-reduced-motion: no-preference) {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--foreground) 6%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+/* Press feedback for custom controls. Button already includes it. */
+@utility press {
+  transition-property: scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:disabled, [aria-disabled="true"]):active {
+      scale: 0.96;
+    }
+  }
 }

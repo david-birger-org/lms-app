@@ -1,42 +1,56 @@
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
+import { Suspense } from "react";
 
-import { DashboardHeaderControls } from "@/components/dashboard/dashboard-header-controls";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { AccountMenu } from "@/components/auth/account-menu";
+import { CabinetTabs } from "@/components/cabinet/cabinet-navigation";
+import { LanguageSwitcherClient } from "@/components/layout/language-switcher-client";
+import { ContextSlash, Logo } from "@/components/shell/logo";
 import { Link } from "@/i18n/routing";
+import type { DashboardAccount } from "@/lib/dashboard-account";
 
-export async function CabinetHeader() {
-  const t = await getTranslations("navigation.cabinet.header");
+export function CabinetHeader({
+  account,
+  features,
+  showAdminLink,
+}: {
+  account: DashboardAccount;
+  features: Promise<string[]>;
+  showAdminLink: boolean;
+}) {
+  const t = useTranslations("navigation");
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-      <div className="flex w-full items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink asChild>
-                <Link href="/dashboard">{t("dashboard")}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="hidden md:block" />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{t("section")}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="flex-1" />
-        <DashboardHeaderControls />
+    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-(--header-height) max-w-6xl items-center gap-2 px-4 md:px-6">
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <Logo />
+          <span className="hidden text-sm font-semibold sm:inline">
+            {t("dashboard.workspaceTitle")}
+          </span>
+        </Link>
+        <ContextSlash />
+        <span className="min-w-0 truncate text-sm font-medium">
+          {account.fullName}
+        </span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <LanguageSwitcherClient />
+          <AccountMenu
+            email={account.email}
+            fullName={account.fullName}
+            settingsHref="/dashboard/settings"
+            secondaryHref={showAdminLink ? "/admin" : undefined}
+            secondaryLabel={
+              showAdminLink ? t("dashboard.adminWorkspace") : undefined
+            }
+          />
+        </div>
       </div>
+      <Suspense fallback={<CabinetTabs />}>
+        <CabinetTabs features={features} />
+      </Suspense>
     </header>
   );
 }

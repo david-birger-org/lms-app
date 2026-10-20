@@ -1,10 +1,9 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { CheckoutActionBar } from "@/components/checkout/order-summary";
 
 interface CheckoutConfirmProps {
   checkoutToken: string;
@@ -44,22 +43,13 @@ export function CheckoutConfirm({ checkoutToken }: CheckoutConfirmProps) {
   }
 
   return (
-    <div className="space-y-3">
-      <Button className="w-full" disabled={isSubmitting} onClick={handleClick}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            {t("creatingInvoice")}
-          </>
-        ) : (
-          t("proceedToPayment")
-        )}
-      </Button>
-      {error ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
+    <CheckoutActionBar
+      error={error}
+      isSubmitting={isSubmitting}
+      label={t("proceedToPayment")}
+      note={t("secureNote")}
+      onConfirm={() => void handleClick()}
+      submittingLabel={t("creatingInvoice")}
+    />
   );
 }

@@ -1,19 +1,23 @@
 "use client";
 
-import { Eye, Trash2, Upload as UploadIcon, X } from "lucide-react";
+import {
+  CircleAlert,
+  Eye,
+  Film,
+  MoreHorizontal,
+  Trash2,
+  Upload as UploadIcon,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { LessonVideoPlayer } from "@/components/cabinet/lesson-video-player";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import { StatusBadge } from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,15 +27,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/routing";
 import type { AdminVideoRow, AdminVideosOverview } from "@/lib/server/lectures";
 import type { VideoPlayback } from "@/lib/server/video/types";
+import { cn } from "@/lib/utils";
 
 import { requestJson } from "./request-json";
 import { VideoStateBadge } from "./VideoStateBadge";
@@ -172,34 +177,144 @@ export function VideosManager({
     }
   }
 
-  function renderState(row: AdminVideoRow) {
-    if (activeUpload?.lectureId !== row.id)
-      return (
-        <VideoStateBadge hasVideo={row.videoId !== null} status={row.video} />
-      );
+  const uploadingRow = activeUpload
+    ? lectures.find((row) => row.id === activeUpload.lectureId)
+    : undefined;
+  const percent = activeUpload ? Math.round(activeUpload.progress * 100) : 0;
 
-    const percent = Math.round(activeUpload.progress * 100);
+  function renderProgress(className?: string) {
+    if (!activeUpload) return null;
     return (
-      <div className="flex min-w-48 items-center gap-2">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+      <div className={cn("flex items-center gap-3", className)}>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          aria-label={t("uploading", { title: uploadingRow?.title ?? "" })}
+          className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
+        >
           <div
-            className="h-full bg-primary transition-[width]"
-            style={{ width: `${percent}%` }}
+            className="h-full origin-left bg-primary transition-transform duration-150 ease-out"
+            style={{ transform: `scaleX(${activeUpload.progress})` }}
           />
         </div>
-        <span className="w-9 text-right font-mono text-xs">{percent}%</span>
+        <span className="font-numeric w-10 text-right text-xs">{percent}%</span>
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon"
+          className="size-10 md:size-8"
           onClick={() => activeUpload.controller.abort()}
           aria-label={t("actions.cancel")}
           title={t("actions.cancel")}
         >
-          <X className="size-3.5" />
+          <X />
         </Button>
       </div>
     );
   }
+
+  const columns: DataListColumn<AdminVideoRow>[] = [
+    {
+      id: "title",
+      header: t("columns.title"),
+      mobile: "title",
+      cell: (row) => (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate font-medium">{row.title}</span>
+          <span className="font-numeric truncate text-xs font-normal text-muted-foreground">
+            {row.slug}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "state",
+      header: t("columns.state"),
+      className: "w-full",
+      cell: (row) =>
+        activeUpload?.lectureId === row.id ? (
+          <div className="flex items-center justify-end gap-2 md:justify-start">
+            <StatusBadge status="warning">{t("state.uploading")}</StatusBadge>
+            {renderProgress("hidden min-w-56 md:flex")}
+          </div>
+        ) : (
+          <VideoStateBadge hasVideo={row.videoId !== null} status={row.video} />
+        ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("columns.actions")}</span>,
+      align: "end",
+      mobile: "trailing",
+      cell: (row) => {
+        const uploadLabel = row.videoId
+          ? t("actions.replace")
+          : t("actions.upload");
+        const canUpload = Boolean(provider) && activeUpload === null;
+
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:inline-flex"
+              onClick={() => pickFile(row)}
+              disabled={!canUpload}
+            >
+              <UploadIcon data-icon="inline-start" />
+              {uploadLabel}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "size-10 md:size-8",
+                    !row.videoId && "md:hidden",
+                  )}
+                  aria-label={t("actions.menu", { name: row.title })}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  className="md:hidden"
+                  disabled={!canUpload}
+                  onSelect={() => pickFile(row)}
+                >
+                  <UploadIcon />
+                  {uploadLabel}
+                </DropdownMenuItem>
+                {row.videoId ? (
+                  <>
+                    <DropdownMenuItem
+                      disabled={!provider}
+                      onSelect={() => void handlePreview(row)}
+                    >
+                      <Eye />
+                      {t("actions.preview")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={activeUpload?.lectureId === row.id}
+                      onSelect={() => setDeleteTarget(row)}
+                    >
+                      <Trash2 />
+                      {t("actions.delete")}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <>
@@ -211,92 +326,45 @@ export function VideosManager({
         onChange={handleFile}
       />
 
-      <Card className="shadow-xs">
-        <CardHeader className="border-b px-3 sm:px-6">
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </CardHeader>
+      {!provider && (
+        <div className="flex items-start gap-3 rounded-xl border bg-background-200 px-4 py-3 text-sm">
+          <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+          <p className="text-pretty text-muted-foreground">
+            {t("notConnected")}
+          </p>
+        </div>
+      )}
 
-        <CardContent className="p-0">
-          {!provider && (
-            <div className="border-b bg-muted/40 px-3 py-3 text-sm text-muted-foreground sm:px-6">
-              {t("notConnected")}
-            </div>
-          )}
-          {lectures.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-3 sm:pl-6">
-                    {t("columns.title")}
-                  </TableHead>
-                  <TableHead>{t("columns.state")}</TableHead>
-                  <TableHead className="pr-3 text-right sm:pr-6">
-                    {t("columns.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lectures.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="pl-3 sm:pl-6">
-                      <p className="font-medium">{row.title}</p>
-                      <code className="text-xs text-muted-foreground">
-                        {row.slug}
-                      </code>
-                    </TableCell>
-                    <TableCell>{renderState(row)}</TableCell>
-                    <TableCell className="pr-3 text-right sm:pr-6">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5"
-                          onClick={() => pickFile(row)}
-                          disabled={!provider || activeUpload !== null}
-                        >
-                          <UploadIcon className="size-3.5" />
-                          {row.videoId
-                            ? t("actions.replace")
-                            : t("actions.upload")}
-                        </Button>
-                        {row.videoId && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => handlePreview(row)}
-                              disabled={!provider}
-                              aria-label={t("actions.preview")}
-                              title={t("actions.preview")}
-                            >
-                              <Eye className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => setDeleteTarget(row)}
-                              disabled={activeUpload?.lectureId === row.id}
-                              aria-label={t("actions.delete")}
-                              title={t("actions.delete")}
-                            >
-                              <Trash2 className="size-3.5 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <DataList
+        items={lectures}
+        getKey={(row) => row.id}
+        columns={columns}
+        empty={
+          <EmptyState
+            icon={Film}
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/admin/lectures">{t("goToLessons")}</Link>
+              </Button>
+            }
+          />
+        }
+      />
+
+      {activeUpload ? (
+        <>
+          {/* Keeps the last card clear of the fixed bar on mobile. */}
+          <div aria-hidden className="h-24 md:hidden" />
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-menu backdrop-blur md:hidden">
+            <p className="truncate text-sm font-medium">
+              {t("uploading", { title: uploadingRow?.title ?? "" })}
+            </p>
+            {renderProgress("mt-1")}
+          </div>
+        </>
+      ) : null}
 
       <Dialog
         open={preview !== null}
@@ -323,7 +391,7 @@ export function VideosManager({
           if (!open && !isDeleting) setDeleteTarget(null);
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("dialogs.delete.title")}</DialogTitle>
             <DialogDescription>

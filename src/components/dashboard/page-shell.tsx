@@ -1,59 +1,43 @@
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
-import { DashboardPageHeading } from "@/components/dashboard/page-heading";
+import { Page, PageHeader, type PageWidth } from "@/components/shell/page";
 import {
   type DashboardRouteHref,
   getDashboardRouteByHref,
 } from "@/lib/dashboard-routes";
-import { cn } from "@/lib/utils";
 
-const pageWidthClasses = {
-  default: "max-w-[1200px]",
-  wide: "max-w-[1400px]",
-} as const;
-
+/** Admin page: Page plus a PageHeader whose title comes from the route. */
 export async function DashboardPage({
+  actions,
   children,
+  description,
   route,
+  title,
   width = "default",
 }: {
+  actions?: ReactNode;
   children: ReactNode;
+  description?: ReactNode;
   route?: DashboardRouteHref;
-  width?: keyof typeof pageWidthClasses;
+  title?: ReactNode;
+  width?: PageWidth;
 }) {
   const page = route ? getDashboardRouteByHref(route) : null;
-  const t = page ? await getTranslations("navigation.dashboard.routes") : null;
+  const t = await getTranslations("navigation.dashboard.routes");
 
   return (
-    <div
-      className={cn(
-        "@container/main mx-auto flex w-full flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6",
-        pageWidthClasses[width],
-      )}
-    >
-      {page ? (
-        <DashboardSection>
-          <DashboardPageHeading
-            title={t?.(`${page.key}.title`) ?? ""}
-            description={t?.(`${page.key}.description`) ?? ""}
-            icon={page.icon}
-          />
-        </DashboardSection>
+    <Page width={width}>
+      {page || title ? (
+        <PageHeader
+          title={title ?? (page ? t(`${page.key}.title`) : null)}
+          description={
+            description ?? (page ? t(`${page.key}.description`) : null)
+          }
+          actions={actions}
+        />
       ) : null}
       {children}
-    </div>
-  );
-}
-
-export function DashboardSection({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn("px-4 lg:px-6", className)}>{children}</section>
+    </Page>
   );
 }

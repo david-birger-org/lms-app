@@ -1,67 +1,43 @@
 "use client";
 
-import { PackageOpen } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  getPaymentStatusKind,
-  normalizePaymentStatus,
-  resolvePaymentStatus,
-} from "@/lib/payments";
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
+import { normalizePaymentStatus, resolvePaymentStatus } from "@/lib/payments";
 import type { UserPurchaseRecord } from "@/lib/server/user-purchases";
 
-type Purchase = UserPurchaseRecord;
+function intlLocale(locale: string) {
+  return locale === "ua" ? "uk-UA" : "en-US";
+}
 
-function formatPrice(priceMinor: number, currency: string) {
-  const amount = priceMinor / 100;
-  return `${amount.toLocaleString("uk-UA", { minimumFractionDigits: 0 })} ${currency}`;
+function formatPrice(amountMinor: number, currency: string, locale: string) {
+  const amount = new Intl.NumberFormat(intlLocale(locale), {
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100);
+  return `${amount} ${currency}`;
 }
 
 function formatDate(iso: string, locale: string) {
-  return new Date(iso).toLocaleDateString(locale === "ua" ? "uk-UA" : "en-US", {
-    year: "numeric",
-    month: "short",
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat(intlLocale(locale), {
     day: "numeric",
-  });
-}
-
-function statusVariant(status: string) {
-  switch (getPaymentStatusKind(status)) {
-    case "paid":
-      return "default";
-    case "failed":
-    case "unknown":
-      return "destructive";
-    case "draft":
-      return "outline";
-    case "pending":
-      return "secondary";
-  }
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 export function UserPurchases({
   initialPurchases,
 }: {
-  initialPurchases: Purchase[];
+  initialPurchases: UserPurchaseRecord[];
 }) {
-  const [purchases] = useState<Purchase[]>(initialPurchases);
   const locale = useLocale();
   const t = useTranslations("purchases");
 
@@ -74,82 +50,73 @@ export function UserPurchases({
     });
   }
 
-  return (
-    <Card className="shadow-xs">
-      <CardHeader className="border-b px-3 sm:px-6">
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-
-      <CardContent className="p-0">
-        {purchases.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-12 text-center">
-            <PackageOpen className="size-8 text-muted-foreground/50" />
-            <div>
-              <p className="text-sm font-medium">{t("emptyTitle")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("emptyDescription")}
-              </p>
-            </div>
+  const columns: DataListColumn<UserPurchaseRecord>[] = [
+    {
+      id: "product",
+      header: t("columns.product"),
+      mobile: "title",
+      cell: (purchase) => {
+        const primary =
+          (locale === "ua" ? purchase.productNameUk : purchase.productNameEn) ??
+          purchase.description;
+        const secondary =
+          locale === "ua" ? purchase.productNameEn : purchase.productNameUk;
+        return (
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate font-medium">{primary}</span>
+            {secondary && secondary !== primary ? (
+              <span className="truncate text-xs font-normal text-muted-foreground">
+                {secondary}
+              </span>
+            ) : null}
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-3 sm:pl-6">
-                  {t("columns.product")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("columns.amount")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("columns.status")}
-                </TableHead>
-                <TableHead className="pr-3 text-right sm:pr-6">
-                  {t("columns.date")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {purchases.map((purchase) => (
-                <TableRow key={purchase.id}>
-                  <TableCell className="pl-3 sm:pl-6">
-                    <div>
-                      <p className="font-medium">
-                        {locale === "ua"
-                          ? (purchase.productNameUk ?? purchase.description)
-                          : (purchase.productNameEn ?? purchase.description)}
-                      </p>
-                      {(
-                        locale === "ua"
-                          ? purchase.productNameEn
-                          : purchase.productNameUk
-                      ) ? (
-                        <p className="text-xs text-muted-foreground">
-                          {locale === "ua"
-                            ? purchase.productNameEn
-                            : purchase.productNameUk}
-                        </p>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
-                    {formatPrice(purchase.amountMinor, purchase.currency)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={statusVariant(purchase.status)}>
-                      {labelStatus(purchase.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="pr-3 text-right text-sm text-muted-foreground sm:pr-6">
-                    {formatDate(purchase.createdAt, locale)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+        );
+      },
+    },
+    {
+      id: "status",
+      header: t("columns.status"),
+      mobile: "trailing",
+      cell: (purchase) => (
+        <StatusBadge status={getPaymentBadgeStatus(purchase.status)}>
+          {labelStatus(purchase.status)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "amount",
+      header: t("columns.amount"),
+      align: "end",
+      cell: (purchase) => (
+        <span className="font-numeric">
+          {formatPrice(purchase.amountMinor, purchase.currency, locale)}
+        </span>
+      ),
+    },
+    {
+      id: "date",
+      header: t("columns.date"),
+      align: "end",
+      cell: (purchase) => (
+        <span className="font-numeric text-muted-foreground">
+          {formatDate(purchase.createdAt, locale)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <DataList
+      items={initialPurchases}
+      getKey={(purchase) => purchase.id}
+      columns={columns}
+      empty={
+        <EmptyState
+          icon={ShoppingBag}
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+        />
+      }
+    />
   );
 }

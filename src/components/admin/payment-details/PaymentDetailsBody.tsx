@@ -1,18 +1,17 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CreditCard,
-  ExternalLink,
-  Info,
-  ReceiptText,
-  XCircle,
-} from "lucide-react";
+import { ExternalLink, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
+
+import { AdminAlert } from "@/components/admin/AdminDataTableShell";
 import type { PaymentDetails } from "@/components/admin/payment-details/types";
 import { mergePaymentDetails } from "@/components/admin/payment-details/utils";
-import { Badge } from "@/components/ui/badge";
+import {
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -35,7 +34,7 @@ function HintIcon({ text }: { text: string }) {
           type="button"
           tabIndex={-1}
           aria-label={text}
-          className="text-muted-foreground/70 hover:text-muted-foreground inline-flex items-center"
+          className="inline-flex items-center text-muted-foreground transition-[color] duration-150 hover:text-foreground"
         >
           <Info className="size-3" />
         </button>
@@ -51,145 +50,50 @@ function stringifyDetailValue(value?: number | string) {
   return value === undefined || value === null ? "-" : String(value);
 }
 
-function DetailCard({
-  label,
-  value,
-  mono = false,
+function DetailRow({
   hint,
+  label,
+  mono = false,
+  value,
 }: {
-  label: string;
-  value: string;
-  mono?: boolean;
   hint?: string;
+  label: string;
+  mono?: boolean;
+  value: string;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/80 p-4 shadow-xs backdrop-blur-sm">
-      <p className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em]">
+    <div className="flex items-baseline justify-between gap-4 border-b py-2.5">
+      <dt className="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground">
         {label}
         {hint ? <HintIcon text={hint} /> : null}
-      </p>
-      <p
+      </dt>
+      <dd
         className={cn(
-          "mt-2 text-sm leading-relaxed sm:text-[15px]",
-          mono && "break-all font-mono text-[11px] sm:text-xs",
+          "min-w-0 text-right break-words",
+          mono && "font-numeric text-xs break-all",
         )}
       >
         {value}
-      </p>
+      </dd>
     </div>
   );
 }
 
-function PaymentSummarySection({
-  amount,
-  ccy,
-  destination,
-  profitAmount,
-  pageUrl,
-  t,
-}: {
-  amount?: number;
-  ccy?: PaymentDetails["ccy"];
-  destination?: string;
-  profitAmount?: number;
-  pageUrl?: string;
-  t: (key: string) => string;
-}) {
+function PaymentDetailsSkeleton({ label }: { label: string }) {
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="space-y-2">
-        <p className="text-muted-foreground text-[11px] font-medium uppercase tracking-[0.22em]">
-          {t("summary.title")}
-        </p>
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <div>
-            <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
-              {t("summary.amount")}
-              <HintIcon text={t("hints.amount")} />
-            </p>
-            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {formatMonobankMoney(amount, ccy)}
-            </p>
+    <div className="flex flex-col gap-4">
+      <span className="sr-only">{label}</span>
+      <div aria-hidden className="flex flex-col gap-3 rounded-xl border p-4">
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+      <div aria-hidden className="grid gap-x-8 sm:grid-cols-2">
+        {["a", "b", "c", "d", "e", "f"].map((key) => (
+          <div key={key} className="flex justify-between gap-4 border-b py-3">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-3.5 w-28" />
           </div>
-          {typeof profitAmount === "number" ? (
-            <div>
-              <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
-                {t("summary.profitAmount")}
-                <HintIcon text={t("hints.profitAmount")} />
-              </p>
-              <p className="text-base font-medium sm:text-lg">
-                {formatMonobankMoney(profitAmount, ccy)}
-              </p>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5">
-        <div className="mb-3 flex items-center gap-2">
-          <ReceiptText className="text-muted-foreground size-4" />
-          <p className="text-sm font-medium">{t("summary.description")}</p>
-        </div>
-        <p className="text-sm leading-6 sm:text-[15px]">{destination ?? "-"}</p>
-        {pageUrl ? (
-          <a
-            href={pageUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary mt-3 inline-flex items-center gap-1 text-sm underline underline-offset-4"
-          >
-            {t("summary.openCheckoutLink")}
-            <ExternalLink className="size-3.5" />
-          </a>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function QuickFactsSection({
-  card,
-  profitAmount,
-  amount,
-  ccy,
-  t,
-}: {
-  card?: string;
-  profitAmount?: number;
-  amount?: number;
-  ccy?: PaymentDetails["ccy"];
-  t: (key: string) => string;
-}) {
-  const facts: { label: string; value: string; hint?: string }[] = [
-    {
-      label: t("quickFacts.amount"),
-      value: formatMonobankMoney(amount, ccy),
-      hint: t("hints.amount"),
-    },
-    typeof profitAmount === "number"
-      ? {
-          label: t("quickFacts.profitAmount"),
-          value: formatMonobankMoney(profitAmount, ccy),
-          hint: t("hints.profitAmount"),
-        }
-      : null,
-    { label: t("quickFacts.card"), value: card ?? "-" },
-  ].filter((item) => item !== null);
-
-  return (
-    <div className="rounded-xl border border-border/60 bg-background/80 p-4 shadow-xs">
-      <div className="mb-3 flex items-center gap-2">
-        <CreditCard className="text-muted-foreground size-4" />
-        <p className="text-sm font-medium">{t("quickFacts.title")}</p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-        {facts.map((item) => (
-          <DetailCard
-            key={item.label}
-            label={item.label}
-            value={item.value}
-            hint={item.hint}
-          />
         ))}
       </div>
     </div>
@@ -213,87 +117,16 @@ export function PaymentDetailsBody({
   const displayDetails = mergePaymentDetails(summary, details);
   const paymentInfo = displayDetails?.paymentInfo;
 
-  const processingStatusAppearance = {
-    className:
-      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-500/10 dark:text-sky-300",
-    icon: AlertTriangle,
-    label: t("statuses.processing"),
-  };
-
-  const paymentStatusAppearances: Record<
-    string,
-    { className: string; icon: typeof AlertTriangle; label: string }
-  > = {
-    cancelled: {
-      className:
-        "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
-      icon: XCircle,
-      label: t("statuses.cancelled"),
-    },
-    creating_invoice: processingStatusAppearance,
-    creation_failed: {
-      className:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
-      icon: XCircle,
-      label: t("statuses.creation_failed"),
-    },
-    draft: {
-      className:
-        "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
-      icon: ReceiptText,
-      label: t("statuses.draft"),
-    },
-    expired: {
-      className:
-        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-500/10 dark:text-amber-300",
-      icon: XCircle,
-      label: t("statuses.expired"),
-    },
-    failed: {
-      className:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
-      icon: XCircle,
-      label: t("statuses.failed"),
-    },
-    invoice_created: {
-      className:
-        "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-500/10 dark:text-sky-300",
-      icon: AlertTriangle,
-      label: t("statuses.invoice_created"),
-    },
-    paid: {
-      className:
-        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-500/10 dark:text-emerald-300",
-      icon: CheckCircle2,
-      label: t("statuses.paid"),
-    },
-    processing: processingStatusAppearance,
-    reversed: {
-      className:
-        "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-500/10 dark:text-rose-300",
-      icon: XCircle,
-      label: t("statuses.reversed"),
-    },
-  };
-
-  function getStatusAppearance(status?: string) {
+  function getStatusLabel(status?: string) {
     const canonicalStatus = resolvePaymentStatus(status);
-
-    if (canonicalStatus) return paymentStatusAppearances[canonicalStatus];
+    if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
 
     const rawStatus = normalizePaymentStatus(status);
-    return {
-      label: rawStatus
-        ? t("statuses.unknownWithValue", { status: rawStatus })
-        : t("statuses.unknown"),
-      icon: ReceiptText,
-      className:
-        "border-border bg-muted/40 text-muted-foreground dark:bg-muted/20",
-    };
+    return rawStatus
+      ? t("statuses.unknownWithValue", { status: rawStatus })
+      : t("statuses.unknown");
   }
 
-  const statusAppearance = getStatusAppearance(displayDetails?.status);
-  const StatusIcon = statusAppearance.icon;
   const secondaryDetails: {
     label: string;
     value: string;
@@ -305,11 +138,13 @@ export function PaymentDetailsBody({
         ? t("labels.created")
         : t("labels.statementDate"),
       value: formatMonobankDate(displayDetails?.createdDate),
+      mono: true,
     },
     details?.modifiedDate
       ? {
           label: t("labels.updated"),
           value: formatMonobankDate(details.modifiedDate),
+          mono: true,
         }
       : null,
     displayDetails?.providerStatus
@@ -326,13 +161,17 @@ export function PaymentDetailsBody({
       ? { label: t("labels.paymentSystem"), value: paymentInfo.paymentSystem }
       : null,
     paymentInfo?.approvalCode
-      ? { label: t("labels.approvalCode"), value: paymentInfo.approvalCode }
+      ? {
+          label: t("labels.approvalCode"),
+          value: paymentInfo.approvalCode,
+          mono: true,
+        }
       : null,
     paymentInfo?.rrn
-      ? { label: t("labels.rrn"), value: paymentInfo.rrn }
+      ? { label: t("labels.rrn"), value: paymentInfo.rrn, mono: true }
       : null,
     paymentInfo?.terminal
-      ? { label: t("labels.terminal"), value: paymentInfo.terminal }
+      ? { label: t("labels.terminal"), value: paymentInfo.terminal, mono: true }
       : null,
     paymentInfo?.tranId
       ? {
@@ -346,6 +185,7 @@ export function PaymentDetailsBody({
           label: t("labels.fee"),
           value: formatMonobankMoney(paymentInfo.fee, displayDetails?.ccy),
           hint: t("hints.fee"),
+          mono: true,
         }
       : null,
     paymentInfo?.country
@@ -362,6 +202,7 @@ export function PaymentDetailsBody({
       ? {
           label: t("labels.expires"),
           value: formatMonobankDate(displayDetails.expiresAt),
+          mono: true,
         }
       : null,
     displayDetails?.reference
@@ -371,81 +212,83 @@ export function PaymentDetailsBody({
           mono: true,
         }
       : null,
+    paymentInfo?.maskedPan
+      ? {
+          label: t("quickFacts.card"),
+          value: paymentInfo.maskedPan,
+          mono: true,
+        }
+      : null,
   ].filter((item) => item !== null);
 
   if (isLoading && !displayDetails) {
-    return (
-      <p className="text-muted-foreground text-sm">{t("loadingDetails")}</p>
-    );
+    return <PaymentDetailsSkeleton label={t("loadingDetails")} />;
   }
 
   if (error) {
-    return (
-      <p className="text-destructive border-destructive/40 bg-destructive/5 rounded-lg border px-3 py-2 text-sm">
-        {error}
-      </p>
-    );
+    return <AdminAlert>{error}</AdminAlert>;
   }
 
   if (!displayDetails) {
-    return <p className="text-muted-foreground text-sm">{t("openPayment")}</p>;
+    return <p className="text-sm text-muted-foreground">{t("openPayment")}</p>;
   }
 
   return (
-    <div className="space-y-5 text-sm sm:space-y-6">
-      {warning ? (
-        <p className="border-amber-300/70 bg-amber-50 text-amber-900 rounded-lg border px-3 py-2 text-sm dark:border-amber-700/60 dark:bg-amber-500/10 dark:text-amber-200">
-          {warning}
-        </p>
-      ) : null}
+    <div className="flex flex-col gap-5 text-sm">
+      {warning ? <AdminAlert tone="warning">{warning}</AdminAlert> : null}
 
-      <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/30 shadow-sm">
-        <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)] lg:gap-6">
-          <div className="space-y-4 sm:space-y-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "h-7 gap-1.5 rounded-full px-3 text-xs capitalize",
-                  statusAppearance.className,
-                )}
-              >
-                <StatusIcon className="size-3.5" />
-                {statusAppearance.label}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="h-7 rounded-full px-3 text-xs"
-              >
-                {t("invoice", { id: displayDetails.invoiceId ?? "-" })}
-              </Badge>
-            </div>
-
-            <PaymentSummarySection
-              amount={displayDetails.amount}
-              ccy={displayDetails.ccy}
-              destination={displayDetails.destination}
-              profitAmount={displayDetails.profitAmount}
-              pageUrl={displayDetails.pageUrl}
-              t={t}
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <QuickFactsSection
-              amount={displayDetails.amount}
-              ccy={displayDetails.ccy}
-              card={paymentInfo?.maskedPan}
-              profitAmount={displayDetails.profitAmount}
-              t={t}
-            />
-          </div>
+      <section className="flex flex-col gap-4 rounded-xl border bg-background-200 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <StatusBadge status={getPaymentBadgeStatus(displayDetails.status)}>
+            {getStatusLabel(displayDetails.status)}
+          </StatusBadge>
+          {displayDetails.pageUrl ? (
+            <Button asChild variant="outline" size="sm" className="h-10 sm:h-8">
+              <a href={displayDetails.pageUrl} target="_blank" rel="noreferrer">
+                {t("summary.openCheckoutLink")}
+                <ExternalLink data-icon="inline-end" />
+              </a>
+            </Button>
+          ) : null}
         </div>
-      </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+          <div className="flex flex-col gap-1">
+            <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              {t("summary.amount")}
+              <HintIcon text={t("hints.amount")} />
+            </p>
+            <p className="font-numeric text-3xl font-semibold tracking-tight">
+              {formatMonobankMoney(displayDetails.amount, displayDetails.ccy)}
+            </p>
+          </div>
+          {typeof displayDetails.profitAmount === "number" ? (
+            <div className="flex flex-col gap-1">
+              <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                {t("summary.profitAmount")}
+                <HintIcon text={t("hints.profitAmount")} />
+              </p>
+              <p className="font-numeric text-lg font-medium">
+                {formatMonobankMoney(
+                  displayDetails.profitAmount,
+                  displayDetails.ccy,
+                )}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1 border-t pt-4">
+          <p className="text-xs text-muted-foreground">
+            {t("summary.description")}
+          </p>
+          <p className="text-pretty">{displayDetails.destination ?? "-"}</p>
+        </div>
+      </section>
+
+      <dl className="grid gap-x-8 sm:grid-cols-2">
         {secondaryDetails.map((item) => (
-          <DetailCard
+          <DetailRow
             key={item.label}
             label={item.label}
             value={item.value}
@@ -453,20 +296,17 @@ export function PaymentDetailsBody({
             hint={item.hint}
           />
         ))}
-      </div>
+      </dl>
 
-      {(displayDetails.failureReason || displayDetails.errCode) && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <DetailCard
-            label={t("failureReason")}
-            value={stringifyDetailValue(displayDetails.failureReason)}
-          />
-          <DetailCard
-            label={t("errorCode")}
-            value={stringifyDetailValue(displayDetails.errCode)}
-          />
-        </div>
-      )}
+      {displayDetails.failureReason || displayDetails.errCode ? (
+        <AdminAlert>
+          <span className="font-medium">{t("failureReason")}:</span>{" "}
+          {stringifyDetailValue(displayDetails.failureReason)}
+          <span className="font-numeric mt-1 block text-xs">
+            {t("errorCode")}: {stringifyDetailValue(displayDetails.errCode)}
+          </span>
+        </AdminAlert>
+      ) : null}
     </div>
   );
 }

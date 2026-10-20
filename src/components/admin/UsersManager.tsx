@@ -1,21 +1,23 @@
 "use client";
 
-import { Pencil, Shield, UserRound } from "lucide-react";
+import {
+  CreditCard,
+  MoreHorizontal,
+  Pencil,
+  Search,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { UserFeaturesManager } from "@/components/admin/UserFeaturesManager";
 import { UserPurchasesDialog } from "@/components/admin/UserPurchasesDialog";
-import { Badge } from "@/components/ui/badge";
+import { DataList, type DataListColumn } from "@/components/shell/data-list";
+import { EmptyState } from "@/components/shell/empty-state";
+import { StatusBadge } from "@/components/shell/status-badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,14 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { AdminUserRecord } from "@/lib/server/admin-users";
 
 function formatDate(value: string) {
@@ -62,6 +62,12 @@ export function UsersManager({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "user">("user");
+  const [query, setQuery] = useState("");
+  // Kept after close so the sheet can animate out with its content.
+  const [purchasesUser, setPurchasesUser] = useState<AdminUserRecord | null>(
+    null,
+  );
+  const [isPurchasesOpen, setIsPurchasesOpen] = useState(false);
   const t = useTranslations("admin.users");
 
   function openEditDialog(user: AdminUserRecord) {
@@ -110,90 +116,160 @@ export function UsersManager({
     }
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleUsers = normalizedQuery
+    ? users.filter((user) =>
+        [user.name, user.email, user.id].some((value) =>
+          value?.toLowerCase().includes(normalizedQuery),
+        ),
+      )
+    : users;
+
+  const columns: DataListColumn<AdminUserRecord>[] = [
+    {
+      id: "user",
+      header: t("columns.user"),
+      mobile: "title",
+      cell: (user) => (
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-background-200 text-muted-foreground">
+            <UserRound className="size-4" />
+          </div>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate font-medium">
+              {user.name ?? t("unnamed")}
+            </span>
+            <span className="truncate text-xs font-normal text-muted-foreground md:hidden">
+              {user.email}
+            </span>
+            <span className="font-numeric hidden truncate text-xs text-muted-foreground md:block">
+              {user.id}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "email",
+      header: t("columns.email"),
+      mobile: "hidden",
+      cell: (user) => user.email,
+    },
+    {
+      id: "role",
+      header: t("columns.role"),
+      cell: (user) => (
+        <StatusBadge status={user.role === "admin" ? "success" : "neutral"}>
+          {t(`roles.${user.role}`)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: "joined",
+      header: t("columns.joined"),
+      align: "end",
+      cell: (user) => (
+        <span className="font-numeric text-muted-foreground">
+          {formatDate(user.createdAt)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("columns.actions")}</span>,
+      align: "end",
+      mobile: "trailing",
+      className: "w-12",
+      cell: (user) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 md:size-8"
+              aria-label={t("actions.menu", { email: user.email })}
+            >
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onSelect={() => openEditDialog(user)}>
+              <Pencil />
+              {t("edit.title")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                setPurchasesUser(user);
+                setIsPurchasesOpen(true);
+              }}
+            >
+              <CreditCard />
+              {user.role === "admin"
+                ? t("actions.invoices")
+                : t("actions.purchases")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
+
   return (
     <>
-      <Card className="shadow-xs">
-        <CardHeader className="border-b px-3 sm:px-6">
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {users.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("search.placeholder")}
+            aria-label={t("search.label")}
+            className="h-10 pl-9 md:h-9"
+          />
+        </div>
+        <p className="font-numeric text-sm text-muted-foreground">
+          {normalizedQuery
+            ? t("countFiltered", {
+                count: visibleUsers.length,
+                total: users.length,
+              })
+            : t("count", { count: users.length })}
+        </p>
+      </div>
+
+      <DataList
+        items={visibleUsers}
+        getKey={(user) => user.id}
+        columns={columns}
+        empty={
+          users.length === 0 ? (
+            <EmptyState icon={Users} title={t("empty")} />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-3 sm:pl-6">
-                    {t("columns.user")}
-                  </TableHead>
-                  <TableHead>{t("columns.email")}</TableHead>
-                  <TableHead>{t("columns.role")}</TableHead>
-                  <TableHead>{t("columns.joined")}</TableHead>
-                  <TableHead className="pr-3 text-right sm:pr-6">
-                    {t("columns.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="pl-3 sm:pl-6">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex size-8 items-center justify-center rounded-full border bg-muted/30">
-                          <UserRound className="size-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {user.name ?? t("unnamed")}
-                          </p>
-                          <p className="font-mono text-xs text-muted-foreground">
-                            {user.id}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          user.role === "admin" ? "default" : "secondary"
-                        }
-                      >
-                        <Shield className="size-3.5" />
-                        {t(`roles.${user.role}`)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(user.createdAt)}
-                    </TableCell>
-                    <TableCell className="pr-3 text-right sm:pr-6">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("edit.open", { email: user.email })}
-                          onClick={() => openEditDialog(user)}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                        <UserPurchasesDialog
-                          userId={user.id}
-                          email={user.email}
-                          name={user.name}
-                          isAdmin={user.role === "admin"}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+            <EmptyState
+              icon={Search}
+              title={t("noMatches")}
+              description={t("noMatchesDescription", { query: query.trim() })}
+              action={
+                <Button variant="outline" onClick={() => setQuery("")}>
+                  {t("search.clear")}
+                </Button>
+              }
+            />
+          )
+        }
+      />
+
+      {purchasesUser ? (
+        <UserPurchasesDialog
+          open={isPurchasesOpen}
+          onOpenChange={setIsPurchasesOpen}
+          userId={purchasesUser.id}
+          email={purchasesUser.email}
+          name={purchasesUser.name}
+          isAdmin={purchasesUser.role === "admin"}
+        />
+      ) : null}
 
       <Dialog
         open={editingUser !== null}
@@ -209,8 +285,8 @@ export function UsersManager({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="user-name">{t("edit.fields.name")}</Label>
               <Input
                 id="user-name"
@@ -219,7 +295,7 @@ export function UsersManager({
                 placeholder={t("edit.placeholders.name")}
               />
             </div>
-            <div className="grid gap-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="user-email">{t("edit.fields.email")}</Label>
               <Input
                 id="user-email"
@@ -229,13 +305,13 @@ export function UsersManager({
                 placeholder={t("edit.placeholders.email")}
               />
             </div>
-            <div className="grid gap-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="user-role">{t("edit.fields.role")}</Label>
               <Select
                 value={role}
                 onValueChange={(value) => setRole(value as "admin" | "user")}
               >
-                <SelectTrigger id="user-role">
+                <SelectTrigger id="user-role" className="w-full">
                   <SelectValue placeholder={t("edit.fields.role")} />
                 </SelectTrigger>
                 <SelectContent>

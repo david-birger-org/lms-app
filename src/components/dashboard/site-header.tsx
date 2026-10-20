@@ -1,41 +1,31 @@
-import { getTranslations } from "next-intl/server";
-
-import { DashboardHeaderControls } from "@/components/dashboard/dashboard-header-controls";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
+import { AccountMenu } from "@/components/auth/account-menu";
+import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-navigation";
+import { LanguageSwitcherClient } from "@/components/layout/language-switcher-client";
+import { Logo } from "@/components/shell/logo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Link } from "@/i18n/routing";
+import type { DashboardAccount } from "@/lib/dashboard-account";
 
-export async function SiteHeader() {
-  const t = await getTranslations("navigation.dashboard.header");
-
+export function SiteHeader({
+  account,
+  userDashboardLabel,
+}: {
+  account: DashboardAccount;
+  userDashboardLabel: string;
+}) {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
-      <div className="flex w-full items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink asChild>
-                <Link href="/admin">{t("app")}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="hidden md:block" />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{t("section")}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <div className="flex-1" />
-        <DashboardHeaderControls />
+    <header className="sticky top-0 z-30 flex h-(--header-height) shrink-0 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur-md md:px-4">
+      <SidebarTrigger />
+      <Logo className="md:hidden" />
+      <DashboardBreadcrumb />
+      <div className="ml-auto flex items-center gap-1.5">
+        <LanguageSwitcherClient />
+        <AccountMenu
+          email={account.email}
+          fullName={account.fullName}
+          settingsHref="/admin/settings"
+          secondaryHref="/dashboard"
+          secondaryLabel={userDashboardLabel}
+        />
       </div>
     </header>
   );

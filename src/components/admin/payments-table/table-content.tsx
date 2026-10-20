@@ -1,22 +1,12 @@
 "use client";
 "use no memo";
 
-import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import type * as React from "react";
+import type { Row, Table } from "@tanstack/react-table";
+import { ReceiptText } from "lucide-react";
 
-import {
-  AdminDataTableScroll,
-  adminDataTableStyles,
-} from "@/components/admin/AdminDataTableShell";
+import { AdminDataTable } from "@/components/admin/AdminDataTableShell";
+import { EmptyState } from "@/components/shell/empty-state";
 import { Button } from "@/components/ui/button";
-import {
-  Table as DataTable,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { StatementItem } from "@/lib/monobank";
 
 const interactiveRowSelector = [
@@ -44,94 +34,50 @@ function toggleRowSelection(row: Row<StatementItem>) {
 export function MonobankPaymentsTableContent({
   emptyActionLabel,
   emptyMessage = "No results.",
+  isLoading,
   onEmptyAction,
   table,
 }: {
   emptyActionLabel?: string;
   emptyMessage?: string;
+  isLoading?: boolean;
   onEmptyAction?: () => void;
   table: Table<StatementItem>;
 }) {
   return (
-    <AdminDataTableScroll>
-      <DataTable className={adminDataTableStyles.table}>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className={adminDataTableStyles.headerCell}
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-                aria-selected={row.getIsSelected()}
-                className="cursor-pointer data-[state=selected]:bg-primary/5 data-[state=selected]:hover:bg-primary/10"
-                onClick={(event: React.MouseEvent<HTMLTableRowElement>) => {
-                  if (isInteractiveRowTarget(event.target)) {
-                    return;
-                  }
-
-                  toggleRowSelection(row);
-                }}
-                onKeyDown={(event) => {
-                  if (event.target !== event.currentTarget) {
-                    return;
-                  }
-
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    toggleRowSelection(row);
-                  }
-                }}
-                tabIndex={0}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={adminDataTableStyles.cell}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={table.getVisibleLeafColumns().length}
-                className={adminDataTableStyles.emptyCell}
-              >
-                <div className="flex flex-col items-center gap-3 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    {emptyMessage}
-                  </p>
-                  {emptyActionLabel && onEmptyAction ? (
-                    <Button variant="outline" size="sm" onClick={onEmptyAction}>
-                      {emptyActionLabel}
-                    </Button>
-                  ) : null}
-                </div>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </DataTable>
-    </AdminDataTableScroll>
+    <AdminDataTable
+      table={table}
+      isLoading={isLoading}
+      empty={
+        <EmptyState
+          className="rounded-none border-0"
+          icon={ReceiptText}
+          title={emptyMessage}
+          action={
+            emptyActionLabel && onEmptyAction ? (
+              <Button variant="outline" onClick={onEmptyAction}>
+                {emptyActionLabel}
+              </Button>
+            ) : undefined
+          }
+        />
+      }
+      getRowProps={(row) => ({
+        "aria-selected": row.getIsSelected(),
+        className: "cursor-pointer",
+        tabIndex: 0,
+        onClick: (event) => {
+          if (isInteractiveRowTarget(event.target)) return;
+          toggleRowSelection(row);
+        },
+        onKeyDown: (event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggleRowSelection(row);
+          }
+        },
+      })}
+    />
   );
 }

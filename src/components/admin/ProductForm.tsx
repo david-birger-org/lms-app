@@ -1,16 +1,22 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 
 export interface ProductFormData {
   slug: string;
@@ -120,91 +126,33 @@ export function ProductForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="nameEn">{t("nameEn")}</Label>
+        <Field label={t("nameEn")} htmlFor="nameEn">
           <Input
-            className="h-9"
             id="nameEn"
             value={nameEn}
             onChange={(e) => handleNameEnChange(e.target.value)}
             placeholder={t("nameEnPlaceholder")}
             required
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="nameUk">{t("nameUk")}</Label>
+        </Field>
+        <Field label={t("nameUk")} htmlFor="nameUk">
           <Input
-            className="h-9"
             id="nameUk"
             value={nameUk}
             onChange={(e) => setNameUk(e.target.value)}
             placeholder="Онлайн коучинг"
             required
           />
-        </div>
+        </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="descriptionEn">{t("descriptionEn")}</Label>
-          <Textarea
-            id="descriptionEn"
-            value={descriptionEn}
-            onChange={(e) => setDescriptionEn(e.target.value)}
-            className="min-h-40"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="descriptionUk">{t("descriptionUk")}</Label>
-          <Textarea
-            id="descriptionUk"
-            value={descriptionUk}
-            onChange={(e) => setDescriptionUk(e.target.value)}
-            className="min-h-40"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="pricingType">{t("pricingType")}</Label>
-          <div className="relative">
-            <select
-              id="pricingType"
-              value={pricingType}
-              onChange={(event) =>
-                setPricingType(event.target.value as "fixed" | "on_request")
-              }
-              className={cn(
-                "flex h-9 w-full appearance-none items-center justify-between rounded-3xl border border-transparent bg-input/50 px-3 py-2 pr-9 text-sm whitespace-nowrap transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            >
-              <option value="fixed">{t("pricingTypeFixed")}</option>
-              <option value="on_request">{t("pricingTypeOnRequest")}</option>
-            </select>
-            <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="sortOrder">{t("sortOrder")}</Label>
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
+        <Field label={t("slug")} htmlFor="slug">
           <Input
-            className="h-9"
-            id="sortOrder"
-            type="number"
-            inputMode="numeric"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="slug">{t("slug")}</Label>
-          <Input
-            className="h-9"
             id="slug"
+            className="font-numeric"
             value={slug}
             onChange={(e) => {
               setSlug(e.target.value);
@@ -213,77 +161,156 @@ export function ProductForm({
             placeholder="online-coaching"
             required
           />
-        </div>
+        </Field>
+        <Field label={t("sortOrder")} htmlFor="sortOrder">
+          <Input
+            id="sortOrder"
+            className="font-numeric"
+            type="number"
+            inputMode="numeric"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          />
+        </Field>
       </div>
 
-      {pricingType === "fixed" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="priceUah">{t("priceUah")}</Label>
-            <Input
-              className="h-9"
-              id="priceUah"
-              type="number"
-              inputMode="decimal"
-              min="0.01"
-              step="0.01"
-              value={priceUahDisplay}
-              onChange={(e) => setPriceUahDisplay(e.target.value)}
-              placeholder="5000"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="priceUsd">{t("priceUsd")}</Label>
-            <Input
-              className="h-9"
-              id="priceUsd"
-              type="number"
-              inputMode="decimal"
-              min="0.01"
-              step="0.01"
-              value={priceUsdDisplay}
-              onChange={(e) => setPriceUsdDisplay(e.target.value)}
-              placeholder="100"
-              required
-            />
-          </div>
-        </div>
-      ) : null}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label={t("descriptionEn")} htmlFor="descriptionEn">
+          <Textarea
+            id="descriptionEn"
+            value={descriptionEn}
+            onChange={(e) => setDescriptionEn(e.target.value)}
+            className="min-h-32"
+            required
+          />
+        </Field>
+        <Field label={t("descriptionUk")} htmlFor="descriptionUk">
+          <Textarea
+            id="descriptionUk"
+            value={descriptionUk}
+            onChange={(e) => setDescriptionUk(e.target.value)}
+            className="min-h-32"
+            required
+          />
+        </Field>
+      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="imageUrl">
-          {t("imageUrl")}{" "}
-          <span className="font-normal text-muted-foreground">
-            {t("optional")}
-          </span>
-        </Label>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label={t("pricingType")} htmlFor="pricingType">
+          <Select
+            value={pricingType}
+            onValueChange={(value) =>
+              setPricingType(value as "fixed" | "on_request")
+            }
+          >
+            <SelectTrigger id="pricingType" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="fixed">{t("pricingTypeFixed")}</SelectItem>
+              <SelectItem value="on_request">
+                {t("pricingTypeOnRequest")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        {pricingType === "fixed" ? (
+          <>
+            <Field label={t("priceUah")} htmlFor="priceUah">
+              <Input
+                id="priceUah"
+                className="font-numeric"
+                type="number"
+                inputMode="decimal"
+                min="0.01"
+                step="0.01"
+                value={priceUahDisplay}
+                onChange={(e) => setPriceUahDisplay(e.target.value)}
+                placeholder="5000"
+                required
+              />
+            </Field>
+            <Field label={t("priceUsd")} htmlFor="priceUsd">
+              <Input
+                id="priceUsd"
+                className="font-numeric"
+                type="number"
+                inputMode="decimal"
+                min="0.01"
+                step="0.01"
+                value={priceUsdDisplay}
+                onChange={(e) => setPriceUsdDisplay(e.target.value)}
+                placeholder="100"
+                required
+              />
+            </Field>
+          </>
+        ) : null}
+      </div>
+
+      <Field
+        label={
+          <>
+            {t("imageUrl")}{" "}
+            <span className="font-normal text-muted-foreground">
+              {t("optional")}
+            </span>
+          </>
+        }
+        htmlFor="imageUrl"
+      >
         <Input
-          className="h-9"
           id="imageUrl"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
           placeholder="/images/{locale}/coworking-1.jpg"
         />
-      </div>
+      </Field>
 
-      <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-        <div className="space-y-0.5">
-          <Label htmlFor="activeToggle">{t("active")}</Label>
-          <p className="text-xs text-muted-foreground">{t("activeHint")}</p>
-        </div>
+      <label
+        htmlFor="activeToggle"
+        className="flex min-h-14 items-center justify-between gap-4 rounded-lg border px-3 py-2.5"
+      >
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium">{t("active")}</span>
+          <span className="text-xs text-muted-foreground">
+            {t("activeHint")}
+          </span>
+        </span>
         <Switch
           id="activeToggle"
           checked={active}
           onCheckedChange={setActive}
         />
-      </div>
+      </label>
 
-      <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isSubmitting} className="h-9 min-w-28">
+      <DialogFooter className="mt-1">
+        <DialogClose asChild>
+          <Button type="button" variant="outline">
+            {t("cancel")}
+          </Button>
+        </DialogClose>
+        <Button type="submit" disabled={isSubmitting} className="min-w-28">
           {isSubmitting ? t("saving") : submitLabel}
         </Button>
-      </div>
+      </DialogFooter>
     </form>
+  );
+}
+
+function Field({
+  children,
+  htmlFor,
+  label,
+}: {
+  children: ReactNode;
+  htmlFor: string;
+  label: ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <Label htmlFor={htmlFor}>{label}</Label>
+      {children}
+    </div>
   );
 }

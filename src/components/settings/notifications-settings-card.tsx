@@ -1,15 +1,17 @@
 "use client";
 
-import { Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+import { type Status, StatusBadge } from "@/components/shell/status-badge";
 
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -127,88 +129,96 @@ export function NotificationsSettingsCard() {
   ];
 
   return (
-    <Card className="shadow-xs">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-          <Bell className="size-4" />
-          {t("title")}
-        </CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
-      <CardContent className="pt-4 xl:pt-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <StatusBadge state={badgeState} />
+      <CardContent>
+        <PermissionBadge state={badgeState} />
+      </CardContent>
+      <CardFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="max-md:h-10 sm:-ml-2.5">
+              {t("buttons.howTo")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t("modal.title")}</DialogTitle>
+              <DialogDescription>
+                {needsInstall
+                  ? t("modal.descriptionIos")
+                  : t("modal.descriptionBrowser")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4">
+              <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm marker:font-numeric marker:text-muted-foreground">
+                {(needsInstall ? iosSteps : browserSteps).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
+              {permission === "denied" ? (
+                <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                  {t("modal.denied")}
+                </p>
+              ) : null}
+              {permission === "unsupported" ? (
+                <p className="rounded-lg border bg-background-200 p-3 text-xs text-muted-foreground">
+                  {t("modal.unsupported")}
+                </p>
+              ) : null}
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">{t("buttons.close")}</Button>
+              </DialogClose>
+              {!needsInstall &&
+              permission !== "granted" &&
+              permission !== "denied" &&
+              permission !== "unsupported" ? (
+                <Button onClick={requestPermission}>
+                  {t("buttons.enableNow")}
+                </Button>
+              ) : null}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
           {isEnabled ? (
             <>
-              <Button variant="destructive" onClick={handleDisableClick}>
-                {t("buttons.disable")}
-              </Button>
-              <Button variant="outline" onClick={sendTest}>
+              <Button
+                variant="outline"
+                className="max-md:h-10"
+                onClick={sendTest}
+              >
                 {t("buttons.test")}
+              </Button>
+              <Button
+                variant="destructive"
+                className="max-md:h-10"
+                onClick={handleDisableClick}
+              >
+                {t("buttons.disable")}
               </Button>
             </>
           ) : (
             <Button
+              className="max-md:h-10"
               onClick={handleEnableClick}
               disabled={permission === "unsupported"}
             >
               {t("buttons.enable")}
             </Button>
           )}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm">
-                {t("buttons.howTo")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{t("modal.title")}</DialogTitle>
-                <DialogDescription>
-                  {needsInstall
-                    ? t("modal.descriptionIos")
-                    : t("modal.descriptionBrowser")}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <ol className="list-decimal space-y-2 pl-5 text-sm">
-                  {(needsInstall ? iosSteps : browserSteps).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ol>
-                {permission === "denied" ? (
-                  <p className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
-                    {t("modal.denied")}
-                  </p>
-                ) : null}
-                {permission === "unsupported" ? (
-                  <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-                    {t("modal.unsupported")}
-                  </p>
-                ) : null}
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">{t("buttons.close")}</Button>
-                </DialogClose>
-                {!needsInstall &&
-                permission !== "granted" &&
-                permission !== "denied" &&
-                permission !== "unsupported" ? (
-                  <Button onClick={requestPermission}>
-                    {t("buttons.enableNow")}
-                  </Button>
-                ) : null}
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
-      </CardContent>
+      </CardFooter>
     </Card>
   );
 }
 
-function StatusBadge({ state }: { state: BadgeState }) {
+function PermissionBadge({ state }: { state: BadgeState }) {
   const t = useTranslations("settings.notifications.status");
   const label =
     state === "granted"
@@ -222,17 +232,7 @@ function StatusBadge({ state }: { state: BadgeState }) {
             : state === "default"
               ? t("default")
               : t("loading");
-  const tone =
-    state === "granted"
-      ? "bg-green-500/15 text-green-700 dark:text-green-400"
-      : state === "denied"
-        ? "bg-red-500/15 text-red-700 dark:text-red-400"
-        : "bg-muted text-muted-foreground";
-  return (
-    <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${tone}`}
-    >
-      {label}
-    </span>
-  );
+  const status: Status =
+    state === "granted" ? "success" : state === "denied" ? "error" : "neutral";
+  return <StatusBadge status={status}>{label}</StatusBadge>;
 }

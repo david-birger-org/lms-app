@@ -59,7 +59,7 @@ function LecturePage({
 
   return (
     <div
-      className="relative mx-auto w-full overflow-hidden rounded-lg bg-muted shadow-sm ring-1 ring-foreground/10"
+      className="relative mx-auto w-full overflow-hidden rounded-lg bg-muted shadow-card ring-1 ring-foreground/10"
       style={{ aspectRatio }}
     >
       {!loaded && (
@@ -93,7 +93,8 @@ function ZoomToolbar({
     Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(value)));
 
   return (
-    <div className="sticky top-2 z-10 mx-auto flex w-fit items-center gap-2 rounded-full border bg-background/90 px-2 py-1.5 shadow-sm backdrop-blur">
+    // Sits below the site header, and on mobile below the lesson title bar.
+    <div className="sticky top-[calc(var(--header-height)+3.5rem)] z-20 mx-auto flex w-fit items-center gap-1 rounded-[10px] border bg-background/90 p-1 shadow-menu backdrop-blur-md md:top-[calc(var(--header-height)+0.5rem)] md:gap-2">
       <Button
         type="button"
         variant="ghost"
@@ -101,7 +102,7 @@ function ZoomToolbar({
         aria-label="Zoom out"
         disabled={zoom <= ZOOM_MIN}
         onClick={() => onChange(clamp(zoom - ZOOM_STEP))}
-        className="size-7"
+        className="size-10 md:size-8"
       >
         <Minus className="size-3.5" />
       </Button>
@@ -113,7 +114,7 @@ function ZoomToolbar({
         step={ZOOM_STEP}
         value={zoom}
         onChange={(e) => onChange(clamp(Number(e.target.value)))}
-        className="h-1 w-32 cursor-pointer accent-foreground sm:w-40"
+        className="h-1 w-28 cursor-pointer accent-foreground sm:w-40"
       />
       <Button
         type="button"
@@ -122,11 +123,11 @@ function ZoomToolbar({
         aria-label="Zoom in"
         disabled={zoom >= ZOOM_MAX}
         onClick={() => onChange(clamp(zoom + ZOOM_STEP))}
-        className="size-7"
+        className="size-10 md:size-8"
       >
         <Plus className="size-3.5" />
       </Button>
-      <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+      <span className="w-11 pr-2 text-right font-numeric text-xs text-muted-foreground">
         {zoom}%
       </span>
     </div>

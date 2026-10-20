@@ -121,17 +121,19 @@ export function DateRangePicker({
           variant="outline"
           size="sm"
           disabled={disabled}
-          className={cn("h-9 justify-start gap-2 px-3 font-normal", className)}
+          className={cn("h-10 justify-start md:h-8", className)}
         >
-          <CalendarIcon />
-          <span>{formatLabel(range)}</span>
+          <CalendarIcon className="text-muted-foreground" />
+          <span className="font-numeric truncate text-xs">
+            {formatLabel(range)}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         className="w-auto min-w-(--radix-popover-trigger-width) p-0"
       >
-        <div className="flex flex-wrap items-center gap-1.5 border-b p-3">
+        <div className="flex flex-wrap items-center gap-1.5 border-b p-2">
           {shortcuts.map((shortcut) => {
             const exceeds = maxDays !== undefined && shortcut.days > maxDays;
             return (
@@ -139,7 +141,7 @@ export function DateRangePicker({
                 key={shortcut.days}
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5"
+                className="font-numeric h-10 md:h-8"
                 disabled={exceeds}
                 onClick={() => handleShortcut(shortcut.days)}
               >
@@ -150,7 +152,7 @@ export function DateRangePicker({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2.5"
+            className="ml-auto h-10 md:h-8"
             onClick={() => handleShortcut(30)}
           >
             {t("reset")}
@@ -163,8 +165,13 @@ export function DateRangePicker({
           onSelect={setDraft}
           defaultMonth={draft?.from}
         />
-        <div className="flex items-center justify-between gap-2 border-t p-3">
-          <p className="text-muted-foreground text-xs">
+        <div className="flex items-center justify-between gap-2 border-t p-2 pl-3">
+          <p
+            className={cn(
+              "text-xs tabular-nums",
+              exceedsMax ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
             {exceedsMax
               ? t("maxDays", { days: maxDays })
               : draftRange
@@ -173,6 +180,7 @@ export function DateRangePicker({
           </p>
           <Button
             size="sm"
+            className="h-10 md:h-8"
             onClick={handleApply}
             disabled={!draftRange || exceedsMax}
           >

@@ -49,7 +49,7 @@ export function LanguageSwitcherClient() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="flex">
+        <Button variant="ghost" size="sm" className="h-10 md:h-8">
           <Languages />
           {localeLabels[locale]}
         </Button>

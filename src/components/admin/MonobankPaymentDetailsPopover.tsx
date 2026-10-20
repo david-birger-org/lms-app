@@ -3,6 +3,7 @@
 import { Eye, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { AdminAlert } from "@/components/admin/AdminDataTableShell";
 import { PaymentDetailsBody } from "@/components/admin/payment-details/PaymentDetailsBody";
 import type { PaymentDetails } from "@/components/admin/payment-details/types";
 import { usePaymentDetails } from "@/components/admin/payment-details/usePaymentDetails";
@@ -94,51 +95,25 @@ export function MonobankPaymentDetailsPopover({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 p-0 sm:max-w-5xl xl:max-w-6xl">
-        <DialogHeader className="border-b bg-muted/20 px-4 py-4 sm:px-6 sm:py-5">
-          <DialogTitle className="text-base sm:text-lg">
-            {t("title")}
-          </DialogTitle>
-          <DialogDescription className="break-all font-mono text-[11px] sm:text-xs">
+      <DialogContent className="gap-0 p-0 pb-[env(safe-area-inset-bottom)] sm:max-w-3xl sm:pb-0">
+        <DialogHeader className="sticky top-0 z-10 gap-1 border-b bg-popover px-4 py-4 pr-12 text-left sm:px-6">
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription className="font-numeric text-xs break-all">
             {effectiveInvoiceId ?? "-"}
           </DialogDescription>
-          {isLoading || canCancelInvoice ? (
-            <div className="flex flex-wrap items-center gap-2 pt-3">
-              {isLoading ? (
-                <div
-                  aria-live="polite"
-                  className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-xs text-muted-foreground"
-                >
-                  <LoaderCircle className="size-3.5 animate-spin" />
-                  {loadingLabel}
-                </div>
-              ) : null}
-              {canCancelInvoice ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  disabled={isCancelling}
-                  onClick={() => void handleCancelInvoice()}
-                >
-                  {isCancelling ? (
-                    <>
-                      <LoaderCircle className="animate-spin" />
-                      {cancellingButtonLabel ?? t("cancelling")}
-                    </>
-                  ) : (
-                    (cancelButtonLabel ?? t("cancelInvoice"))
-                  )}
-                </Button>
-              ) : null}
-            </div>
+          {isLoading ? (
+            <p
+              aria-live="polite"
+              className="inline-flex items-center gap-2 pt-1 text-xs text-muted-foreground"
+            >
+              <LoaderCircle className="size-3.5 animate-spin" />
+              {loadingLabel}
+            </p>
           ) : null}
         </DialogHeader>
-        <div className="max-h-[85vh] overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6">
           {cancellationError ? (
-            <p className="text-destructive border-destructive/40 bg-destructive/5 mb-4 rounded-lg border px-3 py-2 text-sm">
-              {cancellationError}
-            </p>
+            <AdminAlert>{cancellationError}</AdminAlert>
           ) : null}
           <PaymentDetailsBody
             isLoading={isLoading}
@@ -148,6 +123,26 @@ export function MonobankPaymentDetailsPopover({
             summary={payment}
           />
         </div>
+        {canCancelInvoice ? (
+          <div className="sticky bottom-0 flex justify-end border-t bg-background-200 px-4 py-3 sm:rounded-b-xl sm:px-6">
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-10 max-sm:w-full sm:h-9"
+              disabled={isCancelling}
+              onClick={() => void handleCancelInvoice()}
+            >
+              {isCancelling ? (
+                <>
+                  <LoaderCircle className="animate-spin" />
+                  {cancellingButtonLabel ?? t("cancelling")}
+                </>
+              ) : (
+                (cancelButtonLabel ?? t("cancelInvoice"))
+              )}
+            </Button>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

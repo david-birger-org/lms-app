@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -59,12 +60,15 @@ export function LectureForm({
     });
   }
 
+  const optional = (
+    <span className="font-normal text-muted-foreground">{t("optional")}</span>
+  );
+
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="space-y-2">
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-2">
         <Label htmlFor="lectureTitle">{t("title")}</Label>
         <Input
-          className="h-9"
           id="lectureTitle"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -72,12 +76,12 @@ export function LectureForm({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-        <div className="space-y-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor="lectureSlug">{t("slug")}</Label>
           <Input
-            className="h-9"
             id="lectureSlug"
+            className="font-numeric"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="lesson-1"
@@ -86,11 +90,11 @@ export function LectureForm({
             required
           />
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="lectureSortOrder">{t("sortOrder")}</Label>
           <Input
-            className="h-9"
             id="lectureSortOrder"
+            className="font-numeric"
             type="number"
             inputMode="numeric"
             value={sortOrder}
@@ -99,12 +103,9 @@ export function LectureForm({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="lectureDescription">
-          {t("description")}{" "}
-          <span className="font-normal text-muted-foreground">
-            {t("optional")}
-          </span>
+          {t("description")} {optional}
         </Label>
         <Textarea
           id="lectureDescription"
@@ -114,38 +115,44 @@ export function LectureForm({
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <Label htmlFor="lectureCover">
-          {t("coverImageUrl")}{" "}
-          <span className="font-normal text-muted-foreground">
-            {t("optional")}
-          </span>
+          {t("coverImageUrl")} {optional}
         </Label>
         <Input
-          className="h-9"
           id="lectureCover"
           value={coverImageUrl}
           onChange={(e) => setCoverImageUrl(e.target.value)}
         />
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border px-3 py-2">
-        <div className="space-y-0.5">
-          <Label htmlFor="lectureActive">{t("active")}</Label>
-          <p className="text-xs text-muted-foreground">{t("activeHint")}</p>
-        </div>
+      <label
+        htmlFor="lectureActive"
+        className="flex min-h-14 items-center justify-between gap-4 rounded-lg border px-3 py-2.5"
+      >
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium">{t("active")}</span>
+          <span className="text-xs text-muted-foreground">
+            {t("activeHint")}
+          </span>
+        </span>
         <Switch
           id="lectureActive"
           checked={active}
           onCheckedChange={setActive}
         />
-      </div>
+      </label>
 
-      <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isSubmitting} className="h-9 min-w-28">
+      <DialogFooter className="mt-1">
+        <DialogClose asChild>
+          <Button type="button" variant="outline">
+            {t("cancel")}
+          </Button>
+        </DialogClose>
+        <Button type="submit" disabled={isSubmitting} className="min-w-28">
           {isSubmitting ? t("saving") : submitLabel}
         </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

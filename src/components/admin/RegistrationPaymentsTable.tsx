@@ -2,11 +2,9 @@
 "use no memo";
 
 import {
-  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type FilterFn,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -17,8 +15,8 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import {
-  ArrowUpDown,
   ChevronDown,
+  Columns3,
   Download,
   ExternalLink,
   Eye,
@@ -27,6 +25,7 @@ import {
   Printer,
   ReceiptText,
   RefreshCw,
+  Users,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,18 +34,25 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import {
+  AdminDataTable,
   AdminDataTableCard,
   AdminDataTablePagination,
-  AdminDataTableScroll,
+  AdminDataTableToolbar,
   adminDataTableStyles,
 } from "@/components/admin/AdminDataTableShell";
 import { MonobankPaymentDetailsPopover } from "@/components/admin/MonobankPaymentDetailsPopover";
+import { SortableColumnHeader } from "@/components/admin/payments-table/columns";
 import {
   getHttpUrl,
   getReceiptFile,
   getReceiptLabel,
   receiptFileName,
 } from "@/components/admin/registration-payments/receipt-utils";
+import { EmptyState } from "@/components/shell/empty-state";
+import {
+  getPaymentBadgeStatus,
+  StatusBadge,
+} from "@/components/shell/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,14 +73,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -92,12 +90,6 @@ const pageSizeOptions = [10, 20, 50, 100] as const;
 
 const defaultColumnVisibility: VisibilityState = {
   paymentId: false,
-};
-
-type RegistrationPaymentColumnMeta = {
-  cellClassName?: string;
-  headerClassName?: string;
-  label?: string;
 };
 
 const arrayFilter: FilterFn<AdminRegistrationPaymentRecord> = (
@@ -141,20 +133,6 @@ function formatDateTime(value?: string) {
   });
 }
 
-function statusVariant(status: string) {
-  switch (getPaymentStatusKind(status)) {
-    case "paid":
-      return "default";
-    case "failed":
-    case "unknown":
-      return "destructive";
-    case "draft":
-      return "outline";
-    case "pending":
-      return "secondary";
-  }
-}
-
 function getSearchValue(payment: AdminRegistrationPaymentRecord) {
   return [
     payment.customerName,
@@ -176,32 +154,6 @@ function getSearchValue(payment: AdminRegistrationPaymentRecord) {
     .filter((value): value is string => typeof value === "string")
     .map((value) => value.toLowerCase())
     .join(" ");
-}
-
-function getColumnMeta(column: Column<AdminRegistrationPaymentRecord>) {
-  return column.columnDef.meta as RegistrationPaymentColumnMeta | undefined;
-}
-
-function SortableColumnHeader({
-  column,
-  title,
-  className,
-}: {
-  column: Column<AdminRegistrationPaymentRecord>;
-  title: string;
-  className?: string;
-}) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(adminDataTableStyles.sortButton, className)}
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    >
-      {title}
-      <ArrowUpDown className={adminDataTableStyles.icon} />
-    </Button>
-  );
 }
 
 type RegistrationPaymentLabels = {
@@ -600,19 +552,16 @@ function createColumns(
       cell: ({ row }) => {
         const payment = row.original;
         return (
-          <div className="flex min-w-[10rem] max-w-[12rem] flex-col gap-0.5 sm:max-w-[16rem]">
-            <span className="truncate text-xs font-medium sm:text-sm">
+          <div className="flex min-w-0 flex-col gap-0.5 md:max-w-64">
+            <span className="truncate text-sm font-medium">
               {payment.customerName || labels.unknownName}
             </span>
             <a
               href={`mailto:${payment.customerEmail}`}
-              className="truncate text-[11px] text-muted-foreground hover:underline"
+              className="truncate text-xs font-normal text-muted-foreground hover:text-foreground hover:underline"
             >
               {payment.customerEmail}
             </a>
-            <span className="truncate font-mono text-[10px] text-muted-foreground sm:hidden">
-              {payment.externalRef}
-            </span>
           </div>
         );
       },
@@ -620,26 +569,23 @@ function createColumns(
         a.original.customerName.localeCompare(b.original.customerName),
       meta: {
         label: labels.columns.participant,
+        mobile: "title",
       },
     },
     {
       accessorKey: "amountMinor",
       header: ({ column }) => (
-        <SortableColumnHeader
-          column={column}
-          title={labels.columns.amount}
-          className="ml-auto"
-        />
+        <SortableColumnHeader column={column} title={labels.columns.amount} />
       ),
       cell: ({ row }) => (
-        <div className="whitespace-nowrap text-right text-xs font-medium sm:text-sm">
+        <span className="font-numeric text-sm font-medium">
           {formatMoney(row.original.amountMinor, row.original.currency)}
-        </div>
+        </span>
       ),
       meta: {
-        cellClassName: "text-right",
-        headerClassName: "text-right",
+        align: "end",
         label: labels.columns.amount,
+        mobile: "trailing",
       },
     },
     {
@@ -649,20 +595,17 @@ function createColumns(
       ),
       filterFn: arrayFilter,
       cell: ({ row }) => (
-        <div className="flex max-w-[7.75rem] flex-col gap-0.5">
-          <Badge
-            variant={statusVariant(row.original.status)}
-            className="h-4 max-w-full truncate rounded-md px-1.5 text-[10px] sm:h-5 sm:text-xs"
-          >
+        <div className="flex max-w-40 flex-col items-end gap-1 md:items-start">
+          <StatusBadge status={getPaymentBadgeStatus(row.original.status)}>
             {labelStatus(row.original.status, labels)}
-          </Badge>
+          </StatusBadge>
           {row.original.failureReason ? (
-            <span className="truncate text-[10px] text-destructive">
+            <span className="max-w-full truncate text-xs text-destructive">
               {row.original.failureReason}
             </span>
           ) : row.original.providerStatus ? (
             <span
-              className="truncate text-[10px] text-muted-foreground"
+              className="font-numeric max-w-full truncate text-[11px] text-muted-foreground"
               title={`Monobank status: ${row.original.providerStatus}`}
             >
               {labels.providerStatusPrefix}: {row.original.providerStatus}
@@ -693,10 +636,10 @@ function createColumns(
             rel="noreferrer"
             title={invoiceLabel}
             aria-label={invoiceLabel}
-            className="inline-flex max-w-[6.75rem] items-center gap-1 whitespace-nowrap text-[11px] text-primary hover:underline sm:text-xs"
+            className="font-numeric inline-flex items-center gap-1 text-xs text-foreground underline-offset-4 hover:underline"
           >
-            <ExternalLink className="size-3 shrink-0" />
             <span>{compactIdentifier(invoiceLabel)}</span>
+            <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
           </a>
         );
       },
@@ -717,9 +660,7 @@ function createColumns(
         if (!receiptFile) {
           if (payment.checkStatus) {
             return (
-              <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
-                {payment.checkStatus}
-              </Badge>
+              <StatusBadge status="neutral">{payment.checkStatus}</StatusBadge>
             );
           }
           return <span className="text-muted-foreground">-</span>;
@@ -727,7 +668,7 @@ function createColumns(
 
         const label = getReceiptLabel(payment);
         const className =
-          "inline-flex max-w-[5rem] items-center gap-1 truncate text-[11px] text-primary hover:underline sm:max-w-[9rem] sm:text-xs";
+          "inline-flex min-h-10 max-w-40 items-center gap-1.5 truncate text-xs text-foreground underline-offset-4 hover:underline md:min-h-0";
 
         return receiptFile.kind === "url" ? (
           <a
@@ -736,7 +677,7 @@ function createColumns(
             rel="noreferrer"
             className={className}
           >
-            <ReceiptText className="size-3 shrink-0" />
+            <ReceiptText className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate">{label}</span>
           </a>
         ) : (
@@ -747,7 +688,7 @@ function createColumns(
               openReceiptFile(receiptFile.value, receiptFileName(payment))
             }
           >
-            <ReceiptText className="size-3 shrink-0" />
+            <ReceiptText className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate">{label}</span>
           </button>
         );
@@ -763,16 +704,13 @@ function createColumns(
       ),
       filterFn: arrayFilter,
       cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className="h-4 rounded-md px-1.5 text-[10px] sm:h-5 sm:text-xs"
-        >
+        <Badge variant="outline">
           {labelSource(row.original.source, labels)}
         </Badge>
       ),
       meta: {
-        cellClassName: "hidden sm:table-cell",
-        headerClassName: "hidden sm:table-cell",
+        cellClassName: "hidden lg:table-cell",
+        headerClassName: "hidden lg:table-cell",
         label: labels.columns.source,
       },
     },
@@ -785,16 +723,13 @@ function createColumns(
         />
       ),
       cell: ({ row }) => (
-        <div
-          className="max-w-[8rem] whitespace-nowrap font-mono text-[11px]"
-          title={row.original.externalRef}
-        >
+        <div className="font-numeric text-xs" title={row.original.externalRef}>
           {compactIdentifier(row.original.externalRef, 9, 5)}
         </div>
       ),
       meta: {
-        cellClassName: "hidden md:table-cell",
-        headerClassName: "hidden md:table-cell",
+        cellClassName: "hidden xl:table-cell",
+        headerClassName: "hidden xl:table-cell",
         label: labels.columns.externalRef,
       },
     },
@@ -804,16 +739,14 @@ function createColumns(
         <SortableColumnHeader column={column} title={labels.columns.created} />
       ),
       cell: ({ row }) => (
-        <div className="whitespace-nowrap text-[11px] text-muted-foreground">
+        <span className="font-numeric text-xs text-muted-foreground">
           {formatDateTime(row.original.paymentCreatedAt)}
-        </div>
+        </span>
       ),
       sortingFn: (a, b) =>
         new Date(a.original.paymentCreatedAt).getTime() -
         new Date(b.original.paymentCreatedAt).getTime(),
       meta: {
-        cellClassName: "hidden lg:table-cell",
-        headerClassName: "hidden lg:table-cell",
         label: labels.columns.created,
       },
     },
@@ -821,9 +754,9 @@ function createColumns(
       accessorKey: "paymentId",
       header: labels.columns.paymentId,
       cell: ({ row }) => (
-        <div className="max-w-[12rem] truncate font-mono text-[11px]">
+        <span className="font-numeric block max-w-48 truncate text-xs">
           {row.original.paymentId}
-        </div>
+        </span>
       ),
       meta: {
         label: labels.columns.paymentId,
@@ -839,13 +772,14 @@ function createColumns(
         const isSyncingReceipt = syncingReceiptIds.has(payment.paymentId);
 
         return (
-          <div className="flex justify-end gap-1">
+          <div className="flex justify-end gap-1 max-md:-mr-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-xs"
+                  size="icon-sm"
+                  className={adminDataTableStyles.iconControl}
                   aria-label={labels.actions.syncReceipt({ id: identifier })}
                   disabled={!payment.invoiceId || isSyncingReceipt}
                   onClick={(event) => {
@@ -869,7 +803,8 @@ function createColumns(
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-xs"
+                  size="icon-sm"
+                  className={adminDataTableStyles.iconControl}
                   aria-label={labels.actions.openDetails({ id: identifier })}
                   disabled={!payment.invoiceId}
                   onClick={(event) => {
@@ -890,8 +825,8 @@ function createColumns(
       enableHiding: false,
       enableSorting: false,
       meta: {
-        cellClassName: "text-right",
-        headerClassName: "text-right",
+        align: "end",
+        cellClassName: "w-px py-1.5",
         label: labels.columns.details,
       },
     },
@@ -1171,30 +1106,29 @@ export function RegistrationPaymentsTable({
   }
 
   return (
-    <div className="space-y-2">
-      <AdminDataTableCard
-        title={t("title")}
-        description={t("description", { pending: pendingCount })}
-        summaryItems={[
-          {
-            content: t("summary.total", { count: payments.length }),
-            id: "total",
-          },
-          { content: t("summary.paid", { count: paidCount }), id: "paid" },
-          {
-            content: t("summary.amount", {
-              amount: formatMoney(totalAmount, "UAH"),
-            }),
-            id: "amount",
-          },
-          {
-            content: t("summary.pending", { count: pendingCount }),
-            id: "pending",
-          },
-        ]}
-        toolbar={
-          <div className={adminDataTableStyles.toolbar}>
+    <AdminDataTableCard
+      stats={[
+        {
+          id: "total",
+          label: t("stats.total"),
+          value: payments.length,
+        },
+        { id: "paid", label: t("stats.paid"), value: paidCount },
+        {
+          id: "amount",
+          label: t("stats.paidAmount"),
+          value: formatMoney(totalAmount, "UAH"),
+        },
+        { id: "pending", label: t("stats.pending"), value: pendingCount },
+      ]}
+      toolbar={
+        <AdminDataTableToolbar
+          filtersLabel={t("toolbar.filters")}
+          activeFilterCount={selectedStatuses.length + selectedSources.length}
+          search={
             <Input
+              type="search"
+              aria-label={t("toolbar.searchPlaceholder")}
               value={searchValue}
               onChange={(event) => {
                 setSearchValue(event.target.value);
@@ -1203,7 +1137,9 @@ export function RegistrationPaymentsTable({
               placeholder={t("toolbar.searchPlaceholder")}
               className={adminDataTableStyles.search}
             />
-            <div className={adminDataTableStyles.actionRow}>
+          }
+          filters={
+            <>
               <FilterMenu
                 label={t("toolbar.status")}
                 menuLabel={t("toolbar.filterStatus")}
@@ -1225,19 +1161,6 @@ export function RegistrationPaymentsTable({
                 }
               />
               <ColumnsMenu table={table} label={t("toolbar.columns")} />
-              <ExportMenu
-                disabled={exportRows.length === 0}
-                label={t("toolbar.export")}
-                pdfLabel={t("toolbar.exportPdf")}
-                xlsxLabel={t("toolbar.exportXlsx")}
-                onExportPdf={() => printPdf(exportRows, t("title"))}
-                onExportXlsx={() =>
-                  downloadBlob(
-                    createXlsxBlob(exportRows),
-                    exportFileName("xlsx"),
-                  )
-                }
-              />
               <Select
                 value={String(table.getState().pagination.pageSize)}
                 onValueChange={(value) => {
@@ -1245,7 +1168,13 @@ export function RegistrationPaymentsTable({
                   table.setPageIndex(0);
                 }}
               >
-                <SelectTrigger className={adminDataTableStyles.select}>
+                <SelectTrigger
+                  aria-label={t("toolbar.rows")}
+                  className={cn(adminDataTableStyles.select, "max-md:w-full")}
+                >
+                  <span className="text-muted-foreground md:hidden">
+                    {t("toolbar.rows")}
+                  </span>
                   <SelectValue placeholder={t("toolbar.rows")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -1259,116 +1188,77 @@ export function RegistrationPaymentsTable({
               {hasActiveState ? (
                 <Button
                   variant="ghost"
-                  size="sm"
                   className={adminDataTableStyles.control}
                   onClick={resetTable}
                 >
-                  <X className={adminDataTableStyles.icon} />
+                  <X />
                   {t("toolbar.reset")}
                 </Button>
               ) : null}
-            </div>
-          </div>
-        }
-      >
-        <AdminDataTableScroll>
-          <Table className={adminDataTableStyles.table}>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    const meta = getColumnMeta(header.column);
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className={cn(
-                          adminDataTableStyles.headerCell,
-                          meta?.headerClassName,
-                        )}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      const meta = getColumnMeta(cell.column);
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(
-                            adminDataTableStyles.cell,
-                            meta?.cellClassName,
-                          )}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={table.getVisibleLeafColumns().length}
-                    className={adminDataTableStyles.emptyCell}
-                  >
-                    {payments.length === 0 ? t("empty") : t("emptyFiltered")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </AdminDataTableScroll>
-        <AdminDataTablePagination
-          hidden={payments.length === 0}
-          label={
-            <span>
-              {t("pagination.rows", {
-                filtered: table.getFilteredRowModel().rows.length,
-                total: payments.length,
-              })}
-            </span>
+            </>
           }
-          previousLabel={t("pagination.previous")}
-          nextLabel={t("pagination.next")}
-          canPreviousPage={table.getCanPreviousPage()}
-          canNextPage={table.getCanNextPage()}
-          onPreviousPage={() => table.previousPage()}
-          onNextPage={() => table.nextPage()}
+          actions={
+            <ExportMenu
+              disabled={exportRows.length === 0}
+              label={t("toolbar.export")}
+              pdfLabel={t("toolbar.exportPdf")}
+              xlsxLabel={t("toolbar.exportXlsx")}
+              onExportPdf={() => printPdf(exportRows, t("title"))}
+              onExportXlsx={() =>
+                downloadBlob(createXlsxBlob(exportRows), exportFileName("xlsx"))
+              }
+            />
+          }
         />
-        {activePaymentDetails ? (
-          <MonobankPaymentDetailsPopover
-            invoiceId={activePaymentDetails.invoiceId}
-            payment={activePaymentDetails}
-            detailsSource="database"
-            open={detailsOpen}
-            onOpenChange={handleDetailsOpenChange}
-            onCancelInvoiceCompleted={handleRegistrationPaymentDeleted}
-            cancelInvoiceRequest={handleDeleteRegistrationPayment}
-            canCancelInvoice={canDeleteRegistrationPayment}
-            cancelButtonLabel={t("actions.deleteRecord")}
-            cancellingButtonLabel={t("deleting")}
-            cancelConfirmMessage={t("deleteConfirm")}
-            hideTrigger
+      }
+    >
+      <AdminDataTable
+        table={table}
+        empty={
+          <EmptyState
+            className="rounded-none border-0"
+            icon={Users}
+            title={payments.length === 0 ? t("empty") : t("emptyFiltered")}
+            action={
+              payments.length > 0 ? (
+                <Button variant="outline" onClick={resetTable}>
+                  {t("toolbar.reset")}
+                </Button>
+              ) : undefined
+            }
           />
-        ) : null}
-      </AdminDataTableCard>
-    </div>
+        }
+      />
+      <AdminDataTablePagination
+        hidden={table.getFilteredRowModel().rows.length === 0}
+        label={t("pagination.rows", {
+          filtered: table.getFilteredRowModel().rows.length,
+          total: payments.length,
+        })}
+        previousLabel={t("pagination.previous")}
+        nextLabel={t("pagination.next")}
+        canPreviousPage={table.getCanPreviousPage()}
+        canNextPage={table.getCanNextPage()}
+        onPreviousPage={() => table.previousPage()}
+        onNextPage={() => table.nextPage()}
+      />
+      {activePaymentDetails ? (
+        <MonobankPaymentDetailsPopover
+          invoiceId={activePaymentDetails.invoiceId}
+          payment={activePaymentDetails}
+          detailsSource="database"
+          open={detailsOpen}
+          onOpenChange={handleDetailsOpenChange}
+          onCancelInvoiceCompleted={handleRegistrationPaymentDeleted}
+          cancelInvoiceRequest={handleDeleteRegistrationPayment}
+          canCancelInvoice={canDeleteRegistrationPayment}
+          cancelButtonLabel={t("actions.deleteRecord")}
+          cancellingButtonLabel={t("deleting")}
+          cancelConfirmMessage={t("deleteConfirm")}
+          hideTrigger
+        />
+      ) : null}
+    </AdminDataTableCard>
   );
 }
 
@@ -1397,13 +1287,14 @@ function FilterMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={adminDataTableStyles.control}
-        >
+        <Button variant="outline" className={adminDataTableStyles.control}>
           {label}
-          <ChevronDown className={adminDataTableStyles.icon} />
+          {selectedOptions.length > 0 ? (
+            <span className="font-numeric text-muted-foreground">
+              {selectedOptions.length}
+            </span>
+          ) : null}
+          <ChevronDown data-icon="inline-end" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -1434,13 +1325,10 @@ function ColumnsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={adminDataTableStyles.control}
-        >
+        <Button variant="outline" className={adminDataTableStyles.control}>
+          <Columns3 />
           {label}
-          <ChevronDown className={adminDataTableStyles.icon} />
+          <ChevronDown data-icon="inline-end" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -1449,7 +1337,7 @@ function ColumnsMenu({
             .getAllColumns()
             .filter((column) => column.getCanHide())
             .map((column) => {
-              const meta = getColumnMeta(column);
+              const meta = column.columnDef.meta;
               return (
                 <DropdownMenuCheckboxItem
                   key={column.id}
@@ -1488,13 +1376,12 @@ function ExportMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
           className={adminDataTableStyles.control}
           disabled={disabled}
         >
-          <Download className={adminDataTableStyles.icon} />
+          <Download />
           {label}
-          <ChevronDown className={adminDataTableStyles.icon} />
+          <ChevronDown data-icon="inline-end" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

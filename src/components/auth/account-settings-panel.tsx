@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,6 +19,17 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "@/i18n/routing";
 import { authClient } from "@/lib/auth-client";
 
+// Fields stay one column and cap their width from md, like Vercel settings.
+const FIELD = "flex flex-col gap-2 md:max-w-sm";
+const INPUT = "max-md:h-10";
+const ACTION = "max-md:h-10 shrink-0";
+const FOOTER =
+  "flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4";
+
+/**
+ * Profile, password and session cards. Renders a fragment so each card is a
+ * direct child of the page and enters in the page stagger.
+ */
 export function AccountSettingsPanel({
   email,
   fullName,
@@ -92,128 +104,148 @@ export function AccountSettingsPanel({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
-      <div className="grid gap-4">
-        <Card className="shadow-xs">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <UserRound className="size-4" />
-              {t("profile.title")}
-            </CardTitle>
-            <CardDescription>{t("profile.description")}</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form className="space-y-4" onSubmit={handleProfileSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="settings-name">{t("profile.name")}</Label>
-                <Input
-                  id="settings-name"
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder={t("profile.namePlaceholder")}
-                  value={name}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="settings-email">{t("profile.email")}</Label>
-                <Input disabled id="settings-email" value={email} />
-              </div>
-              <Button className="h-9" disabled={isSavingProfile} type="submit">
-                {isSavingProfile ? t("profile.saving") : t("profile.save")}
-              </Button>
-            </form>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("profile.title")}</CardTitle>
+          <CardDescription>{t("profile.description")}</CardDescription>
+        </CardHeader>
+        <form
+          className="flex flex-col gap-(--card-spacing)"
+          onSubmit={handleProfileSubmit}
+        >
+          <CardContent className="flex flex-col gap-4">
+            <div className={FIELD}>
+              <Label htmlFor="settings-name">{t("profile.name")}</Label>
+              <Input
+                autoComplete="name"
+                className={INPUT}
+                id="settings-name"
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t("profile.namePlaceholder")}
+                value={name}
+              />
+            </div>
+            <div className={FIELD}>
+              <Label htmlFor="settings-email">{t("profile.email")}</Label>
+              <Input
+                className={INPUT}
+                disabled
+                id="settings-email"
+                value={email}
+              />
+            </div>
           </CardContent>
-        </Card>
+          <CardFooter className={FOOTER}>
+            <p className="text-sm text-pretty text-muted-foreground">
+              {t("profile.hint")}
+            </p>
+            <Button className={ACTION} disabled={isSavingProfile} type="submit">
+              {isSavingProfile ? t("profile.saving") : t("profile.save")}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
 
-        <Card className="shadow-xs">
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <KeyRound className="size-4" />
-              {t("password.title")}
-            </CardTitle>
-            <CardDescription>{t("password.description")}</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form className="space-y-4" onSubmit={handlePasswordSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="current-password">
-                  {t("password.current")}
-                </Label>
-                <Input
-                  autoComplete="current-password"
-                  id="current-password"
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={currentPassword}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">{t("password.new")}</Label>
-                <Input
-                  autoComplete="new-password"
-                  id="new-password"
-                  minLength={8}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={newPassword}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-new-password">
-                  {t("password.confirm")}
-                </Label>
-                <Input
-                  autoComplete="new-password"
-                  id="confirm-new-password"
-                  minLength={8}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={confirmPassword}
-                />
-              </div>
-              <Button className="h-9" disabled={isSavingPassword} type="submit">
-                {isSavingPassword
-                  ? t("password.submitting")
-                  : t("password.submit")}
-              </Button>
-            </form>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("password.title")}</CardTitle>
+          <CardDescription>{t("password.description")}</CardDescription>
+        </CardHeader>
+        <form
+          className="flex flex-col gap-(--card-spacing)"
+          onSubmit={handlePasswordSubmit}
+        >
+          <CardContent className="flex flex-col gap-4">
+            <div className={FIELD}>
+              <Label htmlFor="current-password">{t("password.current")}</Label>
+              <Input
+                autoComplete="current-password"
+                className={INPUT}
+                id="current-password"
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                required
+                type="password"
+                value={currentPassword}
+              />
+            </div>
+            <div className={FIELD}>
+              <Label htmlFor="new-password">{t("password.new")}</Label>
+              <Input
+                autoComplete="new-password"
+                className={INPUT}
+                id="new-password"
+                minLength={8}
+                onChange={(event) => setNewPassword(event.target.value)}
+                required
+                type="password"
+                value={newPassword}
+              />
+            </div>
+            <div className={FIELD}>
+              <Label htmlFor="confirm-new-password">
+                {t("password.confirm")}
+              </Label>
+              <Input
+                autoComplete="new-password"
+                className={INPUT}
+                id="confirm-new-password"
+                minLength={8}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+                type="password"
+                value={confirmPassword}
+              />
+            </div>
           </CardContent>
-        </Card>
-      </div>
+          <CardFooter className={FOOTER}>
+            <p className="text-sm text-pretty text-muted-foreground">
+              {t("password.hint")}
+            </p>
+            <Button
+              className={ACTION}
+              disabled={isSavingPassword}
+              type="submit"
+            >
+              {isSavingPassword
+                ? t("password.submitting")
+                : t("password.submit")}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
 
-      <Card className="h-fit shadow-xs">
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <ShieldCheck className="size-4" />
-            {t("session.title")}
-          </CardTitle>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("session.title")}</CardTitle>
           <CardDescription>{t("session.description")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 pt-6">
-          <div className="space-y-1 rounded-lg border bg-muted/20 p-4 text-sm">
-            <p className="text-muted-foreground">{t("session.role")}</p>
-            <p className="font-medium text-foreground">{role}</p>
-          </div>
-          <div className="space-y-1 rounded-lg border bg-muted/20 p-4 text-sm">
-            <p className="text-muted-foreground">{t("session.email")}</p>
-            <p className="break-all font-medium text-foreground">{email}</p>
-          </div>
+        <CardContent>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-3 text-sm md:max-w-md">
+            <dt className="text-muted-foreground">{t("session.role")}</dt>
+            <dd className="font-numeric">{role}</dd>
+            <dt className="text-muted-foreground">{t("session.email")}</dt>
+            <dd className="font-numeric break-all">{email}</dd>
+          </dl>
+        </CardContent>
+        <CardFooter className={FOOTER}>
+          <p className="text-sm text-pretty text-muted-foreground">
+            {t("session.signOutHint")}
+          </p>
           <Button
-            className="h-9 w-full"
+            className={ACTION}
             disabled={isSigningOut}
             onClick={() => void handleSignOut()}
             type="button"
             variant="outline"
           >
-            <LogOut className="size-4" />
+            <LogOut data-icon="inline-start" />
             {isSigningOut
               ? accountMenuT("signingOut")
               : accountMenuT("signOut")}
           </Button>
-        </CardContent>
+        </CardFooter>
       </Card>
-    </div>
+    </>
   );
 }

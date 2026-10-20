@@ -122,9 +122,9 @@ export function MonobankPaymentsDataTable({
   onRefresh,
   onInvoiceChanged,
   showStats = true,
-  title = "Payments history",
-  description = "Search the statement feed, filter rows, and inspect invoice-level payment details.",
+  description,
   detailsSource = "database",
+  toolbarLeading,
 }: {
   data: StatementItem[];
   emptyMessage?: string;
@@ -132,17 +132,30 @@ export function MonobankPaymentsDataTable({
   onRefresh: () => void;
   onInvoiceChanged?: () => void;
   showStats?: boolean;
-  title?: string;
   description?: string;
   detailsSource?: PaymentDetailsSource;
+  toolbarLeading?: React.ReactNode;
 }) {
   const t = useTranslations("admin.paymentsTable");
+  const getStatusLabel = React.useCallback(
+    (status: string) => {
+      const canonicalStatus = resolvePaymentStatus(status);
+      if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
+
+      return t("statuses.unknown", {
+        status: normalizePaymentStatus(status) ?? "-",
+      });
+    },
+    [t],
+  );
+
   const columns = React.useMemo(
     () =>
-      createMonobankPaymentsColumns((key, params) =>
-        t(`columns.${key}`, params),
+      createMonobankPaymentsColumns(
+        (key, params) => t(`columns.${key}`, params),
+        getStatusLabel,
       ),
-    [t],
+    [getStatusLabel, t],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -283,18 +296,6 @@ export function MonobankPaymentsDataTable({
     [statusColumn],
   );
 
-  const getStatusLabel = React.useCallback(
-    (status: string) => {
-      const canonicalStatus = resolvePaymentStatus(status);
-      if (canonicalStatus) return t(`statuses.${canonicalStatus}`);
-
-      return t("statuses.unknown", {
-        status: normalizePaymentStatus(status) ?? "-",
-      });
-    },
-    [t],
-  );
-
   const resetTable = React.useCallback(() => {
     table.resetSorting(true);
     table.resetColumnFilters(true);
@@ -341,15 +342,15 @@ export function MonobankPaymentsDataTable({
 
   return (
     <AdminDataTableCard
-      title={title}
       description={description}
-      summaryItems={
+      stats={
         showStats
           ? [
-              { content: `${t("stats.total")} ${data.length}`, id: "total" },
+              { id: "total", label: t("stats.total"), value: data.length },
               {
-                content: `${t("stats.settled")} ${successfulCount}`,
                 id: "settled",
+                label: t("stats.settled"),
+                value: successfulCount,
               },
             ]
           : undefined
@@ -373,12 +374,14 @@ export function MonobankPaymentsDataTable({
           onStatusToggle={handleStatusToggle}
           onReset={resetTable}
           onClearSelection={() => table.resetRowSelection(true)}
+          leading={toolbarLeading}
         />
       }
     >
       <div className="w-full">
         <MonobankPaymentsTableContent
           table={table}
+          isLoading={isLoading}
           emptyActionLabel={emptyActionLabel}
           emptyMessage={resolvedEmptyMessage}
           onEmptyAction={emptyActionLabel ? resetTable : undefined}
@@ -397,6 +400,7 @@ export function MonobankPaymentsDataTable({
         ) : null}
 
         <AdminDataTablePagination
+          hidden={filteredRowCount === 0}
           label={selectionLabel}
           previousLabel={t("pagination.previous")}
           nextLabel={t("pagination.next")}
