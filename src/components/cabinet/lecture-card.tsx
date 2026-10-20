@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, FileText, Video } from "lucide-react";
 import Image from "next/image";
 
 import { Link } from "@/i18n/routing";
@@ -31,6 +31,12 @@ export function LectureCard({ lecture }: { lecture: LectureSummary }) {
           </p>
         )}
       </div>
+      {(lecture.hasVideo || lecture.hasNotes) && (
+        <div className="flex shrink-0 gap-1.5 text-muted-foreground">
+          {lecture.hasVideo && <Video className="size-4" />}
+          {lecture.hasNotes && <FileText className="size-4" />}
+        </div>
+      )}
     </Link>
   );
 }

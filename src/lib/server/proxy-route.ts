@@ -19,6 +19,9 @@ interface ProxyRouteOptions {
   path: string;
   errorMessage: string;
   forwardBody?: boolean;
+  // Forward the request body as raw bytes with this content type instead of
+  // JSON text (e.g. "application/pdf" uploads).
+  rawBodyContentType?: string;
   search?: ProxySearch;
 }
 
@@ -26,7 +29,7 @@ type ResolvedHeaders =
   | { ok: true; headers: Headers }
   | { ok: false; response: NextResponse };
 
-async function resolveProxyHeaders(
+export async function resolveProxyHeaders(
   auth: ProxyAuth,
   request: Request,
 ): Promise<ResolvedHeaders> {
@@ -68,9 +71,16 @@ export function createProxyRoute(options: ProxyRouteOptions) {
       const resolved = await resolveProxyHeaders(options.auth, request);
       if (!resolved.ok) return resolved.response;
 
+      const { rawBodyContentType } = options;
       return await forwardLmsSlsRequest({
-        body: options.forwardBody ? await request.text() : undefined,
-        contentType: options.forwardBody ? "application/json" : undefined,
+        body: rawBodyContentType
+          ? await request.arrayBuffer()
+          : options.forwardBody
+            ? await request.text()
+            : undefined,
+        contentType:
+          rawBodyContentType ??
+          (options.forwardBody ? "application/json" : undefined),
         headers: resolved.headers,
         method: options.method,
         path: options.path,

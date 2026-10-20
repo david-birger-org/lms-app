@@ -76,7 +76,7 @@ export function mergeHeaders(...headerSets: Array<HeadersInit | undefined>) {
 }
 
 interface ForwardLmsSlsRequestOptions {
-  body?: string;
+  body?: string | ArrayBuffer;
   contentType?: string | null;
   headers?: HeadersInit;
   method: string;
@@ -107,7 +107,10 @@ export async function forwardLmsSlsRequest({
   const response = await fetch(targetUrl, {
     method,
     headers,
-    body: body && body.length > 0 ? body : undefined,
+    body:
+      body && (typeof body === "string" ? body.length : body.byteLength) > 0
+        ? body
+        : undefined,
     cache: "no-store",
   });
 

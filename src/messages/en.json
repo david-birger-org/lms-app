@@ -76,6 +76,14 @@
           "title": "Products",
           "description": "Manage products, pricing, and availability."
         },
+        "lectures": {
+          "title": "Lessons",
+          "description": "Manage course lessons and notes PDFs."
+        },
+        "videos": {
+          "title": "Videos",
+          "description": "Upload, preview, and remove lesson videos."
+        },
         "users": {
           "title": "Users",
           "description": "Review users, update access roles, and inspect purchases on demand."
@@ -372,6 +380,128 @@
         "active": "Active",
         "activeHint": "Hidden products won't appear on the portfolio site.",
         "saving": "Saving..."
+      }
+    },
+    "lectures": {
+      "title": "Lessons",
+      "description": "Create, order, and hide course lessons. Upload the notes PDF here. Manage videos on the Videos page.",
+      "addLecture": "Add lecture",
+      "empty": "No lectures yet. Click \"Add lecture\" to create one.",
+      "columns": {
+        "order": "Order",
+        "title": "Title",
+        "slug": "Slug",
+        "status": "Status",
+        "notes": "Notes",
+        "video": "Video",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "hidden": "Hidden"
+      },
+      "notes": {
+        "none": "None",
+        "upload": "Upload notes PDF",
+        "replace": "Replace notes PDF",
+        "remove": "Remove notes",
+        "uploading": "Uploading...",
+        "notPdf": "Choose a PDF file.",
+        "tooLarge": "The PDF is {size}. The limit is 4.5 MB. Compress it and try again."
+      },
+      "success": {
+        "created": "Lecture created",
+        "updated": "Lecture updated",
+        "deleted": "Lecture deleted",
+        "hidden": "Lecture hidden",
+        "visible": "Lecture visible",
+        "notesUploaded": "Notes uploaded",
+        "notesRemoved": "Notes removed"
+      },
+      "errors": {
+        "generic": "Something went wrong. Try again."
+      },
+      "form": {
+        "title": "Title",
+        "slug": "Slug",
+        "slugHint": "Lowercase letters, digits, and dashes.",
+        "sortOrder": "Order",
+        "description": "Description",
+        "coverImageUrl": "Cover image URL",
+        "optional": "(optional)",
+        "active": "Visible to students",
+        "activeHint": "Hidden lectures stay in the admin list only.",
+        "saving": "Saving..."
+      },
+      "dialogs": {
+        "create": {
+          "title": "Add lecture",
+          "description": "Add the lesson details. Upload notes from the table after saving.",
+          "submit": "Create"
+        },
+        "edit": {
+          "title": "Edit lecture",
+          "description": "Update the lesson details.",
+          "submit": "Save"
+        },
+        "deleteLecture": {
+          "title": "Delete lecture",
+          "description": "Delete \"{name}\" with its notes and video? This cannot be undone."
+        },
+        "removeNotes": {
+          "title": "Remove notes",
+          "description": "Remove the notes PDF from \"{name}\"?"
+        },
+        "confirm": {
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "working": "Deleting..."
+        }
+      }
+    },
+    "videos": {
+      "title": "Videos",
+      "description": "One video per lesson. Files upload straight from your browser to the video host.",
+      "notConnected": "Video hosting is not connected. Set VIDEO_PROVIDER.",
+      "empty": "No lessons yet. Create lessons on the Lessons page first.",
+      "columns": {
+        "title": "Lesson",
+        "state": "Video",
+        "actions": "Actions"
+      },
+      "state": {
+        "none": "None",
+        "unknown": "Unknown",
+        "ready": "Ready",
+        "processing": "Processing",
+        "processingProgress": "Processing {progress}%",
+        "failed": "Failed",
+        "missing": "Missing"
+      },
+      "actions": {
+        "upload": "Upload",
+        "replace": "Replace",
+        "preview": "Preview",
+        "delete": "Delete video",
+        "cancel": "Cancel upload"
+      },
+      "success": {
+        "uploaded": "Video uploaded",
+        "deleted": "Video deleted",
+        "canceled": "Upload canceled"
+      },
+      "errors": {
+        "generic": "Something went wrong. Try again.",
+        "upload": "Video upload failed: {message}"
+      },
+      "dialogs": {
+        "delete": {
+          "title": "Delete video",
+          "description": "Delete the video from \"{name}\"? Students will no longer see it.",
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "deleting": "Deleting..."
+        }
       }
     },
     "users": {
@@ -842,6 +972,7 @@
     "title": "Lectures",
     "empty": "No lectures available yet.",
     "noAccess": "You don't have access to lectures. Purchase a lecture package to get started.",
-    "backToList": "Back to lectures"
+    "backToList": "Back to lectures",
+    "comingSoon": "Materials for this lesson are coming soon."
   }
 }
